@@ -1,0 +1,2 @@
+# newsbot
+Automated news delivery
