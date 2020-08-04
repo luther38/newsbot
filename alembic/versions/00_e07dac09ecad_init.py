@@ -20,18 +20,13 @@ def upgrade():
     op.create_table(
         "articles",
         sa.Column("id", sa.String, primary_key=True),
+        sa.Column("siteName", sa.String),
+        sa.Column("tags", sa.String),
         sa.Column("title", sa.String),
         sa.Column("url", sa.String),
-        sa.Column("pubDate", sa.String)
-    )
-    op.create_table(
-        "pso2news",
-        sa.Column("id", sa.String, primary_key=True),
-        sa.Column("title", sa.String),
-        sa.Column('url', sa.String),
+        sa.Column("pubDate", sa.String),
     )
     pass
-
 
 def downgrade():
     op.drop_table("articles")

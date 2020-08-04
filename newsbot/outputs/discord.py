@@ -8,15 +8,16 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 
 
 class Discord(Outputs):
-    def __init__(self, articles: RSSArticle) -> None:
-        self.hook: DiscordWebhook = DiscordWebhook(newsbot.pogo_hook)
+    def __init__(self, articles: RSSArticle, webhooks: List[str], user: str) -> None:
+        self.user: str = user
+        self.hook: DiscordWebhook = DiscordWebhook(webhooks)
         self.embed: DiscordEmbed = DiscordEmbed()
 
         self.articles: RSSArticle = articles
         pass
 
     def sendMessage(self) -> None:
-        self.hook.username = "Pokemon Go News"
+        self.hook.username = self.user
         # self.hook.content= 'thing'
 
         self.embed.title = self.articles.title
@@ -40,11 +41,14 @@ class Discord(Outputs):
             description = f"{description}..."
 
         self.embed.description = description
-        # self.embed.set_image(url=self.articles.thumbnail)
+        self.embed.set_image(url=self.articles.thumbnail)
 
         self.hook.add_embed(self.embed)
 
         res = self.hook.execute()
+
+        # TODO Logger
+        print(f"{self.user} - Discord - Sending article '{self.articles.title}'")
         pass
 
     def convertFromHtml(self, msg: str) -> str:

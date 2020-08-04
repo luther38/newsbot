@@ -24,13 +24,14 @@ Base = declarative_base()
 class Articles(Base):
     __tablename__ = "articles"
     id = Column(String, primary_key=True)
+    siteName = Column(String)
+    tags = Column(String)
     title = Column(String)
     url = Column(String)
     pubDate = Column(String)
 
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())
-
 
 class DB:
     def __init__(self, Base):

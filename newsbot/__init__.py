@@ -1,5 +1,3 @@
-
-import logging
 import sys
 
 from newsbot.db import DB, Base, Articles
@@ -11,7 +9,6 @@ env = Env().env
 
 # Build the logger
 logger = Logger().logger
-logger.info("NewsBot has started.")
 
 # Database Connections
 database = DB(Base)

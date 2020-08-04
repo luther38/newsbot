@@ -40,6 +40,10 @@ class RssArticleLinks:
         self.text: str = ""
         pass
 
-class Env():
+
+class Env:
     def __init__(self) -> None:
+        self.interval_seconds: int = 60 * 30
+        self.discord_delay_seconds: int = 60
         self.pogo_hooks: List[str] = list()
+        self.pso2_hooks: List[str] = list()

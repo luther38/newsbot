@@ -1,19 +1,15 @@
 import newsbot
-from newsbot.sources.pokemongohub import RSSPogohub
-from newsbot.collections import RSSRoot
-from newsbot.outputs.discord import Discord
-from newsbot.db import Articles
-from time import sleep
+from newsbot.workers.pogohub import PoGoHubWorker
+from newsbot.workers.pso2 import PSO2Worker
 from threading import Thread
 
+logger = newsbot.logger
+logger.info("NewsBot has started.")
 
+w_pogo = PoGoHubWorker()
+t_pogo = Thread(target=w_pogo.init, name="Pokemon Go Hub")
+# t_pogo.start()
 
-
-pogo = RSSPogohub()
-pogoNews: RSSRoot = pogo.getArticles()
-
-print(f"got news")
-for i in pogoNews.articles:
-    d = Discord(i)
-    d.sendMessage()
-    sleep(30)
+w_pso2 = PSO2Worker()
+t_pso2 = Thread(target=w_pso2.init, name="PSO2")
+t_pso2.start()

@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 
 class RSSPogohub(RSSReader):
     def __init__(self) -> None:
+        self.logger = newsbot.logger
         self.rootUrl = "https://pokemongohub.net/rss"
         pass
 
@@ -41,7 +42,7 @@ class RSSPogohub(RSSReader):
 
                 exists = self.exists(item)
                 if exists == False:
-                    self.add(item)
+                    #self.add(item)
 
                     # get thumbnail
                     item.thumbnail = self.getArticleThumbnail(item.link)
@@ -65,6 +66,8 @@ class RSSPogohub(RSSReader):
                         item.descriptionLinks.append(i)
 
                     rss.articles.append(item)
+    
+                    self.logger.debug(f"Pokemon Go Hub - {item.title}")
         return rss
 
     def processItem(self, item: object) -> RSSArticle:
