@@ -28,6 +28,7 @@ def upgrade():
     )
     pass
 
+
 def downgrade():
     op.drop_table("articles")
     pass

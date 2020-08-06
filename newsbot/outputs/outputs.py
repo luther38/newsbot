@@ -7,5 +7,8 @@ class Outputs:
         self.articles = articles
         pass
 
+    def enableThread(self) -> None:
+        raise NotImplementedError
+
     def sendMessage(self) -> None:
         raise NotImplementedError

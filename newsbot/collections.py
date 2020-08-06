@@ -3,13 +3,15 @@ from typing import List
 
 class RSSRoot:
     def __init__(self) -> None:
-        self.title: str = None
-        self.link: str = None
+        self.title: str = ""
+        self.link: str = ""
         self.articles: List[RSSArticle] = list()
 
 
 class RSSArticle:
     def __init__(self) -> None:
+        self.siteName: str = ""
+        self.tags: str = ""
         self.title: str = ""
         self.thumbnail: str = ""
         self.link: str = ""
