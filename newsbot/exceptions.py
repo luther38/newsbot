@@ -12,3 +12,12 @@ class UnableToFindContent(NewsBotException):
     """
 
     pass
+
+
+# Database Errors
+class FailedToAddToDatabase(NewsBotException):
+    """
+    Used when a record failed to add to the Database.
+    """
+
+    pass

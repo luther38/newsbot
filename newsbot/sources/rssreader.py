@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from newsbot.collections import RssArticleImages, RSSArticle, RssArticleLinks
-from newsbot.html import Html
 
 
 class RSSReader:
@@ -29,7 +28,6 @@ class RSSReader:
 
     def getLinks(self, description: str) -> List[RssArticleLinks]:
         links = list()
-        h = Html()
         # res = h.getByElement("a ", 'a', description)
         res = re.findall("<a(.*?)a>", description)
         for r in res:
