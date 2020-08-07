@@ -32,3 +32,23 @@ class Articles(Base):
         self.pubDate = article.pubDate
         self.tags = article.tags
         self.url = article.link
+
+class Sources(Base):
+    __tablename__ = "sources"
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    url = Column(String)
+    enabled = Column(Boolean)
+
+    def __init__(self) -> None:
+        self.id = str(uuid.uuid4())
+
+class DiscordWebHooks(Base):
+    __tablename__ = "discordwebhooks"
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    key = Column(String)
+    enabled = Column(Boolean)
+
+    def __init__(self) -> None:
+        self.id = str(uuid.uuid4())
