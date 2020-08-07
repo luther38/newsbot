@@ -1,0 +1,4 @@
+.devcontainer
+.vscode
+newsbot.db
+.env
