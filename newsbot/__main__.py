@@ -4,8 +4,11 @@ from newsbot.workers.pso2 import PSO2Worker
 from newsbot.outputs.discord import Discord
 from threading import Thread
 
+import alembic.context.
 logger = newsbot.logger
 logger.info("NewsBot has started.")
+
+
 
 # Turn on outputs first
 oDiscord = Discord()
