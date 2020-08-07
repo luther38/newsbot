@@ -18,13 +18,22 @@ depends_on = None
 
 def upgrade():
     op.create_table(
-        "sites",
+        "sources",
         sa.Column('id', sa.String, primary_key=True),
         sa.Column('name', sa.String),
         sa.Column('url', sa.String),
         sa.Column('enabled', sa.BOOLEAN)
     )
 
+    op.create_table(
+        "discordwebhooks",
+        sa.Column('id', sa.String, primary_key=True),
+        sa.Column('name', sa.String),
+        sa.Column('key', sa.String),
+        sa.Column('enabled', sa.String)
+    )
+
 def downgrade():
     op.drop_table('sites')
+    op.drop_table('discordwebhooks')
     

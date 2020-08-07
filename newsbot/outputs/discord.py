@@ -19,7 +19,6 @@ class Discord(Outputs):
             # This uses the public var for the queue as it needs to be outside the class.
             if len(env.discordQueue) >= 1:
                 for i in env.discordQueue:
-                    logger.debug(i)
                     self.sendMessage(i)
                     env.discordQueue.remove(i)
                     sleep(env.discord_delay_seconds)

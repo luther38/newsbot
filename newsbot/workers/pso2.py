@@ -32,7 +32,7 @@ class PSO2Worker(NBWorker):
                     i: RSSArticle = i
                     exists = self.articleExits(i)
                     if exists == False:
-                        #self.addArticle(i)
+                        self.addArticle(i)
 
                         if len(env.pso2_hooks) >= 1:
                             self.sendToDiscord(i)

@@ -39,7 +39,7 @@ class RSSPogohub(RSSReader):
                 rss.title = self.removeHTMLTags(i.next)
             elif i.name == "item":
                 item: RSSArticle = self.processItem(i)
-
+                item.siteName = "Pokemon Go Hub"
                 # self.add(item)
 
                 # get thumbnail
