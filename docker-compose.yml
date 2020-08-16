@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 
 networks:
   newsbot:
@@ -8,11 +8,13 @@ services:
   app:
     #image: jtom38/newsbot:latest
     image: newsbot:latest
+    env_file:
+      - ./.env
     environment:
-      #NEWSBOT_POGO_ENABLED: 'true'
-      #NEWSBOT_POGO_HOOK: ""
-      #NEWSBOT_PSO2_ENABLED: 'true'
-      #NEWSBOT_PSO2_HOOK: ""
+      NEWSBOT_POGO_ENABLED: 'true'
+      NEWSBOT_POGO_HOOK: ""
+      NEWSBOT_PSO2_ENABLED: 'true'
+      NEWSBOT_PSO2_HOOK: ""
     restart: always
 
     networks:
