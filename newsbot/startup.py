@@ -1,9 +1,10 @@
 import newsbot
 from newsbot.workers.pogohub import PoGoHubWorker
-from newsbot.workers.pso2 import PSO2Worker
+#from newsbot.workers.pso2 import PSO2Worker
 from newsbot.workers.worker import Worker
 from newsbot.outputs.discord import Discord
-from newsbot.sources.ffxiv import FFXIV
+from newsbot.sources.ffxiv import FFXIVReader
+from newsbot.sources.pso2 import PSO2Reader
 from threading import Thread
 
 class Startup():
@@ -20,7 +21,7 @@ class Startup():
         tDiscord = Thread(target=oDiscord.enableThread, name="Discord")
         tDiscord.start()
 
-        s_ffxiv = FFXIV()
+        s_ffxiv = FFXIVReader()
         w_ffxiv = Worker(s_ffxiv)
         t_ffxiv = Thread(target=w_ffxiv.init, name="Final Fantasy XIV")
         t_ffxiv.start()
@@ -29,6 +30,7 @@ class Startup():
         t_pogo = Thread(target=w_pogo.init, name="Pokemon Go Hub")
         #t_pogo.start()
 
-        w_pso2 = PSO2Worker()
+        s_pso2 = PSO2Reader()
+        w_pso2 = Worker(s_pso2)
         t_pso2 = Thread(target=w_pso2.init, name="PSO2")
         #t_pso2.start()

@@ -54,10 +54,14 @@ class DiscordWebHooks(Base):
         self.id = str(uuid.uuid4())
 
 class DiscordQueue(Base):
-    __tablename__ = "discordwebhooks"
+    __tablename__ = "discordQueue"
     id = Column(String, primary_key=True)
-    articleName = Column(String)
     siteName = Column(String)
+    title = Column(String)
+    link = Column(String)
+    tags = Column(String)
+    thumbnail = Column(String)
+    description = Column(String)
 
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())

@@ -17,7 +17,7 @@ class Env:
         self.newsbot_pso2_enabled: bool = False
         self.pso2_hooks: List[str] = list()
 
-        self.ffxiv_enabled: bool = False
+        self.ffxiv_all: bool = False
         self.ffxiv_hooks: List[str] = list()
 
         self.discordQueue: List[RSSArticle] = list()
@@ -50,8 +50,17 @@ class Env:
             self.pso2_hooks = list()
 
         # Final Fantasy XIV
-        self.ffxiv_enabled = bool(os.getenv("NEWSBOT_FFXIV_ENABLED"))
+        self.readFfxivValues()
+
+    def readFfxivValues(self) -> None:
         try:
+            self.ffxiv_all = bool(os.getenv("NEWSBOT_FFXIV_ALL"))
+            self.ffxiv_news = bool(os.getenv("NEWSBOT_FFXIV_NEWS"))
+            self.ffxiv_notices = bool(os.getenv("NEWSBOT_FFXIV_NOTICES"))
+            self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
+            self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
+            self.ffxiv_status = bool(os.getenv("NEWSBOT_FFXIV_STATUS"))
+            
             temp: str = os.getenv("NEWSBOT_FFXIV_HOOK")
             tempList = temp.split(" ")
             for i in tempList:
@@ -59,14 +68,7 @@ class Env:
         except:
             self.ffxiv_hooks = list()
 
-    def getFfxivValues(self) -> List:
-        r = {
-            'enabled': self.ffxiv_enabled,
-            'hooks': self.ffxiv_hooks
-        }
-        return r
-
-    def getPso2Hooks(self) -> List:
+    def getPso2Values(self) -> List:
         r = {
             'enabled': self.pso2_enabled,
             'hooks': self.pso2_hooks

@@ -1,4 +1,4 @@
-from newsbot import logger
+from newsbot import logger, env
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle, RSSRoot, RssArticleImages, RssArticleLinks
 from newsbot.exceptions import UnableToFindContent
@@ -12,29 +12,17 @@ class PSO2Reader(RSSReader):
     def __init__(self) -> None:
         self.logger = logger
         self.uri: str = "https://pso2.com/news"
-
+        self.siteName: str = "Phantasy Star Online 2"
+        self.settings = env.getPso2Values()
         pass
-
-    def getParser(self) -> BeautifulSoup:
-        try:
-            r = requests.get(self.uri)
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-        try:
-            bs = BeautifulSoup(r.content, features="html.parser")
-            return bs
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getArticles(self) -> RSSRoot:
         rss = RSSRoot()
         rss.link = self.uri
-
-        rss.title = "Phantasy Star Online 2"
+        rss.title = self.siteName
 
         page = self.getParser()
-        # news = self.findNewsLinks(bs)
+
         try:
             for news in page.find_all("li", {"class", "news-item all sr"}):
                 a = RSSArticle()
@@ -48,7 +36,7 @@ class PSO2Reader(RSSReader):
                 a.description = nc[3].text
 
                 bottom = nc[5].contents
-                a.tags.append(bottom[1].text)
+                a.tags = bottom[1].text
                 a.pubDate = bottom[5].text
 
                 link = re.findall(r"ShowDetails\('(.*?)'", bottom[7].attrs["onclick"],)[
