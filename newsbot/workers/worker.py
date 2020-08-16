@@ -1,6 +1,6 @@
 
 from newsbot import logger, env, database
-from newsbot.tables import Articles
+from newsbot.tables import Articles, DiscordQueue
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle
 from time import sleep
@@ -77,3 +77,9 @@ class Worker:
             logger.critical(f"Failed to add {article.title} to the database! {e}")
         finally:
             s.close()
+
+    def addDiscordItem(self, article: RSSArticle) -> None:
+        s: Session = database.newSession()
+        dq = DiscordQueue()
+        dq.articleName = article.title
+        dq.siteName = article.

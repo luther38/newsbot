@@ -19,10 +19,13 @@ depends_on = None
 def upgrade():
     op.create_table(
         'discordQueue',
-        sa.Column('')
+        sa.Column('id', sa.String, primary_key=True),
+        sa.Column('articleName', sa.String),
+        sa.Column('siteName', sa.String)
     )
     pass
 
 
 def downgrade():
+    op.drop_table('discordQueue')
     pass
