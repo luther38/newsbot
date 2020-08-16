@@ -3,6 +3,7 @@ from newsbot import logger, env, database
 from newsbot.tables import Articles, DiscordQueue
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle
+from newsbot.exceptions import FailedToAddToDatabase
 from time import sleep
 
 class Worker:
@@ -14,7 +15,7 @@ class Worker:
         pass
 
     def check(self) -> bool:
-        if len(self.source.settings['hooks']) >= 1:
+        if len(self.source.hooks) >= 1:
             return True
         else:
             return False
@@ -37,6 +38,7 @@ class Worker:
                     exists = self.articleExits(i)
                     if exists == False:
                         self.addArticle(i)
+                        self.addDiscordQueue(i)
 
                         if len(self.source.settings['hooks']) >= 1:
                             self.sendToDiscord(i)
@@ -49,7 +51,6 @@ class Worker:
         env.discordQueue.append(article)
         logger.debug(f" '{article.title}' was added to the Discord queue")
 
-    
     def articleExits(self, article: RSSArticle) -> bool:
         s = database.newSession()
         a = Articles()
@@ -78,8 +79,20 @@ class Worker:
         finally:
             s.close()
 
-    def addDiscordItem(self, article: RSSArticle) -> None:
+    def addDiscordQueue(self, article: RSSArticle) -> None:
         s: Session = database.newSession()
         dq = DiscordQueue()
-        dq.articleName = article.title
-        dq.siteName = article.
+        dq.siteName = article.siteName
+        dq.title = article.title
+        dq.link = article.link
+        dq.tags = article.tags
+        dq.thumbnail = article.thumbnail
+        dq.description = article.description
+
+        try:
+            s.add(dq)
+            s.commit()
+        except FailedToAddToDatabase as e:
+            logger.critical(f"Failed to add {article.title} to DiscorQueue table! {e}")
+        finally:
+            s.close()

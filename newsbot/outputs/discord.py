@@ -1,10 +1,11 @@
 
 from typing import List
 
-from newsbot import logger, env
+from newsbot import logger, env, database
 
 import re
 from time import sleep
+from newsbot.tables import DiscordQueue
 from newsbot.outputs.outputs import Outputs
 from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
@@ -17,15 +18,18 @@ class Discord(Outputs):
     def enableThread(self) -> None:
         while True:
             # This uses the public var for the queue as it needs to be outside the class.
-            if len(env.discordQueue) >= 1:
-                for i in env.discordQueue:
-                    self.sendMessage(i)
-                    env.discordQueue.remove(i)
-                    sleep(env.discord_delay_seconds)
+            queue: List[DiscordQueue] = self.getQueue()
+            
+            for i in queue:
+                self.sendMessage(i)
+                self.removeFromQueue(i)
+                #env.discordQueue.remove(i)
+                sleep(env.discord_delay_seconds)
             
             sleep(env.discord_delay_seconds)
 
-    def sendMessage(self, article: RSSArticle) -> Response:
+    #def sendMessage(self, article: RSSArticle) -> Response:
+    def sendMessage(self, article: DiscordQueue) -> Response:
         webhooks: List[str] = self.getHooks(article.siteName)
         hook: DiscordWebhook = DiscordWebhook(webhooks)
         #hook.username = self.user
@@ -36,9 +40,9 @@ class Discord(Outputs):
         embed.url = article.link
 
         # convert links
-        for i in article.descriptionLinks:
-            discordLink: str = f"[{i.text}]({i.href})"
-            article.description.replace(i.raw, discordLink)
+        #for i in article.descriptionLinks:
+        #    discordLink: str = f"[{i.text}]({i.href})"
+        #    article.description.replace(i.raw, discordLink)
 
         # TODO track if we have any images in the description and if we need to handle them
         # for i in self.articles.descriptionImages:
@@ -104,3 +108,27 @@ class Discord(Outputs):
             discordLink = f"[{texts[0]}]({hrefs[0]})"
             msg = msg.replace(f"<a{l}a>", discordLink)
         return msg
+
+    def getQueue(self) -> List[DiscordQueue]:
+        s = database.newSession()
+        queue = list()
+        dq = DiscordQueue
+        try:
+            for res in s.query(DiscordQueue):
+                queue.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return queue
+
+    def removeFromQueue(self, item: DiscordQueue) -> None:
+        s = database.newSession()
+        try:
+            s.query(DiscordQueue).filter(DiscordQueue.title == item.title).delete()
+            s.commit()
+        except Exception as e:
+            logger.critical(f"{e}")
+        finally:
+            s.close()

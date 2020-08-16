@@ -22,7 +22,7 @@ class RSSArticle:
         self.content: str = ""
         self.contentImages: List[RssArticleImages] = list()
         self.contentLinks: List[RssArticleLinks] = list()
-        self.tags: List[str] = list()
+        #self.tags: List[str] = list()
 
 
 class RssArticleImages:

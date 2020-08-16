@@ -20,8 +20,12 @@ def upgrade():
     op.create_table(
         'discordQueue',
         sa.Column('id', sa.String, primary_key=True),
-        sa.Column('articleName', sa.String),
-        sa.Column('siteName', sa.String)
+        sa.Column('siteName', sa.String),
+        sa.Column('title', sa.String),
+        sa.Column('link', sa.String),
+        sa.Column('tags', sa.String),
+        sa.Column('thumbnail', sa.String),
+        sa.Column('description', sa.String)
     )
     pass
 
