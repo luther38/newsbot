@@ -1,13 +1,15 @@
+
 from typing import List
 import requests
 from bs4 import BeautifulSoup
 import re
+from newsbot import logger
 from newsbot.collections import RssArticleImages, RSSArticle, RssArticleLinks
 
-
-class RSSReader:
+class RSSReader():
     def __init__(self, rootUrl: str = "") -> None:
         self.rootUrl = rootUrl
+        self.uri: str = ""
         pass
 
     def removeHTMLTags(self, text: str) -> str:
@@ -105,7 +107,18 @@ class RSSReader:
         raise NotImplementedError
 
     def getParser(self) -> BeautifulSoup:
-        raise NotImplementedError
+        #raise NotImplementedError
+        try:
+            r = requests.get(self.uri)
+        except Exception as e:
+            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+
+        try:
+            bs = BeautifulSoup(r.content, features="html.parser")
+            return bs
+        except Exception as e:
+            logger.critical(f"failed to parse data returned from requests. {e}")
+
 
     def getArticles(self) -> None:
         raise NotImplementedError

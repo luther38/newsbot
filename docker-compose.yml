@@ -1,0 +1,22 @@
+version: "2"
+
+networks:
+  newsbot:
+    external: false
+
+services:
+  app:
+    #image: jtom38/newsbot:latest
+    image: newsbot:latest
+    environment:
+      #NEWSBOT_POGO_ENABLED: 'true'
+      NEWSBOT_POGO_HOOK: "https://discordapp.com/api/webhooks/738408036170858677/gja71tu3nBOwU334py4FzrBggQ9jJ9Rg2QA4ETeWyGvbAc_jidlnz8_gGvbks8jZLiiA"
+      #NEWSBOT_PSO2_ENABLED: 'true'
+      NEWSBOT_PSO2_HOOK: "https://discordapp.com/api/webhooks/740332506615644221/VprDRdCBC22tuSAwS-HlKhDGQPacQI8GRM3YsALLMf70_5BD3xUWiw_YpjwG-H0d33rX"
+    restart: always
+
+    networks:
+      - newsbot
+
+    volumes:
+      - ~/docker/newsbot/database:/app/mounts/database
