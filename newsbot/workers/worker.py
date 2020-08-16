@@ -1,31 +1,35 @@
+
 from newsbot import logger, env, database
-from newsbot.workers.nbworker import NBWorker
-from newsbot.sources.pso2 import PSO2Reader
 from newsbot.tables import Articles
+from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle
-from newsbot.outputs.discord import Discord
-from newsbot.exceptions import FailedToAddToDatabase
-from sqlalchemy.orm.session import Session
 from time import sleep
 
-
-class PSO2Worker(NBWorker):
-    def __init__(self) -> None:
-        self.logger = logger
+class Worker:
+    """
+    This is a generic worker that will contain the source it will monitor.
+    """
+    def __init__(self, source: RSSReader):
+        self.source: RSSReader = source
         pass
 
     def check(self) -> bool:
-        if len(env.pso2_hooks) >= 1:
+        if len(self.source.settings['hooks']) >= 1:
             return True
+        else:
+            return False
 
-    def init(self):
+    def init(self) -> None:
+        """
+        This is the entry point for the worker.  
+        Once its turned on it will check the Source for new items.
+        """
         enable: bool = self.check()
         if enable == True:
-            self.logger.debug("PSO2 Worker has started.")
+            logger.debug(f"{self.source.siteName} Worker has started.")
 
             while True:
-                reader = PSO2Reader()
-                news = reader.getArticles()
+                news = self.source.getArticles()
 
                 # Check the DB if it has been posted
                 for i in news.articles:
@@ -34,19 +38,18 @@ class PSO2Worker(NBWorker):
                     if exists == False:
                         self.addArticle(i)
 
-                        if len(env.pso2_hooks) >= 1:
+                        if len(self.source.settings['hooks']) >= 1:
                             self.sendToDiscord(i)
 
-                logger.debug("Thread is going to sleep")
+                logger.debug(f"{self.source.siteName} Worker is going to sleep.")
                 sleep(env.threadSleepTimer)
+        #raise NotImplementedError
 
-    def sendToDiscord(self, i: Articles) -> None:
-        env.discordQueue.append(i)
-        self.logger.debug(f"PSO2 - '{i.title}' was added to the Discord queue.")
-        # d = Discord(i, env.pso2_hooks, "PSO2")
-        # d.sendMessage()
-        # sleep(env.discord_delay_seconds)
+    def sendToDiscord(self, article: RSSArticle):
+        env.discordQueue.append(article)
+        logger.debug(f" '{article.title}' was added to the Discord queue")
 
+    
     def articleExits(self, article: RSSArticle) -> bool:
         s = database.newSession()
         a = Articles()

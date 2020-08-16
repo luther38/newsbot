@@ -1,5 +1,5 @@
-import sys
 
+import sys
 from newsbot.db import DB, Base
 from newsbot.env import Env
 from newsbot.logger import Logger

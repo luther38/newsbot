@@ -69,6 +69,8 @@ class Discord(Outputs):
             return env.pso2_hooks
         elif newsSource == "Pokemon Go Hub":
             return env.pogo_hooks
+        elif newsSource == "Final Fantasy XIV":
+            return env.ffxiv_hooks
         else:
             logger.warning(f"got a request to send to {newsSource} and it's a invalid site.")
 
