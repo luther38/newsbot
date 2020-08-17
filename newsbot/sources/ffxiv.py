@@ -142,7 +142,7 @@ class FFXIVReader(RSSReader):
     def checkEnv(self):
         self.hooks: List = env.ffxiv_hooks
 
-        if env.ffxiv_news == True or env.ffxiv_all == True:
+        if env.ffxiv_topics == True or env.ffxiv_all == True:
             self.links.append(
                 {
                     "tag": "Topics",

@@ -54,7 +54,7 @@ class Env:
     def readFfxivValues(self) -> None:
         try:
             self.ffxiv_all = bool(os.getenv("NEWSBOT_FFXIV_ALL"))
-            self.ffxiv_news = bool(os.getenv("NEWSBOT_FFXIV_NEWS"))
+            self.ffxiv_topics = bool(os.getenv("NEWSBOT_FFXIV_TOPICS"))
             self.ffxiv_notices = bool(os.getenv("NEWSBOT_FFXIV_NOTICES"))
             self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
             self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
