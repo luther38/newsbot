@@ -1,4 +1,4 @@
-import newsbot
+from newsbot import logger, env
 from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.sources.rssreader import RSSReader
 from newsbot.tables import Articles
@@ -7,65 +7,67 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class RSSPogohub(RSSReader):
+class PogohubReader(RSSReader):
     def __init__(self) -> None:
-        self.logger = newsbot.logger
         self.rootUrl = "https://pokemongohub.net/rss"
+        self.siteName: str = "Pokemon Go Hub"
+        self.links = list()
+        self.hooks = list()
+
+        self.checkEnv()
         pass
 
-    def getParser(self) -> BeautifulSoup:
-        try:
-            r = requests.get(self.rootUrl)
-        except Exception as e:
-            print(f"Failed to collect data from '{self.rootUrl}'. Error:{e}")
+    def checkEnv(self):
+        self.hooks = env.pogo_hooks
 
-        try:
-            bs = BeautifulSoup(r.content, features="html.parser")
-            return bs
-        except Exception as e:
-            print(f"Failed to parse data returned from requests. Error:{e}")
+        if env.pogo_enabled == True:
+            self.links.append({"tag": "News", "uri": "https://pokemongohub.net/rss"})
 
     def getArticles(self) -> RSSRoot:
         rss = RSSRoot()
         rss.link = self.removeHTMLTags(self.rootUrl)
 
-        bs = self.getParser()
-        mainLoop = bs.contents[1].contents[1].contents
+        for site in self.links:
+            logger.debug(f"{self.siteName} - {site['tag']} - Checking for updates.")
+            self.uri = site["uri"]
 
-        for i in mainLoop:
-            if i == "\n":
-                continue
-            elif i.name == "title":
-                rss.title = self.removeHTMLTags(i.next)
-            elif i.name == "item":
-                item: RSSArticle = self.processItem(i)
-                item.siteName = "Pokemon Go Hub"
-                # self.add(item)
+            bs = self.getParser()
+            mainLoop = bs.contents[1].contents[1].contents
 
-                # get thumbnail
-                # item.thumbnail = self.getArticleThumbnail(item.link)
+            for i in mainLoop:
+                if i == "\n":
+                    continue
+                elif i.name == "title":
+                    rss.title = self.removeHTMLTags(i.next)
+                elif i.name == "item":
+                    item: RSSArticle = self.processItem(i)
+                    item.siteName = "Pokemon Go Hub"
+                    # self.add(item)
 
-                images = self.getImages(item.content)
-                for i in images:
-                    item.contentImages.append(i)
-                # item.content = self.removeImageLinks(item.content)
-                links = self.getLinks(item.content)
-                for i in links:
-                    item.contentLinks.append(i)
+                    # get thumbnail
+                    # item.thumbnail = self.getArticleThumbnail(item.link)
 
-                images = list()
-                images = self.getImages(item.description)
-                for i in images:
-                    item.descriptionImages.append(i)
+                    images = self.getImages(item.content)
+                    for i in images:
+                        item.contentImages.append(i)
+                    # item.content = self.removeImageLinks(item.content)
+                    links = self.getLinks(item.content)
+                    for i in links:
+                        item.contentLinks.append(i)
 
-                links = list()
-                links = self.getLinks(item.description)
-                for i in links:
-                    item.descriptionLinks.append(i)
+                    images = list()
+                    images = self.getImages(item.description)
+                    for i in images:
+                        item.descriptionImages.append(i)
 
-                rss.articles.append(item)
+                    links = list()
+                    links = self.getLinks(item.description)
+                    for i in links:
+                        item.descriptionLinks.append(i)
 
-                # self.logger.debug(f"Pokemon Go Hub - {item.title}")
+                    rss.articles.append(item)
+
+            logger.debug(f"Pokemon Go Hub - {site['tag']} - Finished checking.")
         return rss
 
     def processItem(self, item: object) -> RSSArticle:
@@ -81,7 +83,7 @@ class RSSPogohub(RSSReader):
             elif i.name == "pubdate":
                 a.pubDate = i.next
             elif i.name == "category":
-                a.tags.append(i.next)
+                a.tags = i.next
             elif i.name == "description":
                 a.description = self.removeHTMLTags(i.next)
             elif i.name == "content:encoded":

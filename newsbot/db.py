@@ -3,13 +3,18 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import create_engine
 import sqlalchemy
 
+# from alembic import context
+
 Base = declarative_base()
 
 
 class DB:
     def __init__(self, Base):
-        uri: str = f"sqlite:///newsbot.db"
+        uri: str = f"sqlite:///mounts/database/newsbot.db"
         self.engine = create_engine(uri)
+        # context.configure(connection=self.engine)
+        # try:
+        #    context.run_migrations
         self.session: sessionmaker = sessionmaker()
         self.session.configure(bind=self.engine)
         self.Base = Base
