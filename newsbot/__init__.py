@@ -1,4 +1,3 @@
-
 import sys
 from newsbot.db import DB, Base
 from newsbot.env import Env

@@ -10,26 +10,26 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3051a6698c8a'
-down_revision = 'ea9cf2966ab1'
+revision = "3051a6698c8a"
+down_revision = "ea9cf2966ab1"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
     op.create_table(
-        'discordQueue',
-        sa.Column('id', sa.String, primary_key=True),
-        sa.Column('siteName', sa.String),
-        sa.Column('title', sa.String),
-        sa.Column('link', sa.String),
-        sa.Column('tags', sa.String),
-        sa.Column('thumbnail', sa.String),
-        sa.Column('description', sa.String)
+        "discordQueue",
+        sa.Column("id", sa.String, primary_key=True),
+        sa.Column("siteName", sa.String),
+        sa.Column("title", sa.String),
+        sa.Column("link", sa.String),
+        sa.Column("tags", sa.String),
+        sa.Column("thumbnail", sa.String),
+        sa.Column("description", sa.String),
     )
     pass
 
 
 def downgrade():
-    op.drop_table('discordQueue')
+    op.drop_table("discordQueue")
     pass

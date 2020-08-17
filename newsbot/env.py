@@ -7,8 +7,9 @@ import os
 
 class Env:
     def __init__(self) -> None:
+        # self.newDatabase: bool = False
         self.interval_seconds: int = 30 * 60
-        self.discord_delay_seconds: int = 30
+        self.discord_delay_seconds: int = 15
         self.threadSleepTimer: int = 60 * 30
 
         self.pogo_enabled: bool = False
@@ -19,8 +20,6 @@ class Env:
 
         self.ffxiv_all: bool = False
         self.ffxiv_hooks: List[str] = list()
-
-        self.discordQueue: List[RSSArticle] = list()
 
         self.readEnv()
         pass
@@ -60,7 +59,7 @@ class Env:
             self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
             self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
             self.ffxiv_status = bool(os.getenv("NEWSBOT_FFXIV_STATUS"))
-            
+
             temp: str = os.getenv("NEWSBOT_FFXIV_HOOK")
             tempList = temp.split(" ")
             for i in tempList:
@@ -69,14 +68,8 @@ class Env:
             self.ffxiv_hooks = list()
 
     def getPso2Values(self) -> List:
-        r = {
-            'enabled': self.pso2_enabled,
-            'hooks': self.pso2_hooks
-        }
+        r = {"enabled": self.pso2_enabled, "hooks": self.pso2_hooks}
         return r
-    
+
     def getPoGoValues(self) -> List:
-        return {
-            'enabled': self.pogo_enabled,
-            'hooks': self.pogo_hooks
-        }
+        return {"enabled": self.pogo_enabled, "hooks": self.pogo_hooks}
