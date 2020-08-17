@@ -1,19 +1,17 @@
-import newsbot
-from newsbot.workers.pogohub import PoGoHubWorker
-#from newsbot.workers.pso2 import PSO2Worker
-from newsbot.workers.worker import Worker
+from newsbot import logger, env
 from newsbot.outputs.discord import Discord
+from newsbot.workers.worker import Worker
 from newsbot.sources.ffxiv import FFXIVReader
 from newsbot.sources.pso2 import PSO2Reader
+from newsbot.sources.pokemongohub import PogohubReader
 from threading import Thread
 
-class Startup():
+
+class Startup:
     def __init__(self) -> None:
         pass
 
     def startProgram(self) -> None:
-
-        logger = newsbot.logger
         logger.info("NewsBot has started.")
 
         # Turn on outputs first
@@ -26,11 +24,12 @@ class Startup():
         t_ffxiv = Thread(target=w_ffxiv.init, name="Final Fantasy XIV")
         t_ffxiv.start()
 
-        w_pogo = PoGoHubWorker()
+        s_pogo = PogohubReader()
+        w_pogo = Worker(s_pogo)
         t_pogo = Thread(target=w_pogo.init, name="Pokemon Go Hub")
-        #t_pogo.start()
+        t_pogo.start()
 
         s_pso2 = PSO2Reader()
         w_pso2 = Worker(s_pso2)
         t_pso2 = Thread(target=w_pso2.init, name="PSO2")
-        #t_pso2.start()
+        t_pso2.start()

@@ -6,15 +6,23 @@ networks:
 
 services:
   app:
-    #image: jtom38/newsbot:latest
-    image: newsbot:latest
+    image: jtom38/newsbot:latest
     env_file:
       - ./.env
     environment:
       NEWSBOT_POGO_ENABLED: 'true'
       NEWSBOT_POGO_HOOK: ""
+
       NEWSBOT_PSO2_ENABLED: 'true'
       NEWSBOT_PSO2_HOOK: ""
+
+      NEWSBOT_FFXIV_ALL: True
+      NEWSBOT_FFXIV_NEWS: True
+      NEWSBOT_FFXIV_NOTICES: True
+      NEWSBOT_FFXIV_MAINTENANCE: True
+      NEWSBOT_FFXIV_UPDATES: True
+      NEWSBOT_FFXIV_STATUS: True
+      NEWSBOT_FFXIV_HOOK: ""
     restart: always
 
     networks:
