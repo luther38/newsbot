@@ -1,3 +1,5 @@
+
+
 from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
@@ -30,42 +32,41 @@ class Env:
 
         # Pokemon Go Hub
         self.pogo_enabled = bool(os.getenv("NEWSBOT_POGO_ENABLED"))
-        try:
-            temp: str = os.getenv("NEWSBOT_POGO_HOOK")
-            tempList = temp.split(" ")
-            for i in tempList:
-                self.pogo_hooks.append(i)
-        except:
-            self.pogo_hooks = list()
+        self.pogo_hooks= self.extractHooks("NEWSBOT_POGO_HOOK")
 
         # Phantasy Star Online 2
         self.pso2_enabled = bool(os.getenv("NEWSBOT_PSO2_ENABLED"))
-        try:
-            temp: str = os.getenv("NEWSBOT_PSO2_HOOK")
-            tempList = temp.split(" ")
-            for i in tempList:
-                self.pso2_hooks.append(i)
-        except:
-            self.pso2_hooks = list()
+        self.pso2_hooks = self.extractHooks("NEWSBOT_PSO2_HOOK")
 
         # Final Fantasy XIV
         self.readFfxivValues()
+        self.readRedditValues()
 
     def readFfxivValues(self) -> None:
-        try:
-            self.ffxiv_all = bool(os.getenv("NEWSBOT_FFXIV_ALL"))
-            self.ffxiv_topics = bool(os.getenv("NEWSBOT_FFXIV_TOPICS"))
-            self.ffxiv_notices = bool(os.getenv("NEWSBOT_FFXIV_NOTICES"))
-            self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
-            self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
-            self.ffxiv_status = bool(os.getenv("NEWSBOT_FFXIV_STATUS"))
+        self.ffxiv_all = bool(os.getenv("NEWSBOT_FFXIV_ALL"))
+        self.ffxiv_topics = bool(os.getenv("NEWSBOT_FFXIV_TOPICS"))
+        self.ffxiv_notices = bool(os.getenv("NEWSBOT_FFXIV_NOTICES"))
+        self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
+        self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
+        self.ffxiv_status = bool(os.getenv("NEWSBOT_FFXIV_STATUS"))
 
-            temp: str = os.getenv("NEWSBOT_FFXIV_HOOK")
-            tempList = temp.split(" ")
-            for i in tempList:
-                self.ffxiv_hooks.append(i)
-        except:
-            self.ffxiv_hooks = list()
+        self.ffxiv_hooks = self.extractHooks("NEWSBOT_FFXIV_HOOK")
+
+    def readRedditValues(self) -> None:
+        self.redditSub01 = os.getenv("NEWSBOT_REDDIT_SUB01")
+        self.redditHook01 = self.extractHooks("NEWSBOT_REDDIT_HOOK01")
+
+    def extractHooks(self, sourceHooks) -> List[str]:
+        try:
+            t: str = os.getenv(sourceHooks)
+            tList = t.split(" ")
+            array = list()
+            for i in tList:
+                array.append(i)
+            return array
+        except Exception as e:
+            print(f"Failed to extract Webhook details from {sourceHooks}. {e}")
+            return list()
 
     def getPso2Values(self) -> List:
         r = {"enabled": self.pso2_enabled, "hooks": self.pso2_hooks}

@@ -12,10 +12,10 @@ services:
       - ./.env
     environment:
       NEWSBOT_POGO_ENABLED: 'true'
-      NEWSBOT_POGO_HOOK: ""
+      #NEWSBOT_POGO_HOOK: ""
 
       NEWSBOT_PSO2_ENABLED: 'true'
-      NEWSBOT_PSO2_HOOK: ""
+      #NEWSBOT_PSO2_HOOK: ""
 
       NEWSBOT_FFXIV_ALL: 'true'
       NEWSBOT_FFXIV_TOPICS: 'True'
@@ -23,7 +23,7 @@ services:
       NEWSBOT_FFXIV_MAINTENANCE: 'True'
       NEWSBOT_FFXIV_UPDATES: 'True'
       NEWSBOT_FFXIV_STATUS: 'True'
-      NEWSBOT_FFXIV_HOOK: ""
+      #NEWSBOT_FFXIV_HOOK: ""
     restart: always
 
     networks:

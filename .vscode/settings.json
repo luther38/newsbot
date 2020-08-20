@@ -1,3 +1,9 @@
 {
-    "sqlite.sqlite3": "sqlite"
+    "sqlite.sqlite3": "sqlite",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true
 }
