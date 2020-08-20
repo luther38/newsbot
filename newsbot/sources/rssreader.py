@@ -109,7 +109,10 @@ class RSSReader:
     def getParser(self) -> BeautifulSoup:
         # raise NotImplementedError
         try:
-            r = requests.get(self.uri)
+            headers = {
+                'User-Agent': 'NewsBot - Automated News Delivery'
+            }
+            r = requests.get(self.uri, headers=headers)
         except Exception as e:
             logger.critical(f"Failed to collect data from {self.uri}. {e}")
 

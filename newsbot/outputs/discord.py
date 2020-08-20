@@ -10,7 +10,6 @@ from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
 
-
 class Discord(Outputs):
     def __init__(self) -> None:
         self.table = DiscordQueue()
@@ -19,12 +18,15 @@ class Discord(Outputs):
     def enableThread(self) -> None:
         while True:
             # Tell the database to give us the queue on the table.
-            queue = self.table.getQueue()
+            try:
+                queue = self.table.getQueue()
 
-            for i in queue:
-                self.sendMessage(i)
-                i.remove()
-                sleep(env.discord_delay_seconds)
+                for i in queue:
+                    self.sendMessage(i)
+                    i.remove()
+                    sleep(env.discord_delay_seconds)
+            except Exception as e:
+                logger.error(f"Failed to post a message. {i.title}")
 
             sleep(env.discord_delay_seconds)
 
@@ -62,10 +64,11 @@ class Discord(Outputs):
         hook.add_embed(embed)
 
         logger.debug(f"Discord - Sending article '{article.title}'")
-        res = hook.execute()
-        if res.ok == False:
+        try:
+            res = hook.execute()
+        except Exception as e:
             logger.critical(
-                f"Failed to send to Discord.  Check to ensure the webhook is correct."
+                f"Failed to send to Discord.  Check to ensure the webhook is correct. {e}"
             )
 
         return res
@@ -77,6 +80,8 @@ class Discord(Outputs):
             return env.pogo_hooks
         elif newsSource == "Final Fantasy XIV":
             return env.ffxiv_hooks
+        elif 'Reddit' in newsSource:
+            return env.redditHook01
         else:
             logger.warning(
                 f"got a request to send to {newsSource} and it's a invalid site."

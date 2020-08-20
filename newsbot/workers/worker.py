@@ -2,11 +2,9 @@ from newsbot import logger, env, database
 from newsbot.tables import Articles, DiscordQueue
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle
-from newsbot.exceptions import FailedToAddToDatabase
 from time import sleep
 
-
-class Worker:
+class Worker():
     """
     This is a generic worker that will contain the source it will monitor.
     """
@@ -26,7 +24,8 @@ class Worker:
         This is the entry point for the worker.  
         Once its turned on it will check the Source for new items.
         """
-        enable: bool = self.check()
+        #enable: bool = self.check()
+        enable = True
         if enable == True:
             logger.debug(f"{self.source.siteName} Worker has started.")
 
