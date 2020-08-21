@@ -60,7 +60,8 @@ class Startup:
         for i in env.ffxiv_hooks:
             DiscordWebHooks(name="Final Fantasy XIV", key=i).add()
 
-        r1 = f"Reddit {env.redditSub01}"
-        Sources(name=r1, url=f"https://reddit.com/r/{env.redditSub01}").add()
-        for i in env.redditHook01:
-            DiscordWebHooks(name=r1, key=i).add()
+        for i in env.reddit_values:
+            r1 = f"Reddit {i.site}"
+            Sources(name=r1, url=f"https://reddit.com/r/{i.site}").add()
+            for h in i.hooks:
+                DiscordWebHooks(name=r1, key=h).add()

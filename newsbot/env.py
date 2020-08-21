@@ -3,7 +3,7 @@
 from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
-from newsbot.collections import RSSArticle
+from newsbot.collections import RSSArticle, EnvDetails
 import os
 
 
@@ -52,18 +52,35 @@ class Env:
 
         self.ffxiv_hooks = self.extractHooks("NEWSBOT_FFXIV_HOOK")
 
-    def readRedditValues(self) -> None:
-        self.redditSub01 = os.getenv("NEWSBOT_REDDIT_SUB01")
-        self.redditHook01 = self.extractHooks("NEWSBOT_REDDIT_HOOK01")
+    def readRedditValues(self) -> List[EnvDetails]:
+        counter = 0
+        items = list()
+
+        while counter <= 10:
+            sub = os.getenv(f"NEWSBOT_REDDIT_SUB_{counter}")
+            hooks = self.extractHooks(f"NEWSBOT_REDDIT_HOOK_{counter}")
+
+            if sub != None or hooks != None:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = sub
+                details.hooks = hooks
+                items.append(details)
+
+            counter = counter + 1
+
+        self.reddit_values = items
 
     def extractHooks(self, sourceHooks) -> List[str]:
         try:
             t: str = os.getenv(sourceHooks)
-            tList = t.split(" ")
-            array = list()
-            for i in tList:
-                array.append(i)
-            return array
+            if t != None:
+                tList = t.split(" ")
+                array = list()
+                for i in tList:
+                    array.append(i)
+                return array
+
         except Exception as e:
             print(f"Failed to extract Webhook details from {sourceHooks}. {e}")
             return list()

@@ -132,6 +132,18 @@ class Sources(Base):
         finally:
             s.close()
 
+    def findAllByName(self) -> List[str]:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources).filter(Sources.name.contains(self.name)):
+                hooks.append(res.name)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
+
 
 class DiscordWebHooks(Base):
     __tablename__ = "discordwebhooks"
@@ -171,6 +183,19 @@ class DiscordWebHooks(Base):
             logger.critical(f"{e}")
         finally:
             s.close()
+
+    def findAllByName(self) -> List[str]:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(DiscordWebHooks).filter(DiscordWebHooks.name.contains(self.name)):
+                hooks.append(res.key)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
+
 
 class DiscordQueue(Base):
     __tablename__ = "discordQueue"
