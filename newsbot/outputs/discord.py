@@ -1,10 +1,10 @@
 from typing import List
 
-from newsbot import logger, env, database
+from newsbot import logger, env
 
 import re
 from time import sleep
-from newsbot.tables import DiscordQueue
+from newsbot.tables import DiscordQueue, DiscordWebHooks
 from newsbot.outputs.outputs import Outputs
 from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
@@ -74,18 +74,12 @@ class Discord(Outputs):
         return res
 
     def getHooks(self, newsSource: str) -> List[str]:
-        if newsSource == "Phantasy Star Online 2":
-            return env.pso2_hooks
-        elif newsSource == "Pokemon Go Hub":
-            return env.pogo_hooks
-        elif newsSource == "Final Fantasy XIV":
-            return env.ffxiv_hooks
-        elif 'Reddit' in newsSource:
-            return env.redditHook01
-        else:
-            logger.warning(
-                f"got a request to send to {newsSource} and it's a invalid site."
-            )
+        try:
+            hooks = DiscordWebHooks(name=newsSource).findAllByName()
+            return hooks
+        except Exception as e:
+            logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
+
 
     def convertFromHtml(self, msg: str) -> str:
         msg = msg.replace("<h2>", "**")
