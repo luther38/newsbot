@@ -12,8 +12,9 @@ import uuid
 from typing import List
 from newsbot import Base, database, logger
 from newsbot.collections import RSSArticle
-from newsbot.exceptions import FailedToAddToDatabase
 
+class FailedToAddToDatabase(Exception):
+    pass
 
 class Articles(Base):
     __tablename__ = "articles"
@@ -73,7 +74,7 @@ class Articles(Base):
         finally:
             s.close()
 
-    def rowCount(self) -> int:
+    def __len__(self) -> int:
         """
         Returns the number of rows based off the SiteName value provieded.
         """
@@ -98,8 +99,50 @@ class Sources(Base):
     url = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self) -> None:
+    def __init__(self, name='', url='') -> None:
         self.id = str(uuid.uuid4())
+        self.name = name
+        self.url = url
+        self.enabled = True
+
+    def add(self) -> None:
+        s = database.newSession()
+        h = Sources()
+        h.name = self.name
+        h.url = self.url
+        h.enabled = self.enabled
+        try:
+            s.add(h)
+            s.commit()
+            #logger.debug(f"'{self.name}' was added to the Discord queue")
+        except FailedToAddToDatabase as e:
+
+            logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
+        finally:
+            s.close()
+
+    def clearTable(self) -> None:
+        s = database.newSession()
+        try:
+            for d in s.query(Sources):
+                s.delete(d)
+            s.commit()
+        except Exception as e:
+            logger.critical(f"{e}")
+        finally:
+            s.close()
+
+    def findAllByName(self) -> List:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources).filter(Sources.name.contains(self.name)):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
 
 
 class DiscordWebHooks(Base):
@@ -109,8 +152,49 @@ class DiscordWebHooks(Base):
     key = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self) -> None:
+    def __init__(self, name='', key='') -> None:
         self.id = str(uuid.uuid4())
+        self.name = name
+        self.key = key
+        self.enabled = True
+
+    def add(self) -> None:
+        s = database.newSession()
+        h = DiscordWebHooks()
+        h.key = self.key
+        h.name = self.name
+        h.enabled = self.enabled
+        try:
+            s.add(h)
+            s.commit()
+            #logger.debug(f"'{self.name}' was added to the Discord queue")
+        except FailedToAddToDatabase as e:
+            logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
+        finally:
+            s.close()
+
+    def clearTable(self) -> None:
+        s = database.newSession()
+        try:
+            for d in s.query(DiscordWebHooks):
+                s.delete(d)
+            s.commit()
+        except Exception as e:
+            logger.critical(f"{e}")
+        finally:
+            s.close()
+
+    def findAllByName(self) -> List:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(DiscordWebHooks).filter(DiscordWebHooks.name.contains(self.name)):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
 
 
 class DiscordQueue(Base):
@@ -179,3 +263,20 @@ class DiscordQueue(Base):
             logger.critical(f"{e}")
         finally:
             s.close()
+
+    def __len__(self) -> int:
+        """
+        Returns the number of rows based off the SiteName value provieded.
+        """
+
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(Articles).filter(Articles.siteName == self.siteName):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return len(l)
