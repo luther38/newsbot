@@ -1,11 +1,9 @@
 
-
 from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
 from newsbot.collections import RSSArticle, EnvDetails
 import os
-
 
 class Env:
     def __init__(self) -> None:
@@ -31,11 +29,11 @@ class Env:
         load_dotenv(dotenv_path=env)
 
         # Pokemon Go Hub
-        self.pogo_enabled = bool(os.getenv("NEWSBOT_POGO_ENABLED"))
+        self.pogo_enabled = self.readBoolEnv("NEWSBOT_POGO_ENABLED")
         self.pogo_hooks= self.extractHooks("NEWSBOT_POGO_HOOK")
 
         # Phantasy Star Online 2
-        self.pso2_enabled = bool(os.getenv("NEWSBOT_PSO2_ENABLED"))
+        self.pso2_enabled = self.readBoolEnv("NEWSBOT_PSO2_ENABLED")
         self.pso2_hooks = self.extractHooks("NEWSBOT_PSO2_HOOK")
 
         # Final Fantasy XIV
@@ -43,12 +41,12 @@ class Env:
         self.readRedditValues()
 
     def readFfxivValues(self) -> None:
-        self.ffxiv_all = bool(os.getenv("NEWSBOT_FFXIV_ALL"))
-        self.ffxiv_topics = bool(os.getenv("NEWSBOT_FFXIV_TOPICS"))
-        self.ffxiv_notices = bool(os.getenv("NEWSBOT_FFXIV_NOTICES"))
-        self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
-        self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
-        self.ffxiv_status = bool(os.getenv("NEWSBOT_FFXIV_STATUS"))
+        self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
+        self.ffxiv_topics = self.readBoolEnv("NEWSBOT_FFXIV_TOPICS")
+        self.ffxiv_notices = self.readBoolEnv("NEWSBOT_FFXIV_NOTICES")
+        self.ffxiv_maintenance = self.readBoolEnv("NEWSBOT_FFXIV_MAINTENANCE")
+        self.ffxiv_updates = self.readBoolEnv("NEWSBOT_FFXIV_UPDATES")
+        self.ffxiv_status = self.readBoolEnv("NEWSBOT_FFXIV_STATUS")
 
         self.ffxiv_hooks = self.extractHooks("NEWSBOT_FFXIV_HOOK")
 
@@ -84,6 +82,15 @@ class Env:
         except Exception as e:
             print(f"Failed to extract Webhook details from {sourceHooks}. {e}")
             return list()
+
+    def readBoolEnv(self, env:str) -> bool:
+        res = os.getenv(env)
+        if res.lower() == "true":
+            return True
+        elif res.lower() == "false":
+            return False
+        else:
+            return False
 
     def getPso2Values(self) -> List:
         r = {"enabled": self.pso2_enabled, "hooks": self.pso2_hooks}
