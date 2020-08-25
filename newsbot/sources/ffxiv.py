@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from newsbot import logger, env
-from newsbot.tables import Articles
+from newsbot.tables import Articles, Sources, DiscordWebHooks
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSRoot, RSSArticle
 
@@ -25,11 +25,11 @@ class FFXIVReader(RSSReader):
         rss.title = self.siteName
 
         for site in self.links:
-            logger.debug(f"{self.siteName} - {site['tag']} - Checking for updates.")
-            self.uri = site["uri"]
+            logger.debug(f"{site.name} - Checking for updates.")
+            self.uri = site.url
             page = self.getParser()
 
-            if site["tag"] == "Topics":
+            if "Topics" in site.name:
                 try:
                     for news in page.find_all(
                         "li", {"class", "news__list--topics ic__topics--list"}
@@ -47,7 +47,7 @@ class FFXIVReader(RSSReader):
                 except Exception as e:
                     logger.error(f"Failed to collect Topics from FFXIV. {e}")
 
-            if site["tag"] == "Notices":
+            if "Notices" in site.name:
                 try:
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__info--list"}
@@ -68,7 +68,7 @@ class FFXIVReader(RSSReader):
                     logger.error(f"Failed to collect Notice from FFXIV. {e}")
                     pass
 
-            if site["tag"] == "Maintenance":
+            if "Maintenance" in site.name:
                 try:
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__maintenance--list"}
@@ -91,7 +91,7 @@ class FFXIVReader(RSSReader):
                     )
                     pass
 
-            if site["tag"] == "Updates":
+            if "Updates" in site.name:
                 try:
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__update--list"}
@@ -114,7 +114,7 @@ class FFXIVReader(RSSReader):
                     )
                     pass
 
-            if site["tag"] == "Status":
+            if "Status" in site.name:
                 try:
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__obstacle--list"}
@@ -140,44 +140,13 @@ class FFXIVReader(RSSReader):
         return rss
 
     def checkEnv(self):
-        self.hooks: List = env.ffxiv_hooks
-
-        if env.ffxiv_topics == True or env.ffxiv_all == True:
-            self.links.append(
-                {
-                    "tag": "Topics",
-                    "uri": "https://na.finalfantasyxiv.com/lodestone/topics/",
-                }
-            )
-
-        if env.ffxiv_notices == True or env.ffxiv_all == True:
-            self.links.append(
-                {
-                    "tag": "Notices",
-                    "uri": "https://na.finalfantasyxiv.com/lodestone/news/category/1",
-                }
-            )
-
-        if env.ffxiv_maintenance == True or env.ffxiv_all == True:
-            self.links.append(
-                {
-                    "tag": "Maintenance",
-                    "uri": "https://na.finalfantasyxiv.com/lodestone/news/category/2",
-                }
-            )
-
-        if env.ffxiv_updates == True or env.ffxiv_all == True:
-            self.links.append(
-                {
-                    "tag": "Updates",
-                    "uri": "https://na.finalfantasyxiv.com/lodestone/news/category/3",
-                }
-            )
-
-        if env.ffxiv_status == True or env.ffxiv_status == True:
-            self.links.append(
-                {
-                    "tag": "Status",
-                    "uri": "https://na.finalfantasyxiv.com/lodestone/news/category/4",
-                }
-            )
+        # Check what topics we will pull, if any.
+        res = Sources(name='Final Fantasy XIV').findAllByName()
+        # if we do not come back with a result, close down the thead
+        if len(res) >= 1:
+            for r in res:
+                self.links.append(r)
+            
+            dwh = DiscordWebHooks(name='Final Fantasy XIV').findAllByName()
+            for r in dwh:
+                self.hooks.append(r)

@@ -74,8 +74,11 @@ class Discord(Outputs):
         return res
 
     def getHooks(self, newsSource: str) -> List[str]:
+        hooks = list()
         try:
-            hooks = DiscordWebHooks(name=newsSource).findAllByName()
+            dwh = DiscordWebHooks(name=newsSource).findAllByName()
+            for i in dwh:
+                hooks.append(i.key)
             return hooks
         except Exception as e:
             logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
