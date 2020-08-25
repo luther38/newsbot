@@ -1,15 +1,14 @@
 from typing import List
 
-from newsbot import logger, env, database
+from newsbot import logger, env
 
 import re
 from time import sleep
-from newsbot.tables import DiscordQueue
+from newsbot.tables import DiscordQueue, DiscordWebHooks
 from newsbot.outputs.outputs import Outputs
 from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
-
 
 class Discord(Outputs):
     def __init__(self) -> None:
@@ -19,12 +18,15 @@ class Discord(Outputs):
     def enableThread(self) -> None:
         while True:
             # Tell the database to give us the queue on the table.
-            queue = self.table.getQueue()
+            try:
+                queue = self.table.getQueue()
 
-            for i in queue:
-                self.sendMessage(i)
-                i.remove()
-                sleep(env.discord_delay_seconds)
+                for i in queue:
+                    self.sendMessage(i)
+                    i.remove()
+                    sleep(env.discord_delay_seconds)
+            except Exception as e:
+                logger.error(f"Failed to post a message. {i.title}")
 
             sleep(env.discord_delay_seconds)
 
@@ -62,25 +64,25 @@ class Discord(Outputs):
         hook.add_embed(embed)
 
         logger.debug(f"Discord - Sending article '{article.title}'")
-        res = hook.execute()
-        if res.ok == False:
+        try:
+            res = hook.execute()
+        except Exception as e:
             logger.critical(
-                f"Failed to send to Discord.  Check to ensure the webhook is correct."
+                f"Failed to send to Discord.  Check to ensure the webhook is correct. {e}"
             )
 
         return res
 
     def getHooks(self, newsSource: str) -> List[str]:
-        if newsSource == "Phantasy Star Online 2":
-            return env.pso2_hooks
-        elif newsSource == "Pokemon Go Hub":
-            return env.pogo_hooks
-        elif newsSource == "Final Fantasy XIV":
-            return env.ffxiv_hooks
-        else:
-            logger.warning(
-                f"got a request to send to {newsSource} and it's a invalid site."
-            )
+        hooks = list()
+        try:
+            dwh = DiscordWebHooks(name=newsSource).findAllByName()
+            for i in dwh:
+                hooks.append(i.key)
+            return hooks
+        except Exception as e:
+            logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
+
 
     def convertFromHtml(self, msg: str) -> str:
         msg = msg.replace("<h2>", "**")

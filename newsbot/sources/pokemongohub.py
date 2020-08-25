@@ -1,11 +1,10 @@
 from newsbot import logger, env
 from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.sources.rssreader import RSSReader
-from newsbot.tables import Articles
+from newsbot.tables import Articles, Sources, DiscordWebHooks
 
 import requests
 from bs4 import BeautifulSoup
-
 
 class PogohubReader(RSSReader):
     def __init__(self) -> None:
@@ -18,18 +17,22 @@ class PogohubReader(RSSReader):
         pass
 
     def checkEnv(self):
-        self.hooks = env.pogo_hooks
+        # Check if Pokemon Go was requested
+        res = Sources(name="Pokemon Go Hub").findAllByName()
+        if len(res) >= 1:
+            self.links.append(res[0])
 
-        if env.pogo_enabled == True:
-            self.links.append({"tag": "News", "uri": "https://pokemongohub.net/rss"})
+            dwh = DiscordWebHooks(name="Pokemon Go Hub").findAllByName()
+            for i in dwh:
+                self.hooks.append(i)
 
     def getArticles(self) -> RSSRoot:
         rss = RSSRoot()
         rss.link = self.removeHTMLTags(self.rootUrl)
 
         for site in self.links:
-            logger.debug(f"{self.siteName} - {site['tag']} - Checking for updates.")
-            self.uri = site["uri"]
+            logger.debug(f"{site.name} - Checking for updates.")
+            self.uri = site.url
 
             bs = self.getParser()
             mainLoop = bs.contents[1].contents[1].contents
@@ -67,7 +70,7 @@ class PogohubReader(RSSReader):
 
                     rss.articles.append(item)
 
-            logger.debug(f"Pokemon Go Hub - {site['tag']} - Finished checking.")
+            logger.debug(f"Pokemon Go Hub - Finished checking.")
         return rss
 
     def processItem(self, item: object) -> RSSArticle:
