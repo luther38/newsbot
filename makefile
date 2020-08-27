@@ -2,8 +2,12 @@
 help: ## Shows this help command
 	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-test: ## Runs unit tests
+unittest: ## Runs unit tests
+	mv ./mounts/database/newsbot.db ./mounts/database/newsbot.db.1
+	alembic upgrade head
 	pytest
+	rm ./mounts/database/newsbot.db
+	mv ./mounts/database/newsbot.db.1 ./mounts/database/newsbot.db
 
 build: ## Build docker image
 	docker build -t newsbot .

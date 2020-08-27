@@ -55,45 +55,7 @@ class RSSReader:
         text = text.replace("<a </a>", "")
         return text
 
-    def getImages(self, text: str) -> List[RssArticleImages]:
-        images = list()
-        # Select all the images in the context with regex
-        # res = re.findall("(?<=<img )(.*)(?=>)", text)
-        res = re.findall("<img(.*?)>", text)
-        for r in res:
-            image = RssArticleImages()
-            image.raw = f"<img{r}>"
-            src = re.findall('src="(.*?)"', r)
-            image.src = src[0]
 
-            try:
-                title = re.findall('title="(.*?)"', r)
-                image.title = title[0]
-            except:
-                # print("failed to find title on img.")
-                pass
-
-            try:
-                alt = re.findall('alt="(.*?)"', r)
-                image.alt = alt[0]
-            except:
-                pass
-
-            try:
-                height = re.findall('height="(.*?)"', r)
-                image.height = height[0]
-            except:
-                pass
-
-            try:
-                width = re.findall('width="(.*?)"', r)
-                image.width = width[0]
-            except:
-                pass
-
-            images.append(image)
-
-        return images
 
     def removeImageLinks(self, text: str) -> str:
         res = re.findall("(?<=<img )(.*)(?=>)", text)

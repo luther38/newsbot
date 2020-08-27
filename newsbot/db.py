@@ -2,15 +2,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import create_engine
 import sqlalchemy
-
-# from alembic import context
+import os
 
 Base = declarative_base()
 
-
 class DB:
     def __init__(self, Base):
-        uri: str = f"sqlite:///mounts/database/newsbot.db"
+        name = self.__getDbName__()
+        uri: str = f"sqlite:///mounts/database/{name}"
         self.engine = create_engine(uri)
         # context.configure(connection=self.engine)
         # try:
@@ -22,3 +21,10 @@ class DB:
 
     def newSession(self) -> Session:
         return self.session()
+
+    def __getDbName__(self) -> str:
+        name = os.getenv("NEWSBOT_DATABASE_NAME")
+        if name == None:
+            return "newsbot.db"
+        else:
+            return name
