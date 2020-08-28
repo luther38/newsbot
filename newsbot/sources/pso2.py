@@ -8,6 +8,7 @@ from typing import List
 import re
 import requests
 
+
 class PSO2Reader(RSSReader):
     def __init__(self) -> None:
         self.uri: str = "https://pso2.com/news"
@@ -90,7 +91,7 @@ class PSO2Reader(RSSReader):
         if len(res) >= 1:
             for r in res:
                 self.links.append(r)
-            
+
             dwh = DiscordWebHooks(name=self.siteName).findAllByName()
             for r in dwh:
                 self.hooks.append(r)

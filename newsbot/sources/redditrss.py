@@ -1,4 +1,3 @@
-
 from typing import List
 from json import loads
 from newsbot import env, logger
@@ -6,10 +5,11 @@ from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.tables import Sources, DiscordWebHooks
 
+
 class RedditReader(RSSReader):
     def __init__(self) -> None:
         self.uri = "https://reddit.com/r/aww/top.json"
-        #self.rootUrl = "https://reddit.com/r/aww/top.rss"
+        # self.rootUrl = "https://reddit.com/r/aww/top.rss"
 
         self.siteName = "Reddit"
         self.links: List[Sources] = list()
@@ -31,7 +31,7 @@ class RedditReader(RSSReader):
                 self.hooks.append(r)
 
     def getArticles(self):
-        #TODO Flag NSFW
+        # TODO Flag NSFW
         allowNSFW = True
 
         rss = RSSRoot()
@@ -39,37 +39,39 @@ class RedditReader(RSSReader):
             subreddit = source.name.replace("Reddit ", "")
 
             logger.debug(f"Collecting posts for '/r/{subreddit}'...")
-            
+
             self.uri = f"https://reddit.com/r/{subreddit}/top.json"
 
             page = self.getParser()
             json = loads(page.text)
-            
+
             try:
-                if json['error'] == 404:
-                    logger.error(f"Tried to access subreddit '{subreddit}' but got a 404.  Check to ensure that the name is correct and try again.'")
+                if json["error"] == 404:
+                    logger.error(
+                        f"Tried to access subreddit '{subreddit}' but got a 404.  Check to ensure that the name is correct and try again.'"
+                    )
             except:
                 # This only does the thing if we error out.
                 pass
 
-            for i in json['data']['children']:
+            for i in json["data"]["children"]:
                 a = RSSArticle()
                 a.siteName = f"Reddit {subreddit}"
-                d = i['data']
+                d = i["data"]
 
                 a.title = f"/r/{subreddit} - {d['title']}"
-                a.tags = d['subreddit']
+                a.tags = d["subreddit"]
                 a.link = f"https://reddit.com{d['permalink']}"
 
                 # figure out what url we are going to display
-                if d['is_video'] == True:
+                if d["is_video"] == True:
                     # Thumbnail needs to be the video content
-                    a.thumbnail = d['media']['reddit_video']['fallback_url']
+                    a.thumbnail = d["media"]["reddit_video"]["fallback_url"]
                     pass
-                elif d['media_only'] == True:
+                elif d["media_only"] == True:
                     print("review dis")
                 else:
-                    a.thumbnail = d['url']
+                    a.thumbnail = d["url"]
 
                 rss.articles.append(a)
 

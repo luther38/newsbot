@@ -55,8 +55,6 @@ class RSSReader:
         text = text.replace("<a </a>", "")
         return text
 
-
-
     def removeImageLinks(self, text: str) -> str:
         res = re.findall("(?<=<img )(.*)(?=>)", text)
         for i in res:
@@ -71,9 +69,7 @@ class RSSReader:
     def getParser(self) -> BeautifulSoup:
         # raise NotImplementedError
         try:
-            headers = {
-                'User-Agent': 'NewsBot - Automated News Delivery'
-            }
+            headers = {"User-Agent": "NewsBot - Automated News Delivery"}
             r = requests.get(self.uri, headers=headers)
         except Exception as e:
             logger.critical(f"Failed to collect data from {self.uri}. {e}")

@@ -50,8 +50,9 @@ class Env:
         self.pogo_hooks: List[str] = list()
         self.pso2_hooks: List[str] = list()
 
-class EnvDetails():
+
+class EnvDetails:
     def __init__(self) -> None:
         self.enabled: bool = False
-        self.site: str = ''
+        self.site: str = ""
         self.hooks: List[str] = list()

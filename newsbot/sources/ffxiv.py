@@ -141,12 +141,12 @@ class FFXIVReader(RSSReader):
 
     def checkEnv(self):
         # Check what topics we will pull, if any.
-        res = Sources(name='Final Fantasy XIV').findAllByName()
+        res = Sources(name="Final Fantasy XIV").findAllByName()
         # if we do not come back with a result, close down the thead
         if len(res) >= 1:
             for r in res:
                 self.links.append(r)
-            
-            dwh = DiscordWebHooks(name='Final Fantasy XIV').findAllByName()
+
+            dwh = DiscordWebHooks(name="Final Fantasy XIV").findAllByName()
             for r in dwh:
                 self.hooks.append(r)

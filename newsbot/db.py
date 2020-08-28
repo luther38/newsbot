@@ -6,6 +6,7 @@ import os
 
 Base = declarative_base()
 
+
 class DB:
     def __init__(self, Base):
         name = self.__getDbName__()

@@ -13,8 +13,10 @@ from typing import List
 from newsbot import Base, database, logger
 from newsbot.collections import RSSArticle
 
+
 class FailedToAddToDatabase(Exception):
     pass
+
 
 class Articles(Base):
     __tablename__ = "articles"
@@ -91,7 +93,6 @@ class Articles(Base):
 
         return len(l)
 
-
 class Sources(Base):
     __tablename__ = "sources"
     id = Column(String, primary_key=True)
@@ -99,7 +100,7 @@ class Sources(Base):
     url = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self, name='', url='') -> None:
+    def __init__(self, name="", url="") -> None:
         self.id = str(uuid.uuid4())
         self.name = name
         self.url = url
@@ -114,7 +115,7 @@ class Sources(Base):
         try:
             s.add(h)
             s.commit()
-            #logger.debug(f"'{self.name}' was added to the Discord queue")
+            # logger.debug(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
 
             logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
@@ -152,7 +153,7 @@ class DiscordWebHooks(Base):
     key = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self, name='', key='') -> None:
+    def __init__(self, name="", key="") -> None:
         self.id = str(uuid.uuid4())
         self.name = name
         self.key = key
@@ -167,7 +168,7 @@ class DiscordWebHooks(Base):
         try:
             s.add(h)
             s.commit()
-            #logger.debug(f"'{self.name}' was added to the Discord queue")
+            # logger.debug(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
             logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
         finally:
@@ -188,7 +189,9 @@ class DiscordWebHooks(Base):
         s = database.newSession()
         hooks = list()
         try:
-            for res in s.query(DiscordWebHooks).filter(DiscordWebHooks.name.contains(self.name)):
+            for res in s.query(DiscordWebHooks).filter(
+                DiscordWebHooks.name.contains(self.name)
+            ):
                 hooks.append(res)
         except Exception as e:
             pass

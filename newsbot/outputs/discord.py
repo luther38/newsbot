@@ -10,6 +10,7 @@ from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
 
+
 class Discord(Outputs):
     def __init__(self) -> None:
         self.table = DiscordQueue()
@@ -82,7 +83,6 @@ class Discord(Outputs):
             return hooks
         except Exception as e:
             logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
-
 
     def convertFromHtml(self, msg: str) -> str:
         msg = msg.replace("<h2>", "**")

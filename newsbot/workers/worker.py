@@ -4,7 +4,8 @@ from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle
 from time import sleep
 
-class Worker():
+
+class Worker:
     """
     This is a generic worker that will contain the source it will monitor.
     """

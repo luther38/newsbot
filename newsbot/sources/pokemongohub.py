@@ -1,12 +1,12 @@
-
 from typing import List
 from newsbot import logger, env
 from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.sources.rssreader import RSSReader, RssArticleImages
 from newsbot.tables import Articles, Sources, DiscordWebHooks
-
+import re
 import requests
 from bs4 import BeautifulSoup
+
 
 class PogohubReader(RSSReader):
     def __init__(self) -> None:
@@ -50,7 +50,7 @@ class PogohubReader(RSSReader):
                     # self.add(item)
 
                     # get thumbnail
-                    #item.thumbnail = self.getArticleThumbnail(item.link)
+                    # item.thumbnail = self.getArticleThumbnail(item.link)
 
                     images = self.getImages(item.content)
                     for i in images:
