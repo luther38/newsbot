@@ -85,6 +85,9 @@ class Env:
 
     def readBoolEnv(self, env:str) -> bool:
         res = os.getenv(env)
+        if res == None:
+            return False
+
         if res.lower() == "true":
             return True
         elif res.lower() == "false":

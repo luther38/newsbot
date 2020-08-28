@@ -75,11 +75,19 @@ class Startup:
         if env.ffxiv_all == True or env.ffxiv_status == True:
             Sources(name="Final Fantasy XIV Status", url='https://na.finalfantasyxiv.com/lodestone/news/category/4').add()
  
-        for i in env.ffxiv_hooks:
-            DiscordWebHooks(name="Final Fantasy XIV", key=i).add()
+        if env.ffxiv_all == True or \
+            env.ffxiv_maintenance == True or \
+            env.ffxiv_notices == True or \
+            env.ffxiv_status == True or \
+            env.ffxiv_topics == True or \
+            env.ffxiv_updates == True:
 
-        for i in env.reddit_values:
-            r1 = f"Reddit {i.site}"
-            Sources(name=r1, url=f"https://reddit.com/r/{i.site}").add()
-            for h in i.hooks:
-                DiscordWebHooks(name=r1, key=h).add()
+            for i in env.ffxiv_hooks:
+                DiscordWebHooks(name="Final Fantasy XIV", key=i).add()
+
+        if len(env.reddit_values) >= 1:
+            for i in env.reddit_values:
+                r1 = f"Reddit {i.site}"
+                Sources(name=r1, url=f"https://reddit.com/r/{i.site}").add()
+                for h in i.hooks:
+                    DiscordWebHooks(name=r1, key=h).add()
