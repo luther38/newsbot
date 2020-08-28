@@ -25,12 +25,36 @@ class Test_DB:
 
 
 class Test_Sources:
+
+    def test_init00(self):
+        s = Sources()
+        if s.name == '' and s.url == '':
+            assert True
+
+    def test_init01(self):
+        s = Sources(name="init01")
+        if s.name == "init01" and s.url == '':
+            assert True
+
+    def test_init02(self):
+        s = Sources(url='init02')
+        if s.name == '' and s.url == 'init02':
+            assert True
+
     def test_add(self):
         s = Sources(name="Source01", url="void")
         s.add()
 
         res = s.findAllByName()
         if res[0].name == "Source01":
+            assert True
+    
+    def test_add01(self):
+        s = Sources(name="", url="void")
+        s.add()
+
+        res = s.findAllByName()
+        if res[0].name == "" and res[0].url == 'void':
             assert True
 
     def test_clearTable(self):
@@ -69,8 +93,8 @@ class Test_DiscordWebHooks:
             assert False
 
     def test_clearTable(self):
-        try:
-            DiscordWebHooks().clearTable()
+        DiscordWebHooks().clearTable()
+        res = len(DiscordWebHooks())
+        if res == 0:
             assert True
-        except:
-            assert False
+

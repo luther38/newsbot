@@ -13,7 +13,6 @@ from typing import List
 from newsbot import Base, database, logger
 from newsbot.collections import RSSArticle
 
-
 class FailedToAddToDatabase(Exception):
     pass
 
@@ -145,6 +144,19 @@ class Sources(Base):
             s.close()
             return hooks
 
+    def __len__(self) -> int:
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(DiscordWebHooks):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return len(l) 
+
 
 class DiscordWebHooks(Base):
     __tablename__ = "discordwebhooks"
@@ -199,6 +211,18 @@ class DiscordWebHooks(Base):
             s.close()
             return hooks
 
+    def __len__(self) -> int:
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(DiscordWebHooks):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return len(l) 
 
 class DiscordQueue(Base):
     __tablename__ = "discordQueue"

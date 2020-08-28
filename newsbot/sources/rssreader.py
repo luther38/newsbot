@@ -10,6 +10,7 @@ class RSSReader:
     def __init__(self, rootUrl: str = "") -> None:
         self.rootUrl = rootUrl
         self.uri: str = ""
+        
         pass
 
     def removeHTMLTags(self, text: str) -> str:
@@ -84,4 +85,7 @@ class RSSReader:
         raise NotImplementedError
 
     def processItem(self, parameter_list) -> RSSArticle:
+        raise NotImplementedError
+
+    def checkEnv(self) -> None:
         raise NotImplementedError
