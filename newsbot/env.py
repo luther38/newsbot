@@ -28,7 +28,7 @@ class Env:
         env = Path(".env")
         load_dotenv(dotenv_path=env)
 
-        self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
+        #self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
 
         # Pokemon Go Hub
         self.pogo_enabled = self.readBoolEnv("NEWSBOT_POGO_ENABLED")
@@ -60,7 +60,7 @@ class Env:
             sub = os.getenv(f"NEWSBOT_REDDIT_SUB_{counter}")
             hooks = self.extractHooks(f"NEWSBOT_REDDIT_HOOK_{counter}")
 
-            if sub != None or hooks != None:
+            if sub != None or len(hooks) >= 1:
                 details = EnvDetails()
                 details.enabled = True
                 details.site = sub
@@ -80,6 +80,8 @@ class Env:
                 for i in tList:
                     array.append(i)
                 return array
+            else:
+                return list()
 
         except Exception as e:
             print(f"Failed to extract Webhook details from {sourceHooks}. {e}")
