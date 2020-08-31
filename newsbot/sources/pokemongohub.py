@@ -37,42 +37,46 @@ class PogohubReader(RSSReader):
             self.uri = site.url
 
             bs = self.getParser()
-            mainLoop = bs.contents[1].contents[1].contents
 
-            for i in mainLoop:
-                if i == "\n":
-                    continue
-                elif i.name == "title":
-                    rss.title = self.removeHTMLTags(i.next)
-                elif i.name == "item":
-                    item: RSSArticle = self.processItem(i)
-                    item.siteName = "Pokemon Go Hub"
-                    # self.add(item)
+            try:
+                mainLoop = bs.contents[1].contents[1].contents
 
-                    # get thumbnail
-                    # item.thumbnail = self.getArticleThumbnail(item.link)
+                for i in mainLoop:
+                    if i == "\n":
+                        continue
+                    elif i.name == "title":
+                        rss.title = self.removeHTMLTags(i.next)
+                    elif i.name == "item":
+                        item: RSSArticle = self.processItem(i)
+                        item.siteName = "Pokemon Go Hub"
+                        # self.add(item)
 
-                    images = self.getImages(item.content)
-                    for i in images:
-                        item.contentImages.append(i)
-                    # item.content = self.removeImageLinks(item.content)
-                    links = self.getLinks(item.content)
-                    for i in links:
-                        item.contentLinks.append(i)
+                        # get thumbnail
+                        # item.thumbnail = self.getArticleThumbnail(item.link)
 
-                    images = list()
-                    images = self.getImages(item.description)
-                    for i in images:
-                        item.descriptionImages.append(i)
+                        images = self.getImages(item.content)
+                        for i in images:
+                            item.contentImages.append(i)
+                        # item.content = self.removeImageLinks(item.content)
+                        links = self.getLinks(item.content)
+                        for i in links:
+                            item.contentLinks.append(i)
 
-                    links = list()
-                    links = self.getLinks(item.description)
-                    for i in links:
-                        item.descriptionLinks.append(i)
+                        images = list()
+                        images = self.getImages(item.description)
+                        for i in images:
+                            item.descriptionImages.append(i)
 
-                    rss.articles.append(item)
+                        links = list()
+                        links = self.getLinks(item.description)
+                        for i in links:
+                            item.descriptionLinks.append(i)
 
-            logger.debug(f"Pokemon Go Hub - Finished checking.")
+                        rss.articles.append(item)
+
+                logger.debug(f"Pokemon Go Hub - Finished checking.")
+            except Exception as e:
+                logger.error(f"Failed to parse articles from Pokemon Go Hub.  Chances are we have a malformed responce. {e}")
         return rss
 
     def processItem(self, item: object) -> RSSArticle:

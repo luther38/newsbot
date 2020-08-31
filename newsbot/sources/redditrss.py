@@ -54,25 +54,28 @@ class RedditReader(RSSReader):
                 # This only does the thing if we error out.
                 pass
 
-            for i in json["data"]["children"]:
-                a = RSSArticle()
-                a.siteName = f"Reddit {subreddit}"
-                d = i["data"]
+            try:
+                for i in json["data"]["children"]:
+                    a = RSSArticle()
+                    a.siteName = f"Reddit {subreddit}"
+                    d = i["data"]
 
-                a.title = f"/r/{subreddit} - {d['title']}"
-                a.tags = d["subreddit"]
-                a.link = f"https://reddit.com{d['permalink']}"
+                    a.title = f"/r/{subreddit} - {d['title']}"
+                    a.tags = d["subreddit"]
+                    a.link = f"https://reddit.com{d['permalink']}"
 
-                # figure out what url we are going to display
-                if d["is_video"] == True:
-                    # Thumbnail needs to be the video content
-                    a.thumbnail = d["media"]["reddit_video"]["fallback_url"]
-                    pass
-                elif d["media_only"] == True:
-                    print("review dis")
-                else:
-                    a.thumbnail = d["url"]
+                    # figure out what url we are going to display
+                    if d["is_video"] == True:
+                        # Thumbnail needs to be the video content
+                        a.thumbnail = d["media"]["reddit_video"]["fallback_url"]
+                        pass
+                    elif d["media_only"] == True:
+                        print("review dis")
+                    else:
+                        a.thumbnail = d["url"]
 
-                rss.articles.append(a)
+                    rss.articles.append(a)
+            except Exception as e:
+                logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
 
         return rss
