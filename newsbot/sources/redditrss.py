@@ -4,6 +4,7 @@ from newsbot import env, logger
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.tables import Sources, DiscordWebHooks
+from time import sleep
 
 
 class RedditReader(RSSReader):
@@ -77,5 +78,7 @@ class RedditReader(RSSReader):
                     rss.articles.append(a)
             except Exception as e:
                 logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
+
+            sleep(15.0)
 
         return rss

@@ -291,20 +291,24 @@ class Test_EnvReddit():
         if len(e.reddit_values) == 0:
             assert True
 
-    def test_e(self):
-        environ['NEWSBOT_REDDIT_SUB_0'] = "aww"
+    def test_sub00(self):
+        environ['NEWSBOT_REDDIT_SUB_0'] = str("aww")
         e = Env()
-        if len(e.reddit_values) == 1:
+        if len(e.reddit_values) == 1 and e.reddit_values[0].site == 'aww':
             assert True
 
-    def test_EnabledTrue(self):
-        environ['NEWSBOT_PSO2_ENABLED'] = 'true'
+    def test_hook00(self):
+        environ['NEWSBOT_REDDIT_HOOK_0'] = str("aww")
         e = Env()
-        if e.pogo_enabled == True:
-            assert True
-
-    def test_EnabledFalse(self):
-        environ['NEWSBOT_PSO2_ENABLED'] = 'false'
-        e = Env()
-        if e.pogo_enabled == False:
+        if len(e.reddit_values) == 1 and e.reddit_values[0].hooks == 'aww':
             assert True 
+
+    def test_00(self):
+        environ['NEWSBOT_REDDIT_SUB_0'] = str("aww")
+        environ['NEWSBOT_REDDIT_HOOK_0'] = str("aww")
+        e = Env()
+        if len(e.reddit_values) == 1 and \
+            e.reddit_values[0].hooks == 'aww' and \
+            e.reddit_values[0].sub == 'aww':
+            assert True  
+
