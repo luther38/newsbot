@@ -285,30 +285,64 @@ class Test_EnvFFXIV():
         if len(e.ffxiv_hooks) == 3:
             assert True 
 
-class Test_EnvReddit():
-    def test_noSubReddits(self):
+class Test_EnvRedditSingle():
+    def test_00noSubReddits(self):
         e = Env()
         if len(e.reddit_values) == 0:
             assert True
 
-    def test_sub00(self):
+    def test_01singleSub(self):
         environ['NEWSBOT_REDDIT_SUB_0'] = str("aww")
         e = Env()
         if len(e.reddit_values) == 1 and e.reddit_values[0].site == 'aww':
             assert True
+        else: assert False
 
-    def test_hook00(self):
+    def test_01singleHook(self):
         environ['NEWSBOT_REDDIT_HOOK_0'] = str("aww")
         e = Env()
-        if len(e.reddit_values) == 1 and e.reddit_values[0].hooks == 'aww':
+        if len(e.reddit_values) == 1 and 'aww' in e.reddit_values[0].hooks:
             assert True 
+        else: assert False
 
-    def test_00(self):
+    def test_01singlBoth(self):
         environ['NEWSBOT_REDDIT_SUB_0'] = str("aww")
         environ['NEWSBOT_REDDIT_HOOK_0'] = str("aww")
         e = Env()
         if len(e.reddit_values) == 1 and \
-            e.reddit_values[0].hooks == 'aww' and \
-            e.reddit_values[0].sub == 'aww':
+            'aww' in e.reddit_values[0].hooks and \
+            e.reddit_values[0].site == 'aww':
             assert True  
+        else: assert False
 
+    def test_02dualSub(self):
+        environ['NEWSBOT_REDDIT_SUB_0'] = str("aww")
+        environ['NEWSBOT_REDDIT_SUB_1'] = str("ffxiv")
+        e = Env()
+        if len(e.reddit_values) == 2 and \
+            e.reddit_values[0].site == 'aww' and \
+            e.reddit_values[1].site == 'ffxiv':
+            assert True 
+        else: assert False
+
+    def test_02dualhooks(self):
+        environ['NEWSBOT_REDDIT_HOOK_0'] = str("pso2") 
+        environ['NEWSBOT_REDDIT_HOOK_1'] = str("python")
+        e = Env()
+        if len(e.reddit_values) == 2 and \
+            'pso2' in e.reddit_values[0].hooks and \
+            'python' in e.reddit_values[1].hooks:
+            assert True
+        else: assert False
+
+    def test_03combo(self):
+        #environ['NEWSBOT_REDDIT_SUB_4'] = str("pso2") 
+        #environ['NEWSBOT_REDDIT_SUB_5'] = str("python")
+        e = Env()
+        if len(e.reddit_values) == 2 and \
+            e.reddit_values[0].site == 'aww' and \
+            e.reddit_values[1].site == 'ffxiv' and \
+            "pso2" in e.reddit_values[0].hooks and \
+            "python" in e.reddit_values[1].hooks:
+            assert True  
+        else: assert False
