@@ -1,9 +1,9 @@
-
 from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
 from newsbot.collections import RSSArticle, EnvDetails
 import os
+
 
 class Env:
     def __init__(self) -> None:
@@ -28,9 +28,11 @@ class Env:
         env = Path(".env")
         load_dotenv(dotenv_path=env)
 
+        #self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
+
         # Pokemon Go Hub
         self.pogo_enabled = self.readBoolEnv("NEWSBOT_POGO_ENABLED")
-        self.pogo_hooks= self.extractHooks("NEWSBOT_POGO_HOOK")
+        self.pogo_hooks = self.extractHooks("NEWSBOT_POGO_HOOK")
 
         # Phantasy Star Online 2
         self.pso2_enabled = self.readBoolEnv("NEWSBOT_PSO2_ENABLED")
@@ -58,7 +60,7 @@ class Env:
             sub = os.getenv(f"NEWSBOT_REDDIT_SUB_{counter}")
             hooks = self.extractHooks(f"NEWSBOT_REDDIT_HOOK_{counter}")
 
-            if sub != None or hooks != None:
+            if sub != None or len(hooks) >= 1:
                 details = EnvDetails()
                 details.enabled = True
                 details.site = sub
@@ -78,12 +80,14 @@ class Env:
                 for i in tList:
                     array.append(i)
                 return array
+            else:
+                return list()
 
         except Exception as e:
             print(f"Failed to extract Webhook details from {sourceHooks}. {e}")
             return list()
 
-    def readBoolEnv(self, env:str) -> bool:
+    def readBoolEnv(self, env: str) -> bool:
         res = os.getenv(env)
         if res == None:
             return False

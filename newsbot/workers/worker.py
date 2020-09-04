@@ -4,7 +4,8 @@ from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSArticle
 from time import sleep
 
-class Worker():
+
+class Worker:
     """
     This is a generic worker that will contain the source it will monitor.
     """
@@ -35,13 +36,13 @@ class Worker():
                 news = self.source.getArticles()
 
                 # Check the DB if it has been posted
-                for i in news.articles:
-                    i: RSSArticle = i
-                    a = Articles(article=i)
-                    exists = a.exists()
+                for i in news:
+                    #i: RSSArticle = i
+                    #a = Articles(article=i)
+                    exists = i.exists()
 
                     if exists == False:
-                        a.add()
+                        i.add()
 
                         if len(self.source.hooks) >= 1:
                             dq = DiscordQueue()
