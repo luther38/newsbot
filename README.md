@@ -8,6 +8,7 @@ Currently, it reads collects news for the following sites.
 * [Phantasy Star Online 2](https://pso2.com/news)
 * [Final Fantasy XIV](https://na.finalfantasyxiv.com/lodestone/news/)
 * [Pokemon Go Hub](https://pokemongohub.net/)
+* [Reddit](https://reddit.com)
 
 The results that are collected are then sent to the following platforms.
 
@@ -27,23 +28,16 @@ The application settings are currently stored in the .env file.  Use the templat
 
 To send to discord for a site, add the webhook url to the HOOK variable.  You can also send to more then one webhook.  With each variable, add a space between them and the program will convert it to two different webhooks.
 
-```text
+Each subreddit is defined by its own number value.
 
-NEWSBOT_POGO_ENABLED=True
-NEWSBOT_POGO_HOOK=
+`NEWSBOT_REDDIT_SUB_0 = aww`
+`NEWSBOT_REDDIT_HOOK_0 = webHookUrl`
+`NEWSBOT_REDDIT_SUB_1 = python`
+`NEWSBOT_REDDIT_HOOK_1 = webHookUrl`
 
-NEWSBOT_PSO2_ENABLED=True
-NEWSBOT_PSO2_HOOK=
+Currently, 10 different subreddits can be monitored.  Each subreddit will need its own entry with the correct values.
 
-NEWSBOT_FFXIV_ALL=True
-NEWSBOT_FFXIV_TOPICS=True
-NEWSBOT_FFXIV_NOTICES=True
-NEWSBOT_FFXIV_MAINTENANCE=True
-NEWSBOT_FFXIV_UPDATES=True
-NEWSBOT_FFXIV_STATUS=True
-NEWSBOT_FFXIV_HOOK=
-
-```
+[Configuration Template](https://github.com/jtom38/newsbot/blob/master/env.template)
 
 ## Tools
 

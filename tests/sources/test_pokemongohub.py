@@ -20,6 +20,6 @@ class TestPokemonGoHub():
     def testRssFeed(self):
         p = PogohubReader()
         res = p.getArticles()
-        if len(res.articles) == 30:
+        if len(res) == 30:
             assert True
         else: assert False
