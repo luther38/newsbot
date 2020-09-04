@@ -19,11 +19,12 @@ class PSO2Reader(RSSReader):
         self.checkEnv()
         pass
 
-    def getArticles(self) -> RSSRoot:
-        rss = RSSRoot()
-        rss.link = self.uri
-        rss.title = self.siteName
+    def getArticles(self) -> List[Articles]:
+        #rss = RSSRoot()
+        #rss.link = self.uri
+        #rss.title = self.siteName
 
+        allArticles: List[Articles] = list()
         for site in self.links:
             logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
@@ -31,7 +32,7 @@ class PSO2Reader(RSSReader):
 
             try:
                 for news in page.find_all("li", {"class", "news-item all sr"}):
-                    a = RSSArticle()
+                    a = Articles()
                     a.siteName = "Phantasy Star Online 2"
                     a.thumbnail = re.findall(
                         "url[(](.*?)[)]", news.contents[1].attrs["style"]
@@ -53,14 +54,14 @@ class PSO2Reader(RSSReader):
                     if " " in cat:
                         cat = cat.replace(" ", "-")
 
-                    a.link = f"{self.uri}/{cat}/{link}"
+                    a.url = f"{self.uri}/{cat}/{link}"
 
-                    rss.articles.append(a)
+                    allArticles.append(a)
             except UnableToFindContent as e:
                 logger.error(f"PSO2 - Unable to find articles. {e}")
 
         logger.debug(f"{site.name} - Finished collecting articles")
-        return rss
+        return allArticles
 
     def findNewsLinks(self, page: BeautifulSoup) -> BeautifulSoup:
         try:

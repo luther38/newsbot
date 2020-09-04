@@ -3,7 +3,7 @@ from json import loads
 from newsbot import env, logger
 from newsbot.sources.rssreader import RSSReader
 from newsbot.collections import RSSRoot, RSSArticle
-from newsbot.tables import Sources, DiscordWebHooks
+from newsbot.tables import Sources, DiscordWebHooks, Articles
 from time import sleep
 
 
@@ -31,11 +31,12 @@ class RedditReader(RSSReader):
             for r in dwh:
                 self.hooks.append(r)
 
-    def getArticles(self):
+    def getArticles(self) -> List[Articles]:
         # TODO Flag NSFW
         allowNSFW = True
 
-        rss = RSSRoot()
+        #rss = RSSRoot()
+        allArticles: List[Articles] = list()
         for source in self.links:
             subreddit = source.name.replace("Reddit ", "")
 
@@ -57,28 +58,31 @@ class RedditReader(RSSReader):
 
             try:
                 for i in json["data"]["children"]:
-                    a = RSSArticle()
+                    #a = RSSArticle()
+                    a = Articles()
                     a.siteName = f"Reddit {subreddit}"
+
                     d = i["data"]
 
-                    a.title = f"/r/{subreddit} - {d['title']}"
+                    a.title = f"{d['title']}"
                     a.tags = d["subreddit"]
-                    a.link = f"https://reddit.com{d['permalink']}"
+                    a.url = f"https://reddit.com{d['permalink']}"
 
                     # figure out what url we are going to display
                     if d["is_video"] == True:
-                        # Thumbnail needs to be the video content
-                        a.thumbnail = d["media"]["reddit_video"]["fallback_url"]
+                        a.video = d["media"]["reddit_video"]["fallback_url"]
+                        a.videoHeight = d['media']['reddit_video']['height']
+                        a.videoWidth = d['media']['reddit_video']['width']
                         pass
                     elif d["media_only"] == True:
                         print("review dis")
                     else:
                         a.thumbnail = d["url"]
 
-                    rss.articles.append(a)
+                    allArticles.append(a)
             except Exception as e:
                 logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
 
             sleep(15.0)
 
-        return rss
+        return allArticles

@@ -25,10 +25,17 @@ class Articles(Base):
     title = Column(String)
     url = Column(String)
     pubDate = Column(String)
+    video = Column(String)
+    videoHeight = Column(Integer)
+    videoWidth = Column(Integer)
+    thumbnail = Column(String)
+    description = Column(String)
+
 
     def __init__(self, article: RSSArticle = RSSArticle()) -> None:
         self.id = str(uuid.uuid4())
         self.convertRssArticle(article)
+        #self.isVideo = False
 
     def convertRssArticle(self, article: RSSArticle) -> None:
         self.title = article.title
@@ -66,6 +73,10 @@ class Articles(Base):
         a.title = self.title
         a.url = self.url
         a.pubDate = self.pubDate
+        a.thumbnail = self.thumbnail
+        a.video = self.video
+        a.videoHeight = self.videoHeight
+        a.videoWidth = self.videoWidth
 
         try:
             s.add(a)
@@ -157,7 +168,6 @@ class Sources(Base):
 
         return len(l) 
 
-
 class DiscordWebHooks(Base):
     __tablename__ = "discordwebhooks"
     id = Column(String, primary_key=True)
@@ -233,18 +243,23 @@ class DiscordQueue(Base):
     tags = Column(String)
     thumbnail = Column(String)
     description = Column(String)
+    video = Column(String)
+    videoHeight = Column(Integer)
+    videoWidth = Column(Integer)
 
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())
 
-    def convert(self, rssArticle: RSSArticle) -> None:
-        self.siteName = rssArticle.siteName
-        self.title = rssArticle.title
-        self.link = rssArticle.link
-        self.tags = rssArticle.tags
-        self.thumbnail = rssArticle.thumbnail
-        self.description = rssArticle.description
-        pass
+    def convert(self, Article: Articles) -> None:
+        self.siteName = Article.siteName
+        self.title = Article.title
+        self.link = Article.url
+        self.tags = Article.tags
+        self.thumbnail = Article.thumbnail
+        self.description = Article.description
+        self.video = Article.video
+        self.videoHeight = Article.videoHeight
+        self.videoWidth = Article.videoWidth
 
     def getQueue(self) -> List:
         s = database.newSession()
@@ -270,6 +285,9 @@ class DiscordQueue(Base):
         dq.tags = self.tags
         dq.thumbnail = self.thumbnail
         dq.description = self.description
+        dq.video = self.video
+        dq.videoHeight = self.videoHeight
+        dq.videoWidth = self.videoWidth
 
         try:
             s.add(dq)
