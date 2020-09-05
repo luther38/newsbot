@@ -1,7 +1,7 @@
 from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
-from newsbot.collections import RSSArticle
+from newsbot.collections import RSSArticle, EnvDetails
 import os
 
 
@@ -28,44 +28,76 @@ class Env:
         env = Path(".env")
         load_dotenv(dotenv_path=env)
 
+        #self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
+
         # Pokemon Go Hub
-        self.pogo_enabled = bool(os.getenv("NEWSBOT_POGO_ENABLED"))
-        try:
-            temp: str = os.getenv("NEWSBOT_POGO_HOOK")
-            tempList = temp.split(" ")
-            for i in tempList:
-                self.pogo_hooks.append(i)
-        except:
-            self.pogo_hooks = list()
+        self.pogo_enabled = self.readBoolEnv("NEWSBOT_POGO_ENABLED")
+        self.pogo_hooks = self.extractHooks("NEWSBOT_POGO_HOOK")
 
         # Phantasy Star Online 2
-        self.pso2_enabled = bool(os.getenv("NEWSBOT_PSO2_ENABLED"))
-        try:
-            temp: str = os.getenv("NEWSBOT_PSO2_HOOK")
-            tempList = temp.split(" ")
-            for i in tempList:
-                self.pso2_hooks.append(i)
-        except:
-            self.pso2_hooks = list()
+        self.pso2_enabled = self.readBoolEnv("NEWSBOT_PSO2_ENABLED")
+        self.pso2_hooks = self.extractHooks("NEWSBOT_PSO2_HOOK")
 
         # Final Fantasy XIV
         self.readFfxivValues()
+        self.readRedditValues()
 
     def readFfxivValues(self) -> None:
-        try:
-            self.ffxiv_all = bool(os.getenv("NEWSBOT_FFXIV_ALL"))
-            self.ffxiv_topics = bool(os.getenv("NEWSBOT_FFXIV_TOPICS"))
-            self.ffxiv_notices = bool(os.getenv("NEWSBOT_FFXIV_NOTICES"))
-            self.ffxiv_maintenance = bool(os.getenv("NEWSBOT_FFXIV_MAINTENANCE"))
-            self.ffxiv_updates = bool(os.getenv("NEWSBOT_FFXIV_UPDATES"))
-            self.ffxiv_status = bool(os.getenv("NEWSBOT_FFXIV_STATUS"))
+        self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
+        self.ffxiv_topics = self.readBoolEnv("NEWSBOT_FFXIV_TOPICS")
+        self.ffxiv_notices = self.readBoolEnv("NEWSBOT_FFXIV_NOTICES")
+        self.ffxiv_maintenance = self.readBoolEnv("NEWSBOT_FFXIV_MAINTENANCE")
+        self.ffxiv_updates = self.readBoolEnv("NEWSBOT_FFXIV_UPDATES")
+        self.ffxiv_status = self.readBoolEnv("NEWSBOT_FFXIV_STATUS")
 
-            temp: str = os.getenv("NEWSBOT_FFXIV_HOOK")
-            tempList = temp.split(" ")
-            for i in tempList:
-                self.ffxiv_hooks.append(i)
-        except:
-            self.ffxiv_hooks = list()
+        self.ffxiv_hooks = self.extractHooks("NEWSBOT_FFXIV_HOOK")
+
+    def readRedditValues(self) -> List[EnvDetails]:
+        counter = 0
+        items = list()
+
+        while counter <= 10:
+            sub = os.getenv(f"NEWSBOT_REDDIT_SUB_{counter}")
+            hooks = self.extractHooks(f"NEWSBOT_REDDIT_HOOK_{counter}")
+
+            if sub != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = sub
+                details.hooks = hooks
+                items.append(details)
+
+            counter = counter + 1
+
+        self.reddit_values = items
+
+    def extractHooks(self, sourceHooks) -> List[str]:
+        try:
+            t: str = os.getenv(sourceHooks)
+            if t != None:
+                tList = t.split(" ")
+                array = list()
+                for i in tList:
+                    array.append(i)
+                return array
+            else:
+                return list()
+
+        except Exception as e:
+            print(f"Failed to extract Webhook details from {sourceHooks}. {e}")
+            return list()
+
+    def readBoolEnv(self, env: str) -> bool:
+        res = os.getenv(env)
+        if res == None:
+            return False
+
+        if res.lower() == "true":
+            return True
+        elif res.lower() == "false":
+            return False
+        else:
+            return False
 
     def getPso2Values(self) -> List:
         r = {"enabled": self.pso2_enabled, "hooks": self.pso2_hooks}

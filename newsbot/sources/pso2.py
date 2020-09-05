@@ -1,5 +1,6 @@
 from newsbot import logger, env
 from newsbot.sources.rssreader import RSSReader
+from newsbot.tables import Sources, DiscordWebHooks, Articles
 from newsbot.collections import RSSArticle, RSSRoot, RssArticleImages, RssArticleLinks
 from newsbot.exceptions import UnableToFindContent
 from bs4 import BeautifulSoup
@@ -18,19 +19,20 @@ class PSO2Reader(RSSReader):
         self.checkEnv()
         pass
 
-    def getArticles(self) -> RSSRoot:
-        rss = RSSRoot()
-        rss.link = self.uri
-        rss.title = self.siteName
+    def getArticles(self) -> List[Articles]:
+        #rss = RSSRoot()
+        #rss.link = self.uri
+        #rss.title = self.siteName
 
+        allArticles: List[Articles] = list()
         for site in self.links:
-            logger.debug(f"{self.siteName} - {site['tag']} - Checking for updates.")
-            self.uri = site["uri"]
+            logger.debug(f"{site.name} - Checking for updates.")
+            self.uri = site.url
             page = self.getParser()
 
             try:
                 for news in page.find_all("li", {"class", "news-item all sr"}):
-                    a = RSSArticle()
+                    a = Articles()
                     a.siteName = "Phantasy Star Online 2"
                     a.thumbnail = re.findall(
                         "url[(](.*?)[)]", news.contents[1].attrs["style"]
@@ -52,14 +54,14 @@ class PSO2Reader(RSSReader):
                     if " " in cat:
                         cat = cat.replace(" ", "-")
 
-                    a.link = f"{self.uri}/{cat}/{link}"
+                    a.url = f"{self.uri}/{cat}/{link}"
 
-                    rss.articles.append(a)
+                    allArticles.append(a)
             except UnableToFindContent as e:
                 logger.error(f"PSO2 - Unable to find articles. {e}")
 
-        logger.debug(f"{self.siteName} - {site['tag']} - Finished collecting articles")
-        return rss
+        logger.debug(f"{site.name} - Finished collecting articles")
+        return allArticles
 
     def findNewsLinks(self, page: BeautifulSoup) -> BeautifulSoup:
         try:
@@ -86,7 +88,11 @@ class PSO2Reader(RSSReader):
             logger.error(f"{e}")
 
     def checkEnv(self):
-        self.hooks: List = env.pso2_hooks
+        res = Sources(name=self.siteName).findAllByName()
+        if len(res) >= 1:
+            for r in res:
+                self.links.append(r)
 
-        if env.pso2_enabled == True:
-            self.links.append({"tag": "News", "uri": "https://pso2.com/news"})
+            dwh = DiscordWebHooks(name=self.siteName).findAllByName()
+            for r in dwh:
+                self.hooks.append(r)

@@ -49,3 +49,10 @@ class Env:
         self.discord_delay_seconds: int = 60
         self.pogo_hooks: List[str] = list()
         self.pso2_hooks: List[str] = list()
+
+
+class EnvDetails:
+    def __init__(self) -> None:
+        self.enabled: bool = False
+        self.site: str = ""
+        self.hooks: List[str] = list()
