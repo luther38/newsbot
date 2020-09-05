@@ -16,6 +16,7 @@ from newsbot.collections import RSSArticle
 class FailedToAddToDatabase(Exception):
     pass
 
+
 class Articles(Base):
     __tablename__ = "articles"
     id = Column(String, primary_key=True)
@@ -24,10 +25,17 @@ class Articles(Base):
     title = Column(String)
     url = Column(String)
     pubDate = Column(String)
+    video = Column(String)
+    videoHeight = Column(Integer)
+    videoWidth = Column(Integer)
+    thumbnail = Column(String)
+    description = Column(String)
+
 
     def __init__(self, article: RSSArticle = RSSArticle()) -> None:
         self.id = str(uuid.uuid4())
         self.convertRssArticle(article)
+        #self.isVideo = False
 
     def convertRssArticle(self, article: RSSArticle) -> None:
         self.title = article.title
@@ -65,6 +73,10 @@ class Articles(Base):
         a.title = self.title
         a.url = self.url
         a.pubDate = self.pubDate
+        a.thumbnail = self.thumbnail
+        a.video = self.video
+        a.videoHeight = self.videoHeight
+        a.videoWidth = self.videoWidth
 
         try:
             s.add(a)
@@ -91,7 +103,6 @@ class Articles(Base):
 
         return len(l)
 
-
 class Sources(Base):
     __tablename__ = "sources"
     id = Column(String, primary_key=True)
@@ -99,7 +110,7 @@ class Sources(Base):
     url = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self, name='', url='') -> None:
+    def __init__(self, name="", url="") -> None:
         self.id = str(uuid.uuid4())
         self.name = name
         self.url = url
@@ -114,7 +125,7 @@ class Sources(Base):
         try:
             s.add(h)
             s.commit()
-            #logger.debug(f"'{self.name}' was added to the Discord queue")
+            # logger.debug(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
 
             logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
@@ -144,6 +155,18 @@ class Sources(Base):
             s.close()
             return hooks
 
+    def __len__(self) -> int:
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(DiscordWebHooks):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return len(l) 
 
 class DiscordWebHooks(Base):
     __tablename__ = "discordwebhooks"
@@ -152,7 +175,7 @@ class DiscordWebHooks(Base):
     key = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self, name='', key='') -> None:
+    def __init__(self, name="", key="") -> None:
         self.id = str(uuid.uuid4())
         self.name = name
         self.key = key
@@ -167,7 +190,7 @@ class DiscordWebHooks(Base):
         try:
             s.add(h)
             s.commit()
-            #logger.debug(f"'{self.name}' was added to the Discord queue")
+            # logger.debug(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
             logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
         finally:
@@ -188,7 +211,9 @@ class DiscordWebHooks(Base):
         s = database.newSession()
         hooks = list()
         try:
-            for res in s.query(DiscordWebHooks).filter(DiscordWebHooks.name.contains(self.name)):
+            for res in s.query(DiscordWebHooks).filter(
+                DiscordWebHooks.name.contains(self.name)
+            ):
                 hooks.append(res)
         except Exception as e:
             pass
@@ -196,6 +221,18 @@ class DiscordWebHooks(Base):
             s.close()
             return hooks
 
+    def __len__(self) -> int:
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(DiscordWebHooks):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return len(l) 
 
 class DiscordQueue(Base):
     __tablename__ = "discordQueue"
@@ -206,18 +243,23 @@ class DiscordQueue(Base):
     tags = Column(String)
     thumbnail = Column(String)
     description = Column(String)
+    video = Column(String)
+    videoHeight = Column(Integer)
+    videoWidth = Column(Integer)
 
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())
 
-    def convert(self, rssArticle: RSSArticle) -> None:
-        self.siteName = rssArticle.siteName
-        self.title = rssArticle.title
-        self.link = rssArticle.link
-        self.tags = rssArticle.tags
-        self.thumbnail = rssArticle.thumbnail
-        self.description = rssArticle.description
-        pass
+    def convert(self, Article: Articles) -> None:
+        self.siteName = Article.siteName
+        self.title = Article.title
+        self.link = Article.url
+        self.tags = Article.tags
+        self.thumbnail = Article.thumbnail
+        self.description = Article.description
+        self.video = Article.video
+        self.videoHeight = Article.videoHeight
+        self.videoWidth = Article.videoWidth
 
     def getQueue(self) -> List:
         s = database.newSession()
@@ -243,6 +285,9 @@ class DiscordQueue(Base):
         dq.tags = self.tags
         dq.thumbnail = self.thumbnail
         dq.description = self.description
+        dq.video = self.video
+        dq.videoHeight = self.videoHeight
+        dq.videoWidth = self.videoWidth
 
         try:
             s.add(dq)

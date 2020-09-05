@@ -12,4 +12,3 @@ class UnableToFindContent(NewsBotException):
     """
 
     pass
-
