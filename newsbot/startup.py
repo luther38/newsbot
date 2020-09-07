@@ -23,14 +23,14 @@ class Startup:
         db.runDatabaseTasks()
 
         # Turn on outputs first
-        oDiscord = Discord()
-        tDiscord = Thread(target=oDiscord.enableThread, name="Discord")
-        tDiscord.start()
+        #oDiscord = Discord()
+        #tDiscord = Thread(target=oDiscord.enableThread, name="Discord")
+        #`tDiscord.start()
 
         #s_ffxiv = FFXIVReader()
-        w_ffxiv = Worker(FFXIVReader())
-        t_ffxiv = Thread(target=w_ffxiv.init, name="Final Fantasy XIV")
-        t_ffxiv.start()
+        #w_ffxiv = Worker(FFXIVReader())
+        #t_ffxiv = Thread(target=w_ffxiv.init, name="Final Fantasy XIV")
+        #t_ffxiv.start()
 
         #s_pogo = PogohubReader()
         w_pogo = Worker(PogohubReader())
@@ -38,12 +38,12 @@ class Startup:
         t_pogo.start()
 
         #s_pso2 = PSO2Reader()
-        w_pso2 = Worker(PSO2Reader())
-        t_pso2 = Thread(target=w_pso2.init, name="PSO2")
-        t_pso2.start()
+        #w_pso2 = Worker(PSO2Reader())
+        #t_pso2 = Thread(target=w_pso2.init, name="PSO2")
+        #t_pso2.start()
 
         #s_reddit = RedditReader()
-        w_reddit = Worker(RedditReader())
-        t_reddit = Thread(target=w_reddit.init, name="Reddit")
-        t_reddit.start()
+        #w_reddit = Worker(RedditReader())
+        #t_reddit = Thread(target=w_reddit.init, name="Reddit")
+        #t_reddit.start()
 

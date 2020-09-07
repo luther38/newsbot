@@ -5,13 +5,13 @@ from newsbot import logger, env
 import re
 from time import sleep
 from newsbot.tables import DiscordQueue, DiscordWebHooks
-from newsbot.outputs.outputs import Outputs
+from newsbot.outputs.ioutputs import IOutputs
 from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
 
 
-class Discord(Outputs):
+class Discord(IOutputs):
     def __init__(self) -> None:
         self.table = DiscordQueue()
         pass

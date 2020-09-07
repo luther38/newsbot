@@ -27,9 +27,7 @@ class Worker:
         This is the entry point for the worker.  
         Once its turned on it will check the Source for new items.
         """
-        self.check()
-
-        if self.enabled == True:
+        if self.source.sourceEnabled == True:
             logger.debug(f"{self.source.siteName} Worker has started.")
 
             while True:
@@ -37,8 +35,6 @@ class Worker:
 
                 # Check the DB if it has been posted
                 for i in news:
-                    #i: RSSArticle = i
-                    #a = Articles(article=i)
                     exists = i.exists()
 
                     if exists == False:

@@ -1,91 +1,66 @@
-from typing import List
-import requests
-from bs4 import BeautifulSoup
-import re
-from newsbot import logger
-from newsbot.collections import RssArticleImages, RSSArticle, RssArticleLinks
 
+from typing import List
+from requests import get, Request
+from bs4 import BeautifulSoup
+from newsbot import logger
+from newsbot.tables import Articles
+
+class UnableToFindContent(Exception):
+    """
+    Used when failure to return results from a scrape request.
+    """
+    pass
+
+class UnableToParseContent(Exception):
+    """
+    This is used when a failure happens on parsing the content that came back from requests.
+    Could be malformed site, or just not what was expected.
+    """
 
 class RSSReader:
     def __init__(self, rootUrl: str = "") -> None:
+        # 
         self.rootUrl = rootUrl
-        self.uri: str = ""
-        
+        self.uri: str = ""  
+
+        self.headers = {"User-Agent": "NewsBot - Automated News Delivery"}
+
+        self.links = list()
+        self.hooks = list() 
+
+        self.sourceEnabled: bool = False
+        self.outputDiscord: bool = False     
         pass
 
-    def removeHTMLTags(self, text: str) -> str:
-        tags = ("<p>", "</p>", "<img >", "<h2>")
-        text = text.replace("\n", "")
-        text = text.replace("\t", "")
-        text = text.replace("<p>", "")
-        text = text.replace("</p>", "\r\n")
-        text = text.replace("&#8217;", "'")
-        spans = re.finditer("(?<=<span )(.*)(?=>)", text)
-        try:
-            if len(spans) >= 1:
-                print("money")
-        except:
-            pass
-
-        return text
-
-    def getLinks(self, description: str) -> List[RssArticleLinks]:
-        links = list()
-        # res = h.getByElement("a ", 'a', description)
-        res = re.findall("<a(.*?)a>", description)
-        for r in res:
-            a = RssArticleLinks()
-            a.raw = f"<a{r}a>"
-
-            href = re.findall('href="(.*?)"', r)
-            # href = h.getByAttribute('href', r)
-            a.href = href[0]
-
-            text = re.findall(">(.*?)</", r)
-            # text = h.getByElement('>', '</', r)
-            a.text = text[0]
-
-            links.append(a)
-        return links
-
-    def removeLinks(self, text: str) -> str:
-        res = re.findall("(?<=<a )(.*)(?=</a>)", text)
-        for i in res:
-            text = text.replace(i, "")
-
-        text = text.replace("<a </a>", "")
-        return text
-
-    def removeImageLinks(self, text: str) -> str:
-        res = re.findall("(?<=<img )(.*)(?=>)", text)
-        for i in res:
-            text = text.replace(i, "")
-
-        text = text.replace("<img >", "")
-        return text
-
-    def getArticleContent(self) -> None:
+    def getContent(self) -> Request:
         raise NotImplementedError
 
     def getParser(self) -> BeautifulSoup:
-        # raise NotImplementedError
-        try:
-            headers = {"User-Agent": "NewsBot - Automated News Delivery"}
-            r = requests.get(self.uri, headers=headers)
-        except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-        try:
-            bs = BeautifulSoup(r.content, features="html.parser")
-            return bs
-        except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
-
-    def getArticles(self) -> None:
         raise NotImplementedError
 
-    def processItem(self, parameter_list) -> RSSArticle:
+    def getArticles(self) -> List[Articles]:
+        """
+        This is the primary loop that checks the source to extract all the articles.
+        """
         raise NotImplementedError
 
     def checkEnv(self) -> None:
+        """
+        This runs at __init__ to check to see what is enabled.
+        """
+        raise NotImplementedError
+
+    def isSourceEnabled(self) -> bool:
+        """
+        Checks to see if the desired Source is enabled.
+        This will write all the valid URL's to self.links to loop though.
+        This also updates self.sourceEnabled
+        Returns -> Bool
+        """
+        raise NotImplementedError
+
+    def isDiscordOutput(self) -> None:
+        """
+        This checks to see if it was defined to add to the DiscordQueue.
+        """
         raise NotImplementedError
