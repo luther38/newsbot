@@ -1,7 +1,7 @@
-
 from typing import List
 from newsbot.tables import Sources, DiscordWebHooks
 from newsbot.sources.rssreader import RSSReader
+
 
 class YoutubeReader(RSSReader):
     def __init__(self):
@@ -13,4 +13,3 @@ class YoutubeReader(RSSReader):
 
         self.checkEnv()
         pass
-

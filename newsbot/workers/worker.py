@@ -1,6 +1,6 @@
 from newsbot import logger, env, database
 from newsbot.tables import Articles, DiscordQueue
-from newsbot.sources.rssreader import RSSReader
+from newsbot.sources.isources import ISources
 from newsbot.collections import RSSArticle
 from time import sleep
 
@@ -10,8 +10,8 @@ class Worker:
     This is a generic worker that will contain the source it will monitor.
     """
 
-    def __init__(self, source: RSSReader):
-        self.source: RSSReader = source
+    def __init__(self, source: ISources):
+        self.source: ISources = source
         self.enabled: bool = False
         pass
 
@@ -27,9 +27,7 @@ class Worker:
         This is the entry point for the worker.  
         Once its turned on it will check the Source for new items.
         """
-        self.check()
-
-        if self.enabled == True:
+        if self.source.sourceEnabled == True:
             logger.debug(f"{self.source.siteName} Worker has started.")
 
             while True:
@@ -37,8 +35,6 @@ class Worker:
 
                 # Check the DB if it has been posted
                 for i in news:
-                    #i: RSSArticle = i
-                    #a = Articles(article=i)
                     exists = i.exists()
 
                     if exists == False:

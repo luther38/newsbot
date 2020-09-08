@@ -2,7 +2,7 @@ from typing import List
 from newsbot.collections import RSSArticle
 
 
-class Outputs:
+class IOutputs:
     def __init__(self, articles: List[RSSArticle]):
         self.articles = articles
         pass

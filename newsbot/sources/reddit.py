@@ -1,41 +1,48 @@
 from typing import List
 from json import loads
 from newsbot import env, logger
-from newsbot.sources.rssreader import RSSReader
+from newsbot.sources.isources import ISources
 from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from time import sleep
+from requests import get, Response
+from bs4 import BeautifulSoup
 
 
-class RedditReader(RSSReader):
+class RedditReader(ISources):
     def __init__(self) -> None:
         self.uri = "https://reddit.com/r/aww/top.json"
-        # self.rootUrl = "https://reddit.com/r/aww/top.rss"
-
         self.siteName = "Reddit"
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
+        self.sourceEnabled: bool = False
+        self.outputDiscord: bool = False
 
         self.checkEnv()
-        pass
 
-    def checkEnv(self):
-        # So we know what subreddits to pull
-        res = Sources(name="Reddit").findAllByName()
+    def checkEnv(self) -> None:
+        # Check if Pokemon Go was requested
+        self.isSourceEnabled()
+        self.isDiscordOutputEnabled()
+
+    def isSourceEnabled(self) -> None:
+        res = Sources(name=self.siteName).findAllByName()
         if len(res) >= 1:
-            for r in res:
-                self.links.append(r)
+            self.links.append(res[0])
+            self.sourceEnabled = True
 
-            # so we know later on if we pass this to discord
-            dwh = DiscordWebHooks(name="Reddit").findAllByName()
-            for r in dwh:
-                self.hooks.append(r)
+    def isDiscordOutputEnabled(self) -> None:
+        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
+        if len(dwh) >= 1:
+            self.outputDiscord = True
+            for i in dwh:
+                self.hooks.append(i)
 
     def getArticles(self) -> List[Articles]:
         # TODO Flag NSFW
         allowNSFW = True
 
-        #rss = RSSRoot()
+        # rss = RSSRoot()
         allArticles: List[Articles] = list()
         for source in self.links:
             subreddit = source.name.replace("Reddit ", "")
@@ -44,7 +51,8 @@ class RedditReader(RSSReader):
 
             self.uri = f"https://reddit.com/r/{subreddit}/top.json"
 
-            page = self.getParser()
+            siteContent = self.getContent()
+            page = self.getParser(siteContent)
             json = loads(page.text)
 
             try:
@@ -58,7 +66,7 @@ class RedditReader(RSSReader):
 
             try:
                 for i in json["data"]["children"]:
-                    #a = RSSArticle()
+                    # a = RSSArticle()
                     a = Articles()
                     a.siteName = f"Reddit {subreddit}"
 
@@ -71,8 +79,8 @@ class RedditReader(RSSReader):
                     # figure out what url we are going to display
                     if d["is_video"] == True:
                         a.video = d["media"]["reddit_video"]["fallback_url"]
-                        a.videoHeight = d['media']['reddit_video']['height']
-                        a.videoWidth = d['media']['reddit_video']['width']
+                        a.videoHeight = d["media"]["reddit_video"]["height"]
+                        a.videoWidth = d["media"]["reddit_video"]["width"]
                         pass
                     elif d["media_only"] == True:
                         print("review dis")
@@ -81,8 +89,23 @@ class RedditReader(RSSReader):
 
                     allArticles.append(a)
             except Exception as e:
-                logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
+                logger.error(
+                    f"Failed to extract Reddit post.  Too many connections? {e}"
+                )
 
             sleep(15.0)
 
         return allArticles
+
+    def getContent(self) -> Response:
+        try:
+            headers = self.getHeaders()
+            return get(self.uri, headers=headers)
+        except Exception as e:
+            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+
+    def getParser(self, siteContent: Response) -> BeautifulSoup:
+        try:
+            return BeautifulSoup(siteContent.content, features="html.parser")
+        except Exception as e:
+            logger.critical(f"failed to parse data returned from requests. {e}")

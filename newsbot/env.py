@@ -28,7 +28,7 @@ class Env:
         env = Path(".env")
         load_dotenv(dotenv_path=env)
 
-        #self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
+        # self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
 
         # Pokemon Go Hub
         self.pogo_enabled = self.readBoolEnv("NEWSBOT_POGO_ENABLED")

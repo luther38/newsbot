@@ -13,6 +13,7 @@ from typing import List
 from newsbot import Base, database, logger
 from newsbot.collections import RSSArticle
 
+
 class FailedToAddToDatabase(Exception):
     pass
 
@@ -31,11 +32,10 @@ class Articles(Base):
     thumbnail = Column(String)
     description = Column(String)
 
-
     def __init__(self, article: RSSArticle = RSSArticle()) -> None:
         self.id = str(uuid.uuid4())
         self.convertRssArticle(article)
-        #self.isVideo = False
+        # self.isVideo = False
 
     def convertRssArticle(self, article: RSSArticle) -> None:
         self.title = article.title
@@ -103,6 +103,7 @@ class Articles(Base):
 
         return len(l)
 
+
 class Sources(Base):
     __tablename__ = "sources"
     id = Column(String, primary_key=True)
@@ -166,7 +167,8 @@ class Sources(Base):
         finally:
             s.close()
 
-        return len(l) 
+        return len(l)
+
 
 class DiscordWebHooks(Base):
     __tablename__ = "discordwebhooks"
@@ -232,7 +234,8 @@ class DiscordWebHooks(Base):
         finally:
             s.close()
 
-        return len(l) 
+        return len(l)
+
 
 class DiscordQueue(Base):
     __tablename__ = "discordQueue"
