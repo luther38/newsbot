@@ -1,33 +1,36 @@
 from newsbot import logger, env
-from newsbot.sources.rssreader import RSSReader, UnableToFindContent
+from newsbot.sources.isources import ISources, UnableToFindContent
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from newsbot.collections import RSSArticle, RSSRoot, RssArticleImages, RssArticleLinks
 from bs4 import BeautifulSoup
 from typing import List
 import re
-import requests
+from requests import get, Response
 
 
-class PSO2Reader(RSSReader):
+class PSO2Reader(ISources):
     def __init__(self) -> None:
         self.uri: str = "https://pso2.com/news"
         self.siteName: str = "Phantasy Star Online 2"
         self.links = list()
         self.hooks = list()
-
+        self.sourceEnabled: bool = False
+        self.outputDiscord: bool = False
         self.checkEnv()
         pass
 
     def getArticles(self) -> List[Articles]:
-        #rss = RSSRoot()
-        #rss.link = self.uri
-        #rss.title = self.siteName
-
         allArticles: List[Articles] = list()
         for site in self.links:
             logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
-            page = self.getParser()
+
+            siteContent: Response = self.getContent()
+            if siteContent.status_code != 200:
+                logger.error(
+                    f"The returned content from {self.siteName} is either malformed or incorrect.  We got the wrong status code.  Expected 200 but got {siteContent.status_code}"
+                )
+            page: BeautifulSoup = self.getParser(siteContent)
 
             try:
                 for news in page.find_all("li", {"class", "news-item all sr"}):
@@ -86,12 +89,33 @@ class PSO2Reader(RSSReader):
         except UnableToFindContent as e:
             logger.error(f"{e}")
 
-    def checkEnv(self):
+    def checkEnv(self) -> None:
+        self.isSourceEnabled()
+        self.isDiscordOutputEnabled()
+
+    def isSourceEnabled(self) -> None:
         res = Sources(name=self.siteName).findAllByName()
         if len(res) >= 1:
-            for r in res:
-                self.links.append(r)
+            self.links.append(res[0])
+            self.sourceEnabled = True
 
-            dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-            for r in dwh:
-                self.hooks.append(r)
+    def isDiscordOutputEnabled(self) -> None:
+        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
+        if len(dwh) >= 1:
+            self.outputDiscord = True
+            for i in dwh:
+                self.hooks.append(i)
+
+    def getContent(self) -> Response:
+        try:
+            headers = self.getHeaders()
+            r = get(self.uri, headers=headers)
+            return r
+        except Exception as e:
+            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+
+    def getParser(self, siteContent: Response) -> BeautifulSoup:
+        try:
+            return BeautifulSoup(siteContent.content, features="html.parser")
+        except Exception as e:
+            logger.critical(f"failed to parse data returned from requests. {e}")

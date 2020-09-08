@@ -1,41 +1,38 @@
 from typing import List
 from newsbot import logger, env
-#from newsbot.collections import RSSRoot, RSSArticle
-from newsbot.sources.rssreader import RSSReader, UnableToFindContent, UnableToParseContent
+
+# from newsbot.collections import RSSRoot, RSSArticle
+from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 import re
-from requests import get, Request
+from requests import get, Response
 from bs4 import BeautifulSoup
 
-class PogohubReader(RSSReader):
+
+class PogohubReader(ISources):
     def __init__(self) -> None:
-        self.rootUrl = "https://pokemongohub.net/rss"
+        self.uri = "https://pokemongohub.net/rss"
         self.siteName: str = "Pokemon Go Hub"
         self.links = list()
         self.hooks = list()
-
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-
         self.checkEnv()
         pass
 
-    def checkEnv(self):
+    def checkEnv(self) -> None:
         # Check if Pokemon Go was requested
         self.isSourceEnabled()
-        self.checkDiscordOutput()
+        self.isDiscordOutputEnabled()
 
-    def isSourceEnabled(self) -> bool:
-        res = Sources(name="Pokemon Go Hub").findAllByName()
+    def isSourceEnabled(self) -> None:
+        res = Sources(name=self.siteName).findAllByName()
         if len(res) >= 1:
             self.links.append(res[0])
             self.sourceEnabled = True
-            return self.sourceEnabled
 
-        return self.sourceEnabled
-
-    def checkDiscordOutput(self) -> None:
-        dwh = DiscordWebHooks(name="Pokemon Go Hub").findAllByName()
+    def isDiscordOutputEnabled(self) -> None:
+        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
         if len(dwh) >= 1:
             self.outputDiscord = True
             for i in dwh:
@@ -46,8 +43,13 @@ class PogohubReader(RSSReader):
             logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
 
-            siteContent: Request = self.getContent()
-            bs: BeautifulSoup = self.getParser()
+            siteContent: Response = self.getContent()
+            if siteContent.status_code != 200:
+                raise UnableToFindContent(
+                    f"Did not get status code 200.  Got status code {siteContent.status_code}"
+                )
+
+            bs: BeautifulSoup = self.getParser(siteContent)
 
             allArticles: List[Articles] = list()
             try:
@@ -67,17 +69,20 @@ class PogohubReader(RSSReader):
 
                 logger.debug(f"Pokemon Go Hub - Finished checking.")
             except Exception as e:
-                logger.error(f"Failed to parse articles from Pokemon Go Hub.  Chances are we have a malformed responce. {e}")
-            
+                logger.error(
+                    f"Failed to parse articles from Pokemon Go Hub.  Chances are we have a malformed responce. {e}"
+                )
+
         return allArticles
 
-    def getContent(self) -> Request:
+    def getContent(self) -> Response:
         try:
-            return get(self.uri, headers=self.headers)
+            headers = self.getHeaders()
+            return get(self.uri, headers=headers)
         except Exception as e:
             logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
-    def getParser(self, siteContent: Request) -> BeautifulSoup:
+    def getParser(self, siteContent: Response) -> BeautifulSoup:
         try:
             return BeautifulSoup(siteContent.content, features="html.parser")
         except Exception as e:

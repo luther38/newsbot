@@ -1,15 +1,17 @@
-
 from typing import List
-from requests import get, Request
+from requests import get, Response
 from bs4 import BeautifulSoup
 from newsbot import logger
 from newsbot.tables import Articles
+
 
 class UnableToFindContent(Exception):
     """
     Used when failure to return results from a scrape request.
     """
+
     pass
+
 
 class UnableToParseContent(Exception):
     """
@@ -17,22 +19,24 @@ class UnableToParseContent(Exception):
     Could be malformed site, or just not what was expected.
     """
 
-class RSSReader:
+
+class ISources:
     def __init__(self, rootUrl: str = "") -> None:
-        # 
-        self.rootUrl = rootUrl
-        self.uri: str = ""  
+        # This defines the URI that will be requested by requests.
+        # This can be static, or filled in by each loop of links.
+        self.uri: str = ""
 
-        self.headers = {"User-Agent": "NewsBot - Automated News Delivery"}
-
+        # This contains all the links that will be looped though.
         self.links = list()
-        self.hooks = list() 
+
+        # This contains all the DiscordWebHooks that relate to this Source.
+        self.hooks = list()
 
         self.sourceEnabled: bool = False
-        self.outputDiscord: bool = False     
+        self.outputDiscord: bool = False
         pass
 
-    def getContent(self) -> Request:
+    def getContent(self) -> Response:
         raise NotImplementedError
 
     def getParser(self) -> BeautifulSoup:
@@ -50,7 +54,7 @@ class RSSReader:
         """
         raise NotImplementedError
 
-    def isSourceEnabled(self) -> bool:
+    def isSourceEnabled(self) -> None:
         """
         Checks to see if the desired Source is enabled.
         This will write all the valid URL's to self.links to loop though.
@@ -59,8 +63,11 @@ class RSSReader:
         """
         raise NotImplementedError
 
-    def isDiscordOutput(self) -> None:
+    def isDiscordOutputEnabled(self) -> None:
         """
         This checks to see if it was defined to add to the DiscordQueue.
         """
         raise NotImplementedError
+
+    def getHeaders(self) -> dict:
+        return {"User-Agent": "NewsBot - Automated News Delivery"}

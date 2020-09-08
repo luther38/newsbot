@@ -1,6 +1,6 @@
 from newsbot import logger, env, database
 from newsbot.tables import Articles, DiscordQueue
-from newsbot.sources.rssreader import RSSReader
+from newsbot.sources.isources import ISources
 from newsbot.collections import RSSArticle
 from time import sleep
 
@@ -10,8 +10,8 @@ class Worker:
     This is a generic worker that will contain the source it will monitor.
     """
 
-    def __init__(self, source: RSSReader):
-        self.source: RSSReader = source
+    def __init__(self, source: ISources):
+        self.source: ISources = source
         self.enabled: bool = False
         pass
 

@@ -1,7 +1,5 @@
 from typing import List
-
 from newsbot import logger, env
-
 import re
 from time import sleep
 from newsbot.tables import DiscordQueue, DiscordWebHooks
@@ -9,7 +7,6 @@ from newsbot.outputs.ioutputs import IOutputs
 from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
-
 
 class Discord(IOutputs):
     def __init__(self) -> None:
@@ -35,7 +32,7 @@ class Discord(IOutputs):
     def sendMessage(self, article: DiscordQueue) -> Response:
         webhooks: List[str] = self.getHooks(article.siteName)
         hook: DiscordWebhook = DiscordWebhook(webhooks)
-        
+
         embed: DiscordEmbed = DiscordEmbed()
         embed.title = article.title
         embed.url = article.link
@@ -53,9 +50,8 @@ class Discord(IOutputs):
         if article.video != None:
             embed.description = "View the video online!"
             embed.set_video(
-                url=article.video,
-                height=article.videoHeight,
-                width=article.videoWidth)
+                url=article.video, height=article.videoHeight, width=article.videoWidth
+            )
 
         if article.thumbnail != None:
             embed.set_image(url=article.thumbnail)
@@ -117,19 +113,19 @@ class Discord(IOutputs):
         return msg
 
     def buildFooter(self, siteName: str) -> str:
-        footer = ''
+        footer = ""
         end: str = "Brought to you by NewsBot"
-        if 'reddit' in siteName.lower():
-            s = siteName.split(' ')
+        if "reddit" in siteName.lower():
+            s = siteName.split(" ")
             footer = f"/r/{s[1]} - {end}"
-            #embed.add_embed_field(name="Source", value=f"Reddit /r/{s[1]}")
-        elif 'Phantasy Star Online 2' in siteName:
+            # embed.add_embed_field(name="Source", value=f"Reddit /r/{s[1]}")
+        elif "Phantasy Star Online 2" in siteName:
             footer = f"Phantasy Star Online 2 - {end}"
-        elif 'Final Fantasy XIV' in siteName:
+        elif "Final Fantasy XIV" in siteName:
             footer = f"Final Fantasy XIV - {end}"
-        elif 'Pokemon Go Hub' in siteName:
+        elif "Pokemon Go Hub" in siteName:
             footer = f"Pokemon Go Hub - {end}"
         else:
             footer = end
-        
+
         return footer
