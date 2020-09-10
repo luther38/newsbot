@@ -11,6 +11,7 @@ from requests import Response
 class Discord(IOutputs):
     def __init__(self) -> None:
         self.table = DiscordQueue()
+        self.tempMessage: DiscordWebhook = DiscordWebhook("placeholder")
         pass
 
     def enableThread(self) -> None:
@@ -28,14 +29,27 @@ class Discord(IOutputs):
 
             sleep(env.discord_delay_seconds)
 
-    # def sendMessage(self, article: RSSArticle) -> Response:
-    def sendMessage(self, article: DiscordQueue) -> Response:
+    def buildMessage(self, article: DiscordQueue) -> None:
+        # reset the stored message
+        self.tempMessage = DiscordWebhook("placeholder")
+
+        # Extract the webhooks that relate to this site
         webhooks: List[str] = self.getHooks(article.siteName)
+
+        # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
 
-        embed: DiscordEmbed = DiscordEmbed()
-        embed.title = article.title
-        embed.url = article.link
+        title = article.title
+        if len(title) >= 128:
+            title = f"{title[0:128]}..."
+
+        # Make a new Embed object
+        embed: DiscordEmbed = DiscordEmbed(
+            title=title,
+            url=article.link
+        )
+        #embed.title = article.title
+        #embed.url = article.link
 
         # Discord Embed Description can only contain 2048 characters
         if article.description != None:
@@ -47,6 +61,7 @@ class Discord(IOutputs):
                 description = f"{description}..."
             embed.description = description
 
+        # Figure out if we have video based content
         if article.video != None:
             embed.description = "View the video online!"
             embed.set_video(
@@ -60,10 +75,16 @@ class Discord(IOutputs):
         footer = self.buildFooter(article.siteName)
         embed.set_footer(text=footer)
 
+        embed.set_color(color=self.getEmbedColor(article.siteName))
+
         hook.add_embed(embed)
+        self.tempMessage = hook
+
+    def sendMessage(self, article: DiscordQueue) -> Response:
         logger.debug(f"Discord - Sending article '{article.title}'")
+        self.buildMessage(article)
         try:
-            res = hook.execute()
+            res = self.tempMessage.execute()
         except Exception as e:
             logger.critical(
                 f"Failed to send to Discord.  Check to ensure the webhook is correct. {e}"
@@ -125,7 +146,14 @@ class Discord(IOutputs):
             footer = f"Final Fantasy XIV - {end}"
         elif "Pokemon Go Hub" in siteName:
             footer = f"Pokemon Go Hub - {end}"
+        elif "Youtube" in siteName:
+            s = siteName.split(' ')
+            footer = f"Youtube - {s[1]} - {end}"
         else:
             footer = end
 
         return footer
+
+    def getEmbedColor(self, siteName: str) -> int:
+        if "Youtube" in siteName:
+            return 16384771

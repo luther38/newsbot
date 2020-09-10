@@ -1,13 +1,10 @@
 from typing import List
 from newsbot import logger, env
-
-# from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 import re
 from requests import get, Response
 from bs4 import BeautifulSoup
-
 
 class PogohubReader(ISources):
     def __init__(self) -> None:

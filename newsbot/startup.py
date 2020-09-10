@@ -3,8 +3,7 @@ from newsbot.outputs.discord import Discord
 from newsbot.workers.worker import Worker
 from newsbot.sources.ffxiv import FFXIVReader
 from newsbot.sources.pso2 import PSO2Reader
-
-# from newsbot.sources.youtube import YouTubeReader
+from newsbot.sources.youtube import YoutubeReader
 from newsbot.sources.reddit import RedditReader
 from newsbot.sources.pokemongohub import PogohubReader
 from newsbot.tables import Sources, DiscordWebHooks
@@ -43,3 +42,7 @@ class Startup:
         w_reddit = Worker(RedditReader())
         t_reddit = Thread(target=w_reddit.init, name="Reddit")
         t_reddit.start()
+
+        w_youtube = Worker(YoutubeReader())
+        t_youtube = Thread(target=w_youtube.init, name="Youtube")
+        t_youtube.start()

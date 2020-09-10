@@ -81,7 +81,8 @@ class RedditReader(ISources):
                         a.video = d["media"]["reddit_video"]["fallback_url"]
                         a.videoHeight = d["media"]["reddit_video"]["height"]
                         a.videoWidth = d["media"]["reddit_video"]["width"]
-                        pass
+                        a.thumbnail = self.getVideoThumbnail(d['preview'])
+
                     elif d["media_only"] == True:
                         print("review dis")
                     else:
@@ -93,7 +94,7 @@ class RedditReader(ISources):
                     f"Failed to extract Reddit post.  Too many connections? {e}"
                 )
 
-            sleep(15.0)
+            sleep(5.0)
 
         return allArticles
 
@@ -109,3 +110,9 @@ class RedditReader(ISources):
             return BeautifulSoup(siteContent.content, features="html.parser")
         except Exception as e:
             logger.critical(f"failed to parse data returned from requests. {e}")
+
+    def getVideoThumbnail(self, preview) -> str:
+        try:
+            return preview['images'][0]['source']['url']
+        except:
+            return ""
