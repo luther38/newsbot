@@ -55,4 +55,5 @@ class EnvDetails:
     def __init__(self) -> None:
         self.enabled: bool = False
         self.site: str = ""
+        self.name: str = ""
         self.hooks: List[str] = list()

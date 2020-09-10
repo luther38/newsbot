@@ -9,10 +9,11 @@ Currently, it reads collects news for the following sites.
 * [Final Fantasy XIV](https://na.finalfantasyxiv.com/lodestone/news/)
 * [Pokemon Go Hub](https://pokemongohub.net/)
 * [Reddit](https://reddit.com)
+* [YouTube](https://youtube.com)
 
 The results that are collected are then sent to the following platforms.
 
-* [Discord - Webhooks](https://discord.com/new)
+* [Discord - Webhooks](https://discord.com/)
 
 ## Deploy
 
@@ -28,16 +29,36 @@ The application settings are currently stored in the .env file.  Use the templat
 
 To send to discord for a site, add the webhook url to the HOOK variable.  You can also send to more then one webhook.  With each variable, add a space between them and the program will convert it to two different webhooks.
 
+### Reddit
+
 Each subreddit is defined by its own number value.
 
-`NEWSBOT_REDDIT_SUB_0 = aww`
-`NEWSBOT_REDDIT_HOOK_0 = webHookUrl`
-`NEWSBOT_REDDIT_SUB_1 = python`
-`NEWSBOT_REDDIT_HOOK_1 = webHookUrl`
+```ini
+NEWSBOT_REDDIT_SUB_0=aww
+NEWSBOT_REDDIT_HOOK_0=webHookUrl
+NEWSBOT_REDDIT_SUB_1=python
+NEWSBOT_REDDIT_HOOK_1=webHookUrl
+```
 
 Currently, 10 different subreddits can be monitored.  Each subreddit will need its own entry with the correct values.
 
+### YouTube
+
+```ini
+NEWSBOT_YOUTUBE_URL_0=https://www.youtube.com/user/gamegrumps
+NEWSBOT_YOUTUBE_HOOK_0=webHookUrl
+NEWSBOT_YOUTUBE_NAME_0=GameGrumps
+```
+
 [Configuration Template](https://github.com/jtom38/newsbot/blob/master/env.template)
+
+## Known Issues
+
+### Discord Webhook Video Embed
+
+At this time Discord webhooks do not support playing video links inside Discord.  This is a requested feature but it has not had any movement.
+
+[Feature Request](https://support.discord.com/hc/en-us/community/posts/360037387352-Videos-in-Rich-Embeds)
 
 ## Tools
 

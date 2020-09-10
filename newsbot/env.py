@@ -40,7 +40,10 @@ class Env:
 
         # Final Fantasy XIV
         self.readFfxivValues()
+
         self.readRedditValues()
+
+        self.readYoutubeValues()
 
     def readFfxivValues(self) -> None:
         self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
@@ -70,6 +73,27 @@ class Env:
             counter = counter + 1
 
         self.reddit_values = items
+    
+    def readYoutubeValues(self) -> None:
+        counter = 0
+        items = list()
+
+        while counter <= 10:
+            sub = os.getenv(f"NEWSBOT_YOUTUBE_URL_{counter}")
+            name = os.getenv(f"NEWSBOT_YOUTUBE_NAME_{counter}")
+            hooks = self.extractHooks(f"NEWSBOT_YOUTUBE_HOOK_{counter}")
+
+            if sub != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = sub
+                details.hooks = hooks
+                details.name = name
+                items.append(details)
+
+            counter = counter + 1
+
+        self.youtube_values = items 
 
     def extractHooks(self, sourceHooks) -> List[str]:
         try:
