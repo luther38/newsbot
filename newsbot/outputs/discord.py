@@ -39,9 +39,13 @@ class Discord(IOutputs):
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
 
+        title = article.title
+        if len(title) >= 128:
+            title = f"{title[0:128]}..."
+
         # Make a new Embed object
         embed: DiscordEmbed = DiscordEmbed(
-            title=article.title,
+            title=title,
             url=article.link
         )
         #embed.title = article.title

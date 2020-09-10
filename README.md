@@ -59,9 +59,3 @@ NEWSBOT_YOUTUBE_NAME_0=GameGrumps
 At this time Discord webhooks do not support playing video links inside Discord.  This is a requested feature but it has not had any movement.
 
 [Feature Request](https://support.discord.com/hc/en-us/community/posts/360037387352-Videos-in-Rich-Embeds)
-
-## Tools
-
-* Python 3
-* Beautiful Soup
-* Requests
