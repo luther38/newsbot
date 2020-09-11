@@ -7,5 +7,5 @@ class Logger:
         pass
 
     def init(self) -> logger:
-        logger.add("newsbot.log", rotation="500 MB")
+        logger.add("./mounts/logs/newsbot.log", rotation="500 MB")
         return logger
