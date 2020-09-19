@@ -146,11 +146,20 @@ class Discord(IOutputs):
         elif "Youtube" in siteName:
             s = siteName.split(" ")
             footer = f"Youtube - {s[1]} - {end}"
+        elif "Instagram" in siteName:
+            s = siteName.split(" ")
+            if s[1] == 'tag':
+                footer = f"Instagram - #{s[2]} - {end}"
+            elif s[1] == 'user':
+                footer = f"Instagram - {s[2]} - {end}"
         else:
             footer = end
 
         return footer
 
     def getEmbedColor(self, siteName: str) -> int:
+        # Decimal values can be collected from https://www.spycolor.com
         if "Youtube" in siteName:
             return 16384771
+        if "Instagram" in siteName:
+            return 	8913151

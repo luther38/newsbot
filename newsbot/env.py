@@ -102,15 +102,28 @@ class Env:
         items = list()
         base = "NEWSBOT_INSTAGRAM"
         while counter <= 10:
-            sub = os.getenv(f"{base}_NAME_{counter}")
-            hooks = self.extractHooks(f"{base}_HOOK_{counter}")
+            # User Posts
+            sub = os.getenv(f"{base}_USER_NAME_{counter}")
+            hooks = self.extractHooks(f"{base}_USER_HOOK_{counter}")
 
             if sub != None or len(hooks) >= 1:
                 details = EnvDetails()
                 details.enabled = True
                 details.site = sub
                 details.hooks = hooks
-                details.name = sub
+                details.name = f"user {sub}"
+                items.append(details)
+
+            # Tags Posts
+            tag = os.getenv(f"{base}_TAG_NAME_{counter}")
+            hooks = self.extractHooks(f"{base}_TAG_HOOK_{counter}")
+
+            if tag != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = tag
+                details.hooks = hooks
+                details.name = f"tag {tag}"
                 items.append(details)
 
             counter = counter + 1

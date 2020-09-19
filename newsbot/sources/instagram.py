@@ -16,6 +16,7 @@ class InstagramReader(ISources):
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
+        self.currentLink: Sources = Sources()
         self.driver = self.getWebDriver()
         self.checkEnv()
         pass
@@ -54,13 +55,23 @@ class InstagramReader(ISources):
         allArticles: List[Articles] = list()
         
         for site in self.links:
-            nameSplit = site.name.split(" ")
-            self.uri = f"{self.baseUri}{nameSplit[1]}"
-            self.siteName = f"Instagram {nameSplit[1]}"
-            logger.debug(f"Instagram - {nameSplit[1]} - Checking for updates.")
-            self.__driverGet__(self.uri)
+            self.currentLink = site
 
-            links = self.getArticleLinks()
+            nameSplit = site.name.split(" ")
+            igType = nameSplit[1]
+            self.siteName = f"Instagram {nameSplit[2]}"
+            logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
+
+            # Figure out if we are looking for a user or tag
+            if igType == 'user':
+                self.uri = f"{self.baseUri}{nameSplit[2]}"
+                self.__driverGet__(self.uri)
+                links = self.getUserArticleLinks()
+            elif igType == 'tag':
+                self.uri = f"{self.baseUri}explore/tags/{nameSplit[2]}/"
+                self.__driverGet__(self.uri)
+                links = self.getTagArticleLinks()
+
             for l in links:
                 # check if we have already seen the url
                 a = Articles(url=l)
@@ -93,7 +104,7 @@ class InstagramReader(ISources):
         except Exception as e:
             logger.critical(f"failed to parse data returned from requests. {e}")
 
-    def getArticleLinks(self) -> List[str]:
+    def getUserArticleLinks(self) -> List[str]:
         """
         This reviews a users page to find all the links that relate to each post they have made.
         """
@@ -114,8 +125,48 @@ class InstagramReader(ISources):
 
         return links
 
+    def getTagArticleLinks(self) -> List[str]:
+        """
+        This checks the tag for the newst posts.
+        """
+        links = list()
+
+        try:
+            source: str = self.getContent()
+            soup: BeautifulSoup = self.getParser(source)
+            res = soup.find_all(name="article")
+
+            # Top Posts
+            links = self.getArticleLinks(res[0].contents[0].contents[1].contents[0].contents, links)
+        
+            # Recent
+            links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
+
+        except Exception as e:
+            logger.error("Driver ran into a problem pulling links from a tag.")
+
+        return links
+
+    def getArticleLinks(self, soupList: List, linkList: List) -> List[str]:
+        
+        for i in soupList:
+            try:
+                for l in i.contents:
+                    linkList.append(
+                        f"https://www.instagram.com{l.contents[0].attrs['href']}"
+                    )
+            except Exception as e:
+                logger.error(f"Failed to extract post link. {e}")
+        return linkList
+
     def getPostInfo(self, link: str) -> Articles:
-        a = Articles(url=link, siteName=self.siteName, tags="instagram, posts")
+        a = Articles(url=link, siteName=self.currentLink.name, tags="instagram, posts")
+        nameSplit = self.currentLink.name.split(' ')
+        if "tag" in self.currentLink.name:
+            a.tags += f", tag, {nameSplit[2]}"
+        elif "user" in self.currentLink.name:
+            a.tags += f", user, {nameSplit[2]}"
+
         self.__driverGet__(link)
         source = self.getContent()
         soup = self.getParser(source)
