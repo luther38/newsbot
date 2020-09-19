@@ -3,3 +3,4 @@
 *.newsbot.db
 .env
 newsbot.log
+chromedriver

@@ -11,7 +11,6 @@ from sqlalchemy import (
 import uuid
 from typing import List
 from newsbot import Base, database, logger
-from newsbot.collections import RSSArticle
 
 
 class FailedToAddToDatabase(Exception):
@@ -32,17 +31,30 @@ class Articles(Base):
     thumbnail = Column(String)
     description = Column(String)
 
-    def __init__(self, article: RSSArticle = RSSArticle()) -> None:
+    def __init__(
+        self,
+        siteName: str = "",
+        tags: str = "",
+        title: str = "",
+        url: str = "",
+        pubDate: str = "",
+        video: str = "",
+        videoHeight: int = -1,
+        videoWidth: int = -1,
+        thumbnail: str = "",
+        description: str = "",
+    ) -> None:
         self.id = str(uuid.uuid4())
-        self.convertRssArticle(article)
-        # self.isVideo = False
-
-    def convertRssArticle(self, article: RSSArticle) -> None:
-        self.title = article.title
-        self.siteName = article.siteName
-        self.pubDate = article.pubDate
-        self.tags = article.tags
-        self.url = article.link
+        self.siteName = siteName
+        self.tags = tags
+        self.title = title
+        self.url = url
+        self.pubDate = pubDate
+        self.video = video
+        self.videoHeight = videoHeight
+        self.videoWidth = videoWidth
+        self.thumbnail = thumbnail
+        self.description = description
 
     def exists(self) -> bool:
         """

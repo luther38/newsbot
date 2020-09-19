@@ -1,7 +1,6 @@
 from newsbot import logger, env
 from newsbot.sources.isources import ISources, UnableToFindContent
 from newsbot.tables import Sources, DiscordWebHooks, Articles
-from newsbot.collections import RSSArticle, RSSRoot, RssArticleImages, RssArticleLinks
 from bs4 import BeautifulSoup
 from typing import List
 import re

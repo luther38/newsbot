@@ -1,9 +1,10 @@
 from newsbot.tables import Sources
 from newsbot.sources.reddit import RedditReader
 
+
 class TestReddit:
     def test_00EnableSource(self):
-        Sources(name="Reddit Python", url='https://reddit.com/r/python').add()
+        Sources(name="Reddit Python", url="https://reddit.com/r/python").add()
         res = Sources(name="Reddit").findAllByName()
         if len(res) >= 1:
             assert True

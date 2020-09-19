@@ -4,9 +4,9 @@ import re
 from time import sleep
 from newsbot.tables import DiscordQueue, DiscordWebHooks
 from newsbot.outputs.ioutputs import IOutputs
-from newsbot.collections import RSSArticle, RssArticleLinks
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
+
 
 class Discord(IOutputs):
     def __init__(self) -> None:
@@ -44,15 +44,12 @@ class Discord(IOutputs):
             title = f"{title[0:128]}..."
 
         # Make a new Embed object
-        embed: DiscordEmbed = DiscordEmbed(
-            title=title,
-            url=article.link
-        )
-        #embed.title = article.title
-        #embed.url = article.link
+        embed: DiscordEmbed = DiscordEmbed(title=title, url=article.link)
+        # embed.title = article.title
+        # embed.url = article.link
 
         # Discord Embed Description can only contain 2048 characters
-        if article.description != None:
+        if article.description != '':
             description: str = str(article.description)
             description = self.convertFromHtml(description)
             descriptionCount = len(description)
@@ -62,13 +59,13 @@ class Discord(IOutputs):
             embed.description = description
 
         # Figure out if we have video based content
-        if article.video != None:
+        if article.video != '':
             embed.description = "View the video online!"
             embed.set_video(
                 url=article.video, height=article.videoHeight, width=article.videoWidth
             )
 
-        if article.thumbnail != None:
+        if article.thumbnail != '':
             embed.set_image(url=article.thumbnail)
 
         # Build our footer message
@@ -147,7 +144,7 @@ class Discord(IOutputs):
         elif "Pokemon Go Hub" in siteName:
             footer = f"Pokemon Go Hub - {end}"
         elif "Youtube" in siteName:
-            s = siteName.split(' ')
+            s = siteName.split(" ")
             footer = f"Youtube - {s[1]} - {end}"
         else:
             footer = end

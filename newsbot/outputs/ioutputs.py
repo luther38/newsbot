@@ -1,5 +1,4 @@
 from typing import List
-from newsbot.collections import RSSArticle
 
 
 class IOutputs:

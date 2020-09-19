@@ -5,6 +5,7 @@ from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
 
+
 class YoutubeReader(ISources):
     def __init__(self):
         self.uri: str = "https://youtube.com"
@@ -28,9 +29,9 @@ class YoutubeReader(ISources):
     def isSourceEnabled(self) -> None:
         res = Sources(name=self.siteName).findAllByName()
         if len(res) >= 1:
+            self.sourceEnabled = True
             for i in res:
                 self.links.append(i)
-                self.sourceEnabled = True
 
     def isDiscordOutputEnabled(self) -> None:
         dwh = DiscordWebHooks(name=self.siteName).findAllByName()
@@ -57,15 +58,15 @@ class YoutubeReader(ISources):
             for item in root:
                 if item.name == "entry":
                     a = Articles()
-                    a.url = item.contents[9].attrs['href']
+                    a.url = item.contents[9].attrs["href"]
                     a.video = a.url
                     a.title = item.contents[7].text
                     a.pubDate = item.contents[13].text
                     a.siteName = site.name
-                    a.thumbnail = item.contents[17].contents[5].attrs['url']
+                    a.thumbnail = item.contents[17].contents[5].attrs["url"]
 
                     allArticles.append(a)
-                    
+
         return allArticles
 
     def getContent(self) -> Response:
@@ -84,14 +85,14 @@ class YoutubeReader(ISources):
     def getChannelId(self) -> str:
         siteContent: Response = self.getContent()
         page: BeautifulSoup = self.getParser(siteContent)
-        
+
         meta = page.find_all("meta")
         for i in meta:
             try:
-                if i.attrs['itemprop'] == "channelId":
-                    channelId = i.attrs['content']
+                if i.attrs["itemprop"] == "channelId":
+                    channelId = i.attrs["content"]
                     return channelId
             except:
                 pass
-        
-        return ''
+
+        return ""

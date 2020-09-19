@@ -2,6 +2,7 @@ from os import system
 from newsbot import env
 from newsbot.tables import Sources, DiscordWebHooks
 
+
 class InitDb:
     def __init__(self) -> None:
         # self.runMigrations()
@@ -80,6 +81,13 @@ class InitDb:
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
+    def checkInstagram(self):
+        for i in env.instagram_values:
+            r1 = f"Instagram {i.name}"
+            Sources(name=r1, url=i.site).add()
+            for h in i.hooks:
+                DiscordWebHooks(name=r1, key=h).add()
+
     def runDatabaseTasks(self):
 
         # Inject new values based off env values
@@ -89,3 +97,4 @@ class InitDb:
         self.checkFinalFantasyXIV()
         self.checkReddit()
         self.checkYoutube()
+        self.checkInstagram()
