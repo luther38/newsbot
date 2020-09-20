@@ -176,7 +176,9 @@ class InstagramReader(ISources):
         # Get the title from the post
         title = soup.find_all(name="span", attrs={"class", ""})
         a.title = self.cleanTitle(title[1].text)
-        a.tags = self.getTags(title[1].text)
+        tags = self.getTags(title[1].text)
+        if tags != '':
+            a.tags = tags
 
         # Get when the post went up
         dt = soup.find_all(name="time", attrs={"class": "FH9sR Nzb55"})
@@ -210,6 +212,8 @@ class InstagramReader(ISources):
         for i in images:
             if "photo by " in i.attrs["alt"].lower():
                 return i.attrs["src"]
+            elif "photo shared by" in i.attrs["alt"].lower():
+                return i.attrs["src"]
 
     def __driverGet__(self, uri: str) -> None:
         try:
@@ -227,18 +231,27 @@ class InstagramReader(ISources):
     def getTags(self, text: str) -> str:
         t = ''
         res = findall('#[a-zA-Z0-9].*', text)
-        tags = res[0].split('#')
-        for i in tags:
-            try:
-                i:str = i.replace(' ', '')
-                if i != '':
-                    t += f"{i}, "
-            except:
-                pass
+        if len(res) >= 1:
+            tags = res[0].split('#')
+            for i in tags:
+                try:
+                    i:str = i.replace(' ', '')
+                    if i != '':
+                        t += f"{i}, "
+                except:
+                    pass
         return t
+        
 
     def cleanTitle(self, text: str) -> str:
+        """
+        This will check the text given for Instagram tags. If they are found, remove them.
+        If no tags are found from regex, it will return the given text.
+        """
         t = ''
         res = findall('#[a-zA-Z0-9].*', text)
-        t = text.replace(res[0], "")
-        return t
+        if len(res) >= 1:
+            t = text.replace(res[0], "")
+            return t
+        else:
+            return text
