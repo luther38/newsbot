@@ -1,6 +1,4 @@
-FROM python:3.8
-
-RUN apt install libglib2 libnss3 libgconf libfontconfig1
+FROM python:3.8-slim-buster
 
 COPY . /app
 
@@ -8,12 +6,15 @@ WORKDIR /app
 
 RUN pip3 install -r requirements.txt
 
-RUN curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /chrome.deb
-RUN dpkg -i /chrome.deb || apt-get install -yf
-RUN rm /chrome.deb
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && \
+	apt-get install -y curl unzip
 
-RUN wget https://chromedriver.storage.googleapis.com/86.0.4240.22/chromedriver_linux64.zip && \
-	unzip ./chromedriver_linux64.zip && \
-	rm ./chromedriver_linux64.zip
+RUN curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
+	&& dpkg -i /tmp/chrome.deb || apt-get install -yf \
+	&& rm /tmp/chrome.deb
+
+RUN curl https://chromedriver.storage.googleapis.com/85.0.4183.87/chromedriver_linux64.zip -o /tmp/chromedriver_linux64.zip \
+    && unzip /tmp/chromedriver_linux64.zip -d /usr/local/bin/ \
+    && chmod +x /usr/local/bin/chromedriver
 
 CMD [ "python", "app.py" ]

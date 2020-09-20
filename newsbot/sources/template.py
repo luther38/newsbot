@@ -5,7 +5,6 @@ from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
 
-
 class TemplateReader(ISources):
     def __init__(self) -> None:
         self.uri = "https://example.net/"
@@ -18,15 +17,16 @@ class TemplateReader(ISources):
         pass
 
     def checkEnv(self) -> None:
-        # Check if Pokemon Go was requested
+        # Check if site was requested.
         self.isSourceEnabled()
         self.isDiscordOutputEnabled()
 
     def isSourceEnabled(self) -> None:
         res = Sources(name=self.siteName).findAllByName()
         if len(res) >= 1:
-            self.links.append(res[0])
             self.sourceEnabled = True
+            for i in res:
+                self.links.append(i)
 
     def isDiscordOutputEnabled(self) -> None:
         dwh = DiscordWebHooks(name=self.siteName).findAllByName()
@@ -36,37 +36,18 @@ class TemplateReader(ISources):
                 self.hooks.append(i)
 
     def getArticles(self) -> List[Articles]:
-        for site in self.links:
-            logger.debug(f"{site.name} - Checking for updates.")
-            self.uri = site.url
+        pass
 
-            siteContent: Response = self.getContent()
-            if siteContent.status_code != 200:
-                raise UnableToFindContent(
-                    f"Did not get status code 200.  Got status code {siteContent.status_code}"
-                )
-
-            bs: BeautifulSoup = self.getParser(siteContent)
-
-            allArticles: List[Articles] = list()
-            try:
-                logger.debug(f"{self.siteName} - Finished checking.")
-            except Exception as e:
-                logger.error(
-                    f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed responce. {e}"
-                )
-
-        return allArticles
-
-    def getContent(self) -> Response:
+    def getContent(self) -> str:
         try:
             headers = self.getHeaders()
-            return get(self.uri, headers=headers)
+            res: Response = get(self.uri, headers=headers)
+            return str(res.content)
         except Exception as e:
             logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
-    def getParser(self, siteContent: Response) -> BeautifulSoup:
+    def getParser(self, siteContent: str) -> BeautifulSoup:
         try:
-            return BeautifulSoup(siteContent.content, features="html.parser")
+            return BeautifulSoup(siteContent, features="html.parser")
         except Exception as e:
             logger.critical(f"failed to parse data returned from requests. {e}")

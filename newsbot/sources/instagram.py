@@ -4,6 +4,7 @@ from newsbot.sources.isources import ISources, UnableToFindContent, UnableToPars
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
+from re import findall
 from selenium.webdriver import Chrome, ChromeOptions
 
 
@@ -140,7 +141,8 @@ class InstagramReader(ISources):
             links = self.getArticleLinks(res[0].contents[0].contents[1].contents[0].contents, links)
         
             # Recent
-            links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
+            # TODO Need a way to define options on Instagram Tags.  One might not want EVERYTHING.
+            #links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
 
         except Exception as e:
             logger.error("Driver ran into a problem pulling links from a tag.")
@@ -173,7 +175,8 @@ class InstagramReader(ISources):
 
         # Get the title from the post
         title = soup.find_all(name="span", attrs={"class", ""})
-        a.title = title[1].text
+        a.title = self.cleanTitle(title[1].text)
+        a.tags = self.getTags(title[1].text)
 
         # Get when the post went up
         dt = soup.find_all(name="time", attrs={"class": "FH9sR Nzb55"})
@@ -220,3 +223,22 @@ class InstagramReader(ISources):
             self.driver.close()
         except Exception as e:
             logger.error(f"Driver failed to close. Error: {e}")
+
+    def getTags(self, text: str) -> str:
+        t = ''
+        res = findall('#[a-zA-Z0-9].*', text)
+        tags = res[0].split('#')
+        for i in tags:
+            try:
+                i:str = i.replace(' ', '')
+                if i != '':
+                    t += f"{i}, "
+            except:
+                pass
+        return t
+
+    def cleanTitle(self, text: str) -> str:
+        t = ''
+        res = findall('#[a-zA-Z0-9].*', text)
+        t = text.replace(res[0], "")
+        return t
