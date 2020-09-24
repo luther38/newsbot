@@ -18,7 +18,6 @@ class InstagramReader(ISources):
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
         self.currentLink: Sources = Sources()
-        self.driver = self.getWebDriver()
         self.checkEnv()
         pass
 
@@ -29,7 +28,8 @@ class InstagramReader(ISources):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         try:
-            return Chrome(options=options)
+            driver = Chrome(options=options)
+            return driver
         except Exception as e:
             logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
@@ -53,6 +53,7 @@ class InstagramReader(ISources):
                 self.hooks.append(i)
 
     def getArticles(self) -> List[Articles]:
+        self.driver = self.getWebDriver()
         allArticles: List[Articles] = list()
 
         for site in self.links:
@@ -88,7 +89,7 @@ class InstagramReader(ISources):
                     f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed responce. {e}"
                 )
 
-        self.driver.close()
+        self.driver.quit()
         self.siteName = "Instagram"
 
         return allArticles
