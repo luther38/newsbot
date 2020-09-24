@@ -1,23 +1,36 @@
-#-------------------------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
-#-------------------------------------------------------------------------------------------------------------
-
-# Update the VARIANT arg in devcontainer.json to pick a Python version: 3, 3.8, 3.7, 3.6 
-# To fully customize the contents of this image, use the following Dockerfile instead:
-# https://github.com/microsoft/vscode-dev-containers/tree/v0.128.0/containers/python-3/.devcontainer/base.Dockerfile
-ARG VARIANT="3"
+# Update the VARIANT arg in docker-compose.yml to pick a Python version: 3, 3.8, 3.7, 3.6 
+ARG VARIANT=3
 FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
+#FROM python:3.8.5-slim-buster
+
+ENV PYTHONUNBUFFERED 1
+
+# Update args in docker-compose.yaml to set the UID/GID of the "vscode" user.
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then \
+        groupmod --gid $USER_GID vscode \
+        && usermod --uid $USER_UID --gid $USER_GID vscode \
+        && chmod -R $USER_UID:$USER_GID /home/vscode; \
+    fi
 
 # [Optional] If your requirements rarely change, uncomment this section to add them to the image.
-#
 # COPY requirements.txt /tmp/pip-tmp/
 # RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
 #    && rm -rf /tmp/pip-tmp
 
-# [Optional] Uncomment this section to install additional packages.
-#
-RUN apt-get update \
-    && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends sqlite
+# [Optional] Uncomment this section to install additional OS packages.
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive
+#    && apt-get -y install --no-install-recommends install
+#    libglib2
+#     && libnss3 \
+#     && libgconf \
+#     #&& libfontconfig1
 
+RUN curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/chrome.deb \
+    && dpkg -i /tmp/chrome.deb || apt-get install -yf \
+    && rm /tmp/chrome.deb
+
+RUN curl https://chromedriver.storage.googleapis.com/85.0.4183.87/chromedriver_linux64.zip -o /tmp/chromedriver_linux64.zip \
+    && unzip /tmp/chromedriver_linux64.zip -d /usr/local/bin/ \
+    && chmod +x /usr/local/bin/chromedriver

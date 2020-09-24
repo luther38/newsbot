@@ -57,3 +57,4 @@ class EnvDetails:
         self.site: str = ""
         self.name: str = ""
         self.hooks: List[str] = list()
+        self.options: str = ""

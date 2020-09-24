@@ -77,6 +77,17 @@ class Test_Sources:
         else:
             assert False
 
+    def test_05ClearSingle(self):
+        s = Sources(name="demo00", url="")
+        s.add()
+        res0 = s.findAllByName()
+        res0[0].clearSingle()
+        res1 = s.findAllByName()
+        if len(res1) == 0:
+            assert True
+        else:
+            assert False
+
 
 class Test_DiscordWebHooks:
     def test_init00(self):

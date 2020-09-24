@@ -2,7 +2,6 @@ from typing import List
 from json import loads
 from newsbot import env, logger
 from newsbot.sources.isources import ISources
-from newsbot.collections import RSSRoot, RSSArticle
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from time import sleep
 from requests import get, Response
@@ -28,8 +27,9 @@ class RedditReader(ISources):
     def isSourceEnabled(self) -> None:
         res = Sources(name=self.siteName).findAllByName()
         if len(res) >= 1:
-            self.links.append(res[0])
             self.sourceEnabled = True
+            for i in res:
+                self.links.append(i)
 
     def isDiscordOutputEnabled(self) -> None:
         dwh = DiscordWebHooks(name=self.siteName).findAllByName()
@@ -66,7 +66,6 @@ class RedditReader(ISources):
 
             try:
                 for i in json["data"]["children"]:
-                    # a = RSSArticle()
                     a = Articles()
                     a.siteName = f"Reddit {subreddit}"
 
@@ -81,7 +80,7 @@ class RedditReader(ISources):
                         a.video = d["media"]["reddit_video"]["fallback_url"]
                         a.videoHeight = d["media"]["reddit_video"]["height"]
                         a.videoWidth = d["media"]["reddit_video"]["width"]
-                        a.thumbnail = self.getVideoThumbnail(d['preview'])
+                        a.thumbnail = self.getVideoThumbnail(d["preview"])
 
                     elif d["media_only"] == True:
                         print("review dis")
@@ -113,6 +112,6 @@ class RedditReader(ISources):
 
     def getVideoThumbnail(self, preview) -> str:
         try:
-            return preview['images'][0]['source']['url']
+            return preview["images"][0]["source"]["url"]
         except:
             return ""

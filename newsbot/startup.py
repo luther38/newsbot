@@ -6,6 +6,8 @@ from newsbot.sources.pso2 import PSO2Reader
 from newsbot.sources.youtube import YoutubeReader
 from newsbot.sources.reddit import RedditReader
 from newsbot.sources.pokemongohub import PogohubReader
+from newsbot.sources.instagram import InstagramReader
+
 from newsbot.tables import Sources, DiscordWebHooks
 from newsbot.initdb import InitDb
 from threading import Thread
@@ -46,3 +48,7 @@ class Startup:
         w_youtube = Worker(YoutubeReader())
         t_youtube = Thread(target=w_youtube.init, name="Youtube")
         t_youtube.start()
+
+        w_instagram = Worker(InstagramReader())
+        t_instagram = Thread(target=w_instagram.init, name="Instagram")
+        t_instagram.start()

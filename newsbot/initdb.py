@@ -1,13 +1,15 @@
 from os import system
-from newsbot import env
+from newsbot import Env
 from newsbot.tables import Sources, DiscordWebHooks
+
 
 class InitDb:
     def __init__(self) -> None:
         # self.runMigrations()
         # self.clearOldRecords()
         # self.runDatabaseTasks()
-        env.readEnv()
+        self.e = Env()
+        self.e.readEnv()
         pass
 
     def runMigrations(self) -> None:
@@ -19,63 +21,70 @@ class InitDb:
         DiscordWebHooks().clearTable()
 
     def checkPokemonGoHub(self):
-        if env.pogo_enabled == True:
+        if self.e.pogo_enabled == True:
             # Pokemon Go Hub only has one source
             Sources(name="Pokemon Go Hub", url="https://pokemongohub.net/rss").add()
             # Sources(name="Pokemon Go Hub", url="https://pokemongohub.net/post/category/news/").add()
-            for i in env.pogo_hooks:
+            for i in self.e.pogo_hooks:
                 DiscordWebHooks(name="Pokemon Go Hub", key=i).add()
 
     def checkPhantasyStarOnline2(self):
-        if env.pso2_enabled == True:
+        if self.e.pso2_enabled == True:
             Sources(name="Phantasy Star Online 2", url="https://pso2.com/news").add()
-            for i in env.pso2_hooks:
+            for i in self.e.pso2_hooks:
                 DiscordWebHooks(name="Phantasy Star Online 2", key=i).add()
 
     def checkFinalFantasyXIV(self):
-        if env.ffxiv_all == True or env.ffxiv_topics == True:
+        if self.e.ffxiv_all == True or self.e.ffxiv_topics == True:
             Sources(
                 name="Final Fantasy XIV Topics",
                 url="https://na.finalfantasyxiv.com/lodestone/topics/",
             ).add()
 
-        if env.ffxiv_all == True or env.ffxiv_notices == True:
+        if self.e.ffxiv_all == True or self.e.ffxiv_notices == True:
             Sources(
                 name="Final Fantasy XIV Notices",
                 url="https://na.finalfantasyxiv.com/lodestone/news/category/1",
             ).add()
 
-        if env.ffxiv_all == True or env.ffxiv_maintenance == True:
+        if self.e.ffxiv_all == True or self.e.ffxiv_maintenance == True:
             Sources(
                 name="Final Fantasy XIV Maintenance",
                 url="https://na.finalfantasyxiv.com/lodestone/news/category/2",
             ).add()
 
-        if env.ffxiv_all == True or env.ffxiv_updates == True:
+        if self.e.ffxiv_all == True or self.e.ffxiv_updates == True:
             Sources(
                 name="Final Fantasy XIV Updates",
                 url="https://na.finalfantasyxiv.com/lodestone/news/category/3",
             ).add()
 
-        if env.ffxiv_all == True or env.ffxiv_status == True:
+        if self.e.ffxiv_all == True or self.e.ffxiv_status == True:
             Sources(
                 name="Final Fantasy XIV Status",
                 url="https://na.finalfantasyxiv.com/lodestone/news/category/4",
             ).add()
 
-        for i in env.ffxiv_hooks:
+        for i in self.e.ffxiv_hooks:
             DiscordWebHooks(name="Final Fantasy XIV", key=i).add()
 
     def checkReddit(self):
-        for i in env.reddit_values:
+        for i in self.e.reddit_values:
             r1 = f"Reddit {i.site}"
             Sources(name=r1, url=f"https://reddit.com/r/{i.site}").add()
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
     def checkYoutube(self):
-        for i in env.youtube_values:
+        for i in self.e.youtube_values:
             r1 = f"Youtube {i.name}"
+            Sources(name=r1, url=i.site).add()
+            for h in i.hooks:
+                DiscordWebHooks(name=r1, key=h).add()
+
+    def checkInstagram(self):
+        for i in self.e.instagram_values:
+            r1 = f"Instagram {i.name}"
             Sources(name=r1, url=i.site).add()
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
@@ -89,3 +98,4 @@ class InitDb:
         self.checkFinalFantasyXIV()
         self.checkReddit()
         self.checkYoutube()
+        self.checkInstagram()

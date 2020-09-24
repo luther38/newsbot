@@ -10,6 +10,7 @@ Currently, it reads collects news for the following sites.
 * [Pokemon Go Hub](https://pokemongohub.net/)
 * [Reddit](https://reddit.com)
 * [YouTube](https://youtube.com)
+* [Instagram](https://instagram.com)
 
 The results that are collected are then sent to the following platforms.
 
@@ -44,10 +45,26 @@ Currently, 10 different subreddits can be monitored.  Each subreddit will need i
 
 ### YouTube
 
+You can now get updates when you defined YouTube channel posts an update!  
+Here is the entries that are required to support a single feed.  
+At this time you can only monitor 10 feeds.
+
 ```ini
 NEWSBOT_YOUTUBE_URL_0=https://www.youtube.com/user/gamegrumps
 NEWSBOT_YOUTUBE_HOOK_0=webHookUrl
 NEWSBOT_YOUTUBE_NAME_0=GameGrumps
+```
+
+### Instagram
+
+Instagram can monitor a users posts or a tag.  You can currently monitor up to 10 of each.
+
+```ini
+NEWSBOT_INSTAGRAM_USER_NAME_0=play_pso2
+NEWSBOT_INSTAGRAM_USER_HOOK_0=webHookUrl
+
+NEWSBOT_INSTAGRAM_TAG_NAME_0=corgi
+NEWSBOT_INSTAGRAM_TAG_HOOK_0=webHookUrl
 ```
 
 [Configuration Template](https://github.com/jtom38/newsbot/blob/master/env.template)
@@ -56,6 +73,6 @@ NEWSBOT_YOUTUBE_NAME_0=GameGrumps
 
 ### Discord Webhook Video Embed
 
-At this time Discord webhooks do not support playing video links inside Discord.  This is a requested feature but it has not had any movement.
+At this time Discord webhooks do not support playing video links inside Discord.  This is a requested feature but it has not had any movement.  Because of this, if a video post is found it will let you know to "Watch the video online!"
 
 [Feature Request](https://support.discord.com/hc/en-us/community/posts/360037387352-Videos-in-Rich-Embeds)

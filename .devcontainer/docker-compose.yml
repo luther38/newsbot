@@ -1,0 +1,37 @@
+version: '3'
+
+networks:
+  newsbotDev:
+
+services:
+  app:
+    # Uncomment the next line to use a non-root user for all processes.
+    # See https://aka.ms/vscode-remote/containers/non-root for details.
+    # user: vscode
+
+    build: 
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        # Update VARIANT to pick a python version: 3, 3.8, 3.7, 3.6
+        VARIANT: 3
+        USER_UID: 1000
+        USER_GID: 1000
+
+    volumes:
+      - ..:/workspace:cached
+      
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    networks: 
+      - newsbotDev
+    
+  webdriver:
+    image: selenium/standalone-chrome:85.0
+    ports: 
+      - 4444:4444
+    #environment:
+    #  shm-size: 2g
+    networks: 
+      - newsbotDev
+    
