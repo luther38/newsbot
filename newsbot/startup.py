@@ -31,15 +31,15 @@ class Startup:
 
         w_ffxiv = Worker(FFXIVReader())
         t_ffxiv = Thread(target=w_ffxiv.init, name="Final Fantasy XIV")
-#        t_ffxiv.start()
+        t_ffxiv.start()
 
         w_pogo = Worker(PogohubReader())
         t_pogo = Thread(target=w_pogo.init, name="Pokemon Go Hub")
-#        t_pogo.start()
+        t_pogo.start()
 
         w_pso2 = Worker(PSO2Reader())
         t_pso2 = Thread(target=w_pso2.init, name="PSO2")
-#        t_pso2.start()
+        t_pso2.start()
 
         w_reddit = Worker(RedditReader())
         t_reddit = Thread(target=w_reddit.init, name="Reddit")
@@ -47,8 +47,8 @@ class Startup:
 
         w_youtube = Worker(YoutubeReader())
         t_youtube = Thread(target=w_youtube.init, name="Youtube")
-#        t_youtube.start()
+        t_youtube.start()
 
         w_instagram = Worker(InstagramReader())
         t_instagram = Thread(target=w_instagram.init, name="Instagram")
-#        t_instagram.start()
+        t_instagram.start()
