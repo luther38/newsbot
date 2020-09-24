@@ -1,15 +1,18 @@
 from newsbot.sources.youtube import YoutubeReader
 from newsbot.tables import Sources, DiscordWebHooks
 
+
 class TestYouTube:
     def test_00EnableSource(self):
-        Sources(name="Youtube LoadingReadyRun",
-            url="https://www.youtube.com/user/loadingreadyrun").add()
+        Sources(
+            name="Youtube LoadingReadyRun",
+            url="https://www.youtube.com/user/loadingreadyrun",
+        ).add()
 
         res = Sources(name="Youtube").findAllByName()
-        if len(res) >= 1: 
-            assert True 
-        else: 
+        if len(res) >= 1:
+            assert True
+        else:
             assert False
 
     def test_01CheckSource(self):
@@ -20,7 +23,7 @@ class TestYouTube:
         yt = YoutubeReader()
         if len(yt.hooks) == 0:
             assert True
-        else: 
+        else:
             assert False
 
     def test_01PullRss(self):
@@ -40,11 +43,9 @@ class TestYouTube:
             assert False
 
     def test_03EnableDiscordWebHook(self):
-        DiscordWebHooks(name='Youtube LoadingReadyRun', key="invalidKey").add()
+        DiscordWebHooks(name="Youtube LoadingReadyRun", key="invalidKey").add()
         res = DiscordWebHooks(name="Youtube").findAllByName()
         if len(res) >= 1:
             assert True
         else:
             assert False
-
-    

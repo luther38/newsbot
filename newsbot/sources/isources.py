@@ -36,10 +36,10 @@ class ISources:
         self.outputDiscord: bool = False
         pass
 
-    def getContent(self) -> Response:
+    def getContent(self) -> str:
         raise NotImplementedError
 
-    def getParser(self) -> BeautifulSoup:
+    def getParser(self, souce: str) -> BeautifulSoup:
         raise NotImplementedError
 
     def getArticles(self) -> List[Articles]:
