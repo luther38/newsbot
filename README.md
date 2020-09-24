@@ -16,7 +16,9 @@ The results that are collected are then sent to the following platforms.
 
 * [Discord - Webhooks](https://discord.com/)
 
-## Deploy
+## Deployment
+
+This application was made to be deployed to a Docker host.  If you want to run it on metal, call the app.py file.  
 
 Use the docker image to deploy the application.
 
@@ -28,7 +30,9 @@ You can see an example of how to deploy the bot with the docker-compose.yml file
 
 The application settings are currently stored in the .env file.  Use the template and apply the webhook links for the sites that you want to use.
 
-To send to discord for a site, add the webhook url to the HOOK variable.  You can also send to more then one webhook.  With each variable, add a space between them and the program will convert it to two different webhooks.
+### Discord Webhooks
+
+If you want to have a single source post to multiple webhooks, you can do that.  On the line where you enter your webhook seperate each one with a space character.  The program will split them up and post updates to both webhooks.
 
 ### Reddit
 
@@ -36,9 +40,9 @@ Each subreddit is defined by its own number value.
 
 ```ini
 NEWSBOT_REDDIT_SUB_0=aww
-NEWSBOT_REDDIT_HOOK_0=webHookUrl
+NEWSBOT_REDDIT_HOOK_0=https://discordapp.com/api/webhooks/...
 NEWSBOT_REDDIT_SUB_1=python
-NEWSBOT_REDDIT_HOOK_1=webHookUrl
+NEWSBOT_REDDIT_HOOK_1=https://discordapp.com/api/webhooks/...
 ```
 
 Currently, 10 different subreddits can be monitored.  Each subreddit will need its own entry with the correct values.
@@ -51,20 +55,20 @@ At this time you can only monitor 10 feeds.
 
 ```ini
 NEWSBOT_YOUTUBE_URL_0=https://www.youtube.com/user/gamegrumps
-NEWSBOT_YOUTUBE_HOOK_0=webHookUrl
+NEWSBOT_YOUTUBE_HOOK_0=https://discordapp.com/api/webhooks/...
 NEWSBOT_YOUTUBE_NAME_0=GameGrumps
 ```
 
 ### Instagram
 
-Instagram can monitor a users posts or a tag.  You can currently monitor up to 10 of each.
+Instagram can monitor a users posts or a tag as long as they are public.  You can currently monitor up to 10 of each.
 
 ```ini
 NEWSBOT_INSTAGRAM_USER_NAME_0=play_pso2
-NEWSBOT_INSTAGRAM_USER_HOOK_0=webHookUrl
+NEWSBOT_INSTAGRAM_USER_HOOK_0=https://discordapp.com/api/webhooks/...
 
 NEWSBOT_INSTAGRAM_TAG_NAME_0=corgi
-NEWSBOT_INSTAGRAM_TAG_HOOK_0=webHookUrl
+NEWSBOT_INSTAGRAM_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
 ```
 
 [Configuration Template](https://github.com/jtom38/newsbot/blob/master/env.template)
