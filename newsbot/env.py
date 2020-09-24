@@ -5,7 +5,7 @@ from newsbot.collections import RSSArticle, EnvDetails
 import os
 
 
-class Env:
+class Env():
     def __init__(self) -> None:
         self.interval_seconds: int = 30 * 60
         self.discord_delay_seconds: int = 15
@@ -62,7 +62,7 @@ class Env:
 
     def readRedditValues(self) -> List[EnvDetails]:
         counter = 0
-        # items = list()
+        self.reddit_values.clear()
 
         while counter <= 10:
             sub = os.getenv(f"NEWSBOT_REDDIT_SUB_{counter}")
@@ -81,7 +81,7 @@ class Env:
 
     def readYoutubeValues(self) -> None:
         counter = 0
-        # items = list()
+        self.youtube_values.clear()
 
         while counter <= 10:
             sub = os.getenv(f"NEWSBOT_YOUTUBE_URL_{counter}")
@@ -103,7 +103,7 @@ class Env:
 
     def readInstagramValues(self) -> None:
         counter = 0
-        # items = list()
+        self.instagram_values.clear()
         base = "NEWSBOT_INSTAGRAM"
         while counter <= 10:
             # User Posts
