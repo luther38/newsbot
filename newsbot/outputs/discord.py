@@ -49,7 +49,7 @@ class Discord(IOutputs):
         # embed.url = article.link
 
         # Discord Embed Description can only contain 2048 characters
-        if article.description != '':
+        if article.description != "":
             description: str = str(article.description)
             description = self.convertFromHtml(description)
             descriptionCount = len(description)
@@ -59,13 +59,13 @@ class Discord(IOutputs):
             embed.description = description
 
         # Figure out if we have video based content
-        if article.video != '':
+        if article.video != "":
             embed.description = "View the video online!"
             embed.set_video(
                 url=article.video, height=article.videoHeight, width=article.videoWidth
             )
 
-        if article.thumbnail != '':
+        if article.thumbnail != "":
             embed.set_image(url=article.thumbnail)
 
         # Build our footer message
@@ -84,7 +84,7 @@ class Discord(IOutputs):
             res = self.tempMessage.execute()
         except Exception as e:
             logger.critical(
-                f"Failed to send to Discord.  Check to ensure the webhook is correct. {e}"
+                f"Failed to send to Discord.  Check to ensure the webhook is correct. Error: {e}"
             )
 
         return res
@@ -148,9 +148,9 @@ class Discord(IOutputs):
             footer = f"Youtube - {s[1]} - {end}"
         elif "Instagram" in siteName:
             s = siteName.split(" ")
-            if s[1] == 'tag':
+            if s[1] == "tag":
                 footer = f"Instagram - #{s[2]} - {end}"
-            elif s[1] == 'user':
+            elif s[1] == "user":
                 footer = f"Instagram - {s[2]} - {end}"
         else:
             footer = end
@@ -162,4 +162,4 @@ class Discord(IOutputs):
         if "Youtube" in siteName:
             return 16384771
         if "Instagram" in siteName:
-            return 	8913151
+            return 8913151

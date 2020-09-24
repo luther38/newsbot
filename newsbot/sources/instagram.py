@@ -29,7 +29,7 @@ class InstagramReader(ISources):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         try:
-            return Chrome(chrome_options=options)
+            return Chrome(options=options)
         except Exception as e:
             logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
@@ -54,7 +54,7 @@ class InstagramReader(ISources):
 
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
-        
+
         for site in self.links:
             self.currentLink = site
 
@@ -64,11 +64,11 @@ class InstagramReader(ISources):
             logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
 
             # Figure out if we are looking for a user or tag
-            if igType == 'user':
+            if igType == "user":
                 self.uri = f"{self.baseUri}{nameSplit[2]}"
                 self.__driverGet__(self.uri)
                 links = self.getUserArticleLinks()
-            elif igType == 'tag':
+            elif igType == "tag":
                 self.uri = f"{self.baseUri}explore/tags/{nameSplit[2]}/"
                 self.__driverGet__(self.uri)
                 links = self.getTagArticleLinks()
@@ -87,6 +87,9 @@ class InstagramReader(ISources):
                 logger.error(
                     f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed responce. {e}"
                 )
+
+        self.driver.close()
+        self.siteName = "Instagram"
 
         return allArticles
 
@@ -138,11 +141,13 @@ class InstagramReader(ISources):
             res = soup.find_all(name="article")
 
             # Top Posts
-            links = self.getArticleLinks(res[0].contents[0].contents[1].contents[0].contents, links)
-        
+            links = self.getArticleLinks(
+                res[0].contents[0].contents[1].contents[0].contents, links
+            )
+
             # Recent
             # TODO Need a way to define options on Instagram Tags.  One might not want EVERYTHING.
-            #links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
+            # links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
 
         except Exception as e:
             logger.error("Driver ran into a problem pulling links from a tag.")
@@ -150,7 +155,7 @@ class InstagramReader(ISources):
         return links
 
     def getArticleLinks(self, soupList: List, linkList: List) -> List[str]:
-        
+
         for i in soupList:
             try:
                 for l in i.contents:
@@ -163,7 +168,7 @@ class InstagramReader(ISources):
 
     def getPostInfo(self, link: str) -> Articles:
         a = Articles(url=link, siteName=self.currentLink.name, tags="instagram, posts")
-        nameSplit = self.currentLink.name.split(' ')
+        nameSplit = self.currentLink.name.split(" ")
         if "tag" in self.currentLink.name:
             a.tags += f", tag, {nameSplit[2]}"
         elif "user" in self.currentLink.name:
@@ -175,9 +180,18 @@ class InstagramReader(ISources):
 
         # Get the title from the post
         title = soup.find_all(name="span", attrs={"class", ""})
-        a.title = self.cleanTitle(title[1].text)
+
+        # Check the title to make sure it was not just all tags... someone did that! - Done
+        # TODO Need a better placeholder value
+        cleanTitle = self.cleanTitle(title[1].text)
+        if cleanTitle == "":
+            a.title = "Instagram Post"
+        else:
+            a.title = cleanTitle
+
+        # improve the regex to collect tags.  It nuked out a title... oops - Made an adjustment
         tags = self.getTags(title[1].text)
-        if tags != '':
+        if tags != "":
             a.tags = tags
 
         # Get when the post went up
@@ -229,27 +243,27 @@ class InstagramReader(ISources):
             logger.error(f"Driver failed to close. Error: {e}")
 
     def getTags(self, text: str) -> str:
-        t = ''
-        res = findall('#[a-zA-Z0-9].*', text)
+        t = ""
+        # res = findall('#[a-zA-Z0-9].*', text)
+        res = findall("[#](.*?)[ ]", text)
         if len(res) >= 1:
-            tags = res[0].split('#')
-            for i in tags:
+            # tags = res[0].split('#')
+            for i in res:
                 try:
-                    i:str = i.replace(' ', '')
-                    if i != '':
+                    i: str = i.replace(" ", "")
+                    if i != "":
                         t += f"{i}, "
                 except:
                     pass
         return t
-        
 
     def cleanTitle(self, text: str) -> str:
         """
         This will check the text given for Instagram tags. If they are found, remove them.
         If no tags are found from regex, it will return the given text.
         """
-        t = ''
-        res = findall('#[a-zA-Z0-9].*', text)
+        t = ""
+        res = findall("#[a-zA-Z0-9].*", text)
         if len(res) >= 1:
             t = text.replace(res[0], "")
             return t

@@ -5,6 +5,7 @@ from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
 
+
 class TemplateReader(ISources):
     def __init__(self) -> None:
         self.uri = "https://example.net/"

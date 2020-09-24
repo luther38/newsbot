@@ -156,6 +156,23 @@ class Sources(Base):
         finally:
             s.close()
 
+    def clearSingle(self) -> bool:
+        """
+        This will remove a single entry from the table by its ID value.
+        """
+        s = database.newSession()
+        result: bool = False
+        try:
+            for i in s.query(Sources).filter(Sources.id == self.id):
+                s.delete(i)
+                s.commit()
+                result = True
+        except Exception as e:
+            logger.critical(e)
+        finally:
+            s.close()
+            return result
+
     def findAllByName(self) -> List:
         s = database.newSession()
         hooks = list()
@@ -220,6 +237,23 @@ class DiscordWebHooks(Base):
             logger.critical(f"{e}")
         finally:
             s.close()
+
+    def clearSingle(self) -> bool:
+        """
+        This will remove a single entry from the table by its ID value.
+        """
+        s = database.newSession()
+        result: bool = False
+        try:
+            for i in s.query(DiscordWebHooks).filter(DiscordWebHooks.id == self.id):
+                s.delete(i)
+                s.commit()
+                result = True
+        except Exception as e:
+            logger.critical(e)
+        finally:
+            s.close()
+            return result
 
     def findAllByName(self) -> List:
         s = database.newSession()
