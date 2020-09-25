@@ -5,9 +5,8 @@ from newsbot.collections import RSSArticle, EnvDetails
 import os
 
 
-class Env:
+class Env():
     def __init__(self) -> None:
-        # self.newDatabase: bool = False
         self.interval_seconds: int = 30 * 60
         self.discord_delay_seconds: int = 15
         self.threadSleepTimer: int = 60 * 30
@@ -20,6 +19,10 @@ class Env:
 
         self.ffxiv_all: bool = False
         self.ffxiv_hooks: List[str] = list()
+
+        self.reddit_values: List[EnvDetails] = list()
+        self.youtube_values: List[EnvDetails] = list()
+        self.instagram_values: List[EnvDetails] = list()
 
         self.readEnv()
         pass
@@ -45,6 +48,8 @@ class Env:
 
         self.readYoutubeValues()
 
+        self.readInstagramValues()
+
     def readFfxivValues(self) -> None:
         self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
         self.ffxiv_topics = self.readBoolEnv("NEWSBOT_FFXIV_TOPICS")
@@ -57,7 +62,7 @@ class Env:
 
     def readRedditValues(self) -> List[EnvDetails]:
         counter = 0
-        items = list()
+        self.reddit_values.clear()
 
         while counter <= 10:
             sub = os.getenv(f"NEWSBOT_REDDIT_SUB_{counter}")
@@ -68,15 +73,15 @@ class Env:
                 details.enabled = True
                 details.site = sub
                 details.hooks = hooks
-                items.append(details)
+                self.reddit_values.append(details)
 
             counter = counter + 1
 
-        self.reddit_values = items
-    
+        # self.reddit_values = items
+
     def readYoutubeValues(self) -> None:
         counter = 0
-        items = list()
+        self.youtube_values.clear()
 
         while counter <= 10:
             sub = os.getenv(f"NEWSBOT_YOUTUBE_URL_{counter}")
@@ -89,11 +94,47 @@ class Env:
                 details.site = sub
                 details.hooks = hooks
                 details.name = name
-                items.append(details)
+                self.youtube_values.append(details)
+                # items.append(details)
 
             counter = counter + 1
 
-        self.youtube_values = items 
+        # self.youtube_values = items
+
+    def readInstagramValues(self) -> None:
+        counter = 0
+        self.instagram_values.clear()
+        base = "NEWSBOT_INSTAGRAM"
+        while counter <= 10:
+            # User Posts
+            sub = os.getenv(f"{base}_USER_NAME_{counter}")
+            hooks = self.extractHooks(f"{base}_USER_HOOK_{counter}")
+
+            if sub != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = sub
+                details.hooks = hooks
+                details.name = f"user {sub}"
+                self.instagram_values.append(details)
+                # items.append(details)
+
+            # Tags Posts
+            tag = os.getenv(f"{base}_TAG_NAME_{counter}")
+            hooks = self.extractHooks(f"{base}_TAG_HOOK_{counter}")
+
+            if tag != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = tag
+                details.hooks = hooks
+                details.name = f"tag {tag}"
+                self.instagram_values.append(details)
+                # items.append(details)
+
+            counter = counter + 1
+
+        # self.instagram_values = items
 
     def extractHooks(self, sourceHooks) -> List[str]:
         try:

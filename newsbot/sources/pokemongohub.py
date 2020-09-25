@@ -6,6 +6,7 @@ import re
 from requests import get, Response
 from bs4 import BeautifulSoup
 
+
 class PogohubReader(ISources):
     def __init__(self) -> None:
         self.uri = "https://pokemongohub.net/rss"

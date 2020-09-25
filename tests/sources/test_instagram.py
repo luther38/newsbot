@@ -1,40 +1,40 @@
+from newsbot.sources.instagram import InstagramReader
 from newsbot.tables import Sources, DiscordWebHooks, Articles
-from newsbot.sources.pokemongohub import PogohubReader
 
 
-class TestPokemonGoHub:
+class TestInstagram:
     def test_00EnableSource(self):
-        # environ["NEWSBOT_POGO_ENABLED"] = str("true")
-        Sources(name="Pokemon Go Hub", url="https://pokemongohub.net/rss").add()
-        res = Sources(name="Pokemon Go Hub").findAllByName()
+        Sources(name="Instagram tag pokemongo", url="pokemongo").add()
+
+        res = Sources(name="Instagram").findAllByName()
         if len(res) >= 1:
             assert True
         else:
             assert False
 
-    def test_01GetEnabled(self):
-        pgh = PogohubReader()
-        assert pgh.sourceEnabled
+    def test_01CheckSource(self):
+        ig = InstagramReader()
+        assert ig.sourceEnabled
 
-    def test_01GetHooks(self):
-        pgh = PogohubReader()
-        if len(pgh.hooks) == 0:
+    def test_01CheckDiscord(self):
+        ig = InstagramReader()
+        if len(ig.hooks) == 0:
             assert True
         else:
             assert False
 
-    def test_01PullRssFeed(self):
-        p = PogohubReader()
-        res = p.getArticles()
-        if len(res) == 30:
+    def test_02PullFeed(self):
+        ig = InstagramReader()
+        res = ig.getArticles()
+        if len(res) >= 9:
             assert True
         else:
             assert False
 
     def test_02ItemTitle(self):
         # All articles need to have a title
-        r = PogohubReader()
-        res = r.getArticles()
+        ig = InstagramReader()
+        res = ig.getArticles()
         for i in res:
             i: Articles = i
             if i.title == "":
@@ -44,8 +44,8 @@ class TestPokemonGoHub:
 
     def test_02ItemTags(self):
         # All articles need to have tags
-        r = PogohubReader()
-        res = r.getArticles()
+        ig = InstagramReader()
+        res = ig.getArticles()
         for i in res:
             i: Articles = i
             if i.tags == "":
@@ -54,9 +54,9 @@ class TestPokemonGoHub:
         assert True
 
     def test_02ItemUrl(self):
-        # All articles need to have a url
-        r = PogohubReader()
-        res = r.getArticles()
+        # All articles need to have tags
+        ig = InstagramReader()
+        res = ig.getArticles()
         for i in res:
             i: Articles = i
             if i.url == "":
@@ -66,8 +66,8 @@ class TestPokemonGoHub:
 
     def test_02ItemPubDate(self):
         # All articles need to have tags
-        r = PogohubReader()
-        res = r.getArticles()
+        ig = InstagramReader()
+        res = ig.getArticles()
         for i in res:
             i: Articles = i
             if i.pubDate == "":

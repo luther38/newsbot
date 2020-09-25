@@ -14,10 +14,10 @@ refresh: ## Removes temp data for a clean start
 rmdatabase:
 	rm ./mounts/database/newsbot.db
 
-build: ## Build docker image
+docker-build: ## Build docker image
 	docker build -t newsbot .
 
-demo: ## Runs the application
+docker-run: ## Runs the application
 	docker-compose up
 
 freeze: ## Exports all installed python packages to the requirements.txt

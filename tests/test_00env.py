@@ -357,3 +357,88 @@ class Test_EnvRedditSingle:
             assert True
         else:
             assert False
+
+
+class Test_EnvYouTube:
+    def test_00noSubReddits(self):
+        e = Env()
+        if len(e.youtube_values) == 0:
+            assert True
+
+    def test_01singleUrl(self):
+        environ["NEWSBOT_YOUTUBE_URL_0"] = str("aww")
+        e = Env()
+        if len(e.youtube_values) == 1 and e.youtube_values[0].site == "aww":
+            assert True
+        else:
+            assert False
+
+    def test_01singleName(self):
+        environ["NEWSBOT_YOUTUBE_NAME_0"] = str("aww")
+        e = Env()
+        if len(e.youtube_values) == 1 and e.youtube_values[0].name == "aww":
+            assert True
+        else:
+            assert False
+
+    def test_01singleHook(self):
+        environ["NEWSBOT_YOUTUBE_HOOK_0"] = str("aww")
+        e = Env()
+        if len(e.youtube_values) == 1 and "aww" in e.youtube_values[0].hooks:
+            assert True
+        else:
+            assert False
+
+    def test_01singlBoth(self):
+        environ["NEWSBOT_YOUTUBE_SUB_0"] = str("aww")
+        environ["NEWSBOT_YOUTUBE_HOOK_0"] = str("aww")
+        e = Env()
+        if (
+            len(e.youtube_values) == 1
+            and "aww" in e.youtube_values[0].hooks
+            and e.youtube_values[0].site == "aww"
+        ):
+            assert True
+        else:
+            assert False
+
+    def test_02dualSub(self):
+        environ["NEWSBOT_YOUTUBE_URL_0"] = str("aww")
+        environ["NEWSBOT_YOUTUBE_URL_1"] = str("ffxiv")
+        e = Env()
+        if (
+            len(e.youtube_values) == 2
+            and e.youtube_values[0].site == "aww"
+            and e.youtube_values[1].site == "ffxiv"
+        ):
+            assert True
+        else:
+            assert False
+
+    def test_02dualhooks(self):
+        environ["NEWSBOT_YOUTUBE_HOOK_0"] = str("pso2")
+        environ["NEWSBOT_YOUTUBE_HOOK_1"] = str("python")
+        e = Env()
+        if (
+            len(e.reddit_values) == 2
+            and "pso2" in e.youtube_values[0].hooks
+            and "python" in e.youtube_values[1].hooks
+        ):
+            assert True
+        else:
+            assert False
+
+    def test_03combo(self):
+        # environ['NEWSBOT_REDDIT_SUB_4'] = str("pso2")
+        # environ['NEWSBOT_REDDIT_SUB_5'] = str("python")
+        e = Env()
+        if (
+            len(e.reddit_values) == 2
+            and e.reddit_values[0].site == "aww"
+            and e.reddit_values[1].site == "ffxiv"
+            and "pso2" in e.youtube_values[0].hooks
+            and "python" in e.youtube_values[1].hooks
+        ):
+            assert True
+        else:
+            assert False
