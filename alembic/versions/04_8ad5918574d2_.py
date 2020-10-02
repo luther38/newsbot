@@ -5,7 +5,7 @@ Revises: de2a7ff224e5
 Create Date: 2020-09-01 20:51:55.238100
 
 """
-from alembic import op
+from alembic.op import add_column, drop_column
 from sqlalchemy import Column, Boolean, String, Integer
 
 
@@ -17,23 +17,21 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column("DiscordQueue", Column("video", String()))
-    op.add_column("DiscordQueue", Column("videoHeight", Integer()))
-    op.add_column("DiscordQueue", Column("videoWidth", Integer()))
-
-    op.add_column("Articles", Column("video", String()))
-    op.add_column("Articles", Column("videoHeight", Integer()))
-    op.add_column("Articles", Column("videoWidth", Integer()))
-    op.add_column("Articles", Column("thumbnail", String()))
-    op.add_column("Articles", Column("description", String()))
-
+    add_column("DiscordQueue", Column("video", String()))
+    add_column("DiscordQueue", Column("videoHeight", Integer()))
+    add_column("DiscordQueue", Column("videoWidth", Integer()))
+    add_column("Articles", Column("video", String()))
+    add_column("Articles", Column("videoHeight", Integer()))
+    add_column("Articles", Column("videoWidth", Integer()))
+    add_column("Articles", Column("thumbnail", String()))
+    add_column("Articles", Column("description", String()))
 
 def downgrade():
-    op.drop_column("DiscordQueue", "video")
-    op.drop_column("DiscordQueue", "videoHeight")
-    op.drop_column("DiscordQueue", "videoWidth")
-    op.drop_column("Articles", "video")
-    op.drop_column("Articles", "videoHeight")
-    op.drop_column("Articles", "videoWidth")
-    op.drop_column("Articles", "thumbnail")
-    op.drop_column("Articles", "description")
+    drop_column("DiscordQueue", "video")
+    drop_column("DiscordQueue", "videoHeight")
+    drop_column("DiscordQueue", "videoWidth")
+    drop_column("Articles", "video")
+    drop_column("Articles", "videoHeight")
+    drop_column("Articles", "videoWidth")
+    drop_column("Articles", "thumbnail")
+    drop_column("Articles", "description")

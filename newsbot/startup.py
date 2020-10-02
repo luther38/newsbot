@@ -7,6 +7,7 @@ from newsbot.sources.youtube import YoutubeReader
 from newsbot.sources.reddit import RedditReader
 from newsbot.sources.pokemongohub import PogohubReader
 from newsbot.sources.instagram import InstagramReader
+from newsbot.sources.twitter import TwitterReader
 
 from newsbot.tables import Sources, DiscordWebHooks
 from newsbot.initdb import InitDb
@@ -25,30 +26,12 @@ class Startup:
         db.runDatabaseTasks()
 
         # Turn on outputs first
-        oDiscord = Discord()
-        tDiscord = Thread(target=oDiscord.enableThread, name="Discord")
-        tDiscord.start()
+        Thread(target=Discord().enableThread, name="Discord").start()
 
-        w_ffxiv = Worker(FFXIVReader())
-        t_ffxiv = Thread(target=w_ffxiv.init, name="Final Fantasy XIV")
-        t_ffxiv.start()
-
-        w_pogo = Worker(PogohubReader())
-        t_pogo = Thread(target=w_pogo.init, name="Pokemon Go Hub")
-        t_pogo.start()
-
-        w_pso2 = Worker(PSO2Reader())
-        t_pso2 = Thread(target=w_pso2.init, name="PSO2")
-        t_pso2.start()
-
-        w_reddit = Worker(RedditReader())
-        t_reddit = Thread(target=w_reddit.init, name="Reddit")
-        t_reddit.start()
-
-        w_youtube = Worker(YoutubeReader())
-        t_youtube = Thread(target=w_youtube.init, name="Youtube")
-        t_youtube.start()
-
-        w_instagram = Worker(InstagramReader())
-        t_instagram = Thread(target=w_instagram.init, name="Instagram")
-        t_instagram.start()
+#        Thread(target=Worker(FFXIVReader()).init, name="Final Fantasy XIV").start()
+#        Thread(target=Worker(PogohubReader()).init, name="Pokemon Go Hub").start()
+#        Thread(target=Worker(PSO2Reader()).init, name="PSO2").start()
+        Thread(target=Worker(RedditReader()).init, name="Reddit").start()
+#        Thread(target=Worker(YoutubeReader()).init, name="Youtube").start()
+#        Thread(target=Worker(InstagramReader()).init, name="Instagram").start()
+#        Thread(target=Worker(TwitterReader()).init, name="Twitter").start()

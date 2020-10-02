@@ -2,7 +2,7 @@ from typing import List
 from newsbot import logger, env
 import re
 from time import sleep
-from newsbot.tables import DiscordQueue, DiscordWebHooks
+from newsbot.tables import DiscordQueue, DiscordWebHooks, Icons
 from newsbot.outputs.ioutputs import IOutputs
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
@@ -38,6 +38,7 @@ class Discord(IOutputs):
 
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
+        hook.content = article.link
 
         title = article.title
         if len(title) >= 128:
@@ -45,8 +46,12 @@ class Discord(IOutputs):
 
         # Make a new Embed object
         embed: DiscordEmbed = DiscordEmbed(title=title, url=article.link)
-        # embed.title = article.title
-        # embed.url = article.link
+
+        authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
+        embed.set_author(
+            name=article.authorName,
+            url=None,
+            icon_url=authorIcon)
 
         # Discord Embed Description can only contain 2048 characters
         if article.description != "":
@@ -70,7 +75,10 @@ class Discord(IOutputs):
 
         # Build our footer message
         footer = self.buildFooter(article.siteName)
-        embed.set_footer(text=footer)
+        footerIcon = self.getFooterIcon(article.siteName)
+        embed.set_footer(
+            icon_url=footerIcon,
+            text=footer)
 
         embed.set_color(color=self.getEmbedColor(article.siteName))
 
@@ -78,7 +86,10 @@ class Discord(IOutputs):
         self.tempMessage = hook
 
     def sendMessage(self, article: DiscordQueue) -> Response:
-        logger.debug(f"Discord - Sending article '{article.title}'")
+        if article.title != "":
+            logger.debug(f"Discord - Sending article '{article.title}'")
+        else:
+            logger.debug(f"Discord - Sending article '{article.description}'")
         self.buildMessage(article)
         try:
             res = self.tempMessage.execute()
@@ -130,6 +141,14 @@ class Discord(IOutputs):
             msg = msg.replace(f"<a{l}a>", discordLink)
         return msg
 
+    def getAuthorIcon(self, authorIcon: str, siteName: str) -> str:
+        if authorIcon != "":
+            return authorIcon
+        else:
+            s: List[str] = siteName.split(' ')
+            res = Icons(site=f"Default {s[0]}").findAllByName()
+            return res[0].filename
+
     def buildFooter(self, siteName: str) -> str:
         footer = ""
         end: str = "Brought to you by NewsBot"
@@ -145,21 +164,32 @@ class Discord(IOutputs):
             footer = f"Pokemon Go Hub - {end}"
         elif "Youtube" in siteName:
             s = siteName.split(" ")
-            footer = f"Youtube - {s[1]} - {end}"
+            footer = f"{s[1]} - {end}"
         elif "Instagram" in siteName:
             s = siteName.split(" ")
             if s[1] == "tag":
-                footer = f"Instagram - #{s[2]} - {end}"
+                footer = f"#{s[2]} - {end}"
             elif s[1] == "user":
-                footer = f"Instagram - {s[2]} - {end}"
+                footer = f"{s[2]} - {end}"
         else:
             footer = end
 
         return footer
 
+    def getFooterIcon(self, siteName: str) -> str:
+        s: List[str] = siteName.split(' ')
+
+        res = Icons(site=f"Default {s[0]}").findAllByName()
+        if res[0].filename != "":
+            return res[0].filename
+        else:
+            return ""
+
     def getEmbedColor(self, siteName: str) -> int:
         # Decimal values can be collected from https://www.spycolor.com
-        if "Youtube" in siteName:
+        if "YouTube" in siteName:
             return 16384771
         if "Instagram" in siteName:
             return 8913151
+        if "Twitter" in siteName:
+            return 29647
