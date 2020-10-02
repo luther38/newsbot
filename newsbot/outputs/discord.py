@@ -154,8 +154,7 @@ class Discord(IOutputs):
         end: str = "Brought to you by NewsBot"
         if "reddit" in siteName.lower():
             s = siteName.split(" ")
-            footer = f"/r/{s[1]} - {end}"
-            # embed.add_embed_field(name="Source", value=f"Reddit /r/{s[1]}")
+            footer = f"{end}"
         elif "Phantasy Star Online 2" in siteName:
             footer = f"Phantasy Star Online 2 - {end}"
         elif "Final Fantasy XIV" in siteName:
@@ -187,9 +186,11 @@ class Discord(IOutputs):
 
     def getEmbedColor(self, siteName: str) -> int:
         # Decimal values can be collected from https://www.spycolor.com
+        if "Reddit" in siteName:
+            return 16395272
         if "YouTube" in siteName:
-            return 16384771
+            return 16449542
         if "Instagram" in siteName:
-            return 8913151
+            return 13303930
         if "Twitter" in siteName:
-            return 29647
+            return 1937134

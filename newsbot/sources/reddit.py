@@ -6,7 +6,7 @@ from newsbot.tables import Sources, DiscordWebHooks, Articles
 from time import sleep
 from requests import get, Response
 from bs4 import BeautifulSoup
-
+from selenium.webdriver import Chrome, ChromeOptions
 
 class RedditReader(ISources):
     def __init__(self) -> None:
@@ -42,6 +42,8 @@ class RedditReader(ISources):
         # TODO Flag NSFW
         allowNSFW = True
 
+        self.driver = self.getWebDriver()
+
         # rss = RSSRoot()
         allArticles: List[Articles] = list()
         for source in self.links:
@@ -49,6 +51,18 @@ class RedditReader(ISources):
 
             logger.debug(f"Collecting posts for '/r/{subreddit}'...")
 
+            # Collect values that we do not get from the RSS
+            self.uri = f"https://reddit.com/r/{subreddit}"
+            self.__driverGet__(self.uri)
+            source = self.getDriverContent()
+            soup = self.getParser(source)
+            subImages = soup.find_all(name='img', attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"})
+            authorImage = subImages[0].attrs['src']
+
+            subName = soup.find_all(name='h1', attrs={"class": "_2yYPPW47QxD4lFQTKpfpLQ"})
+            authorName = f"/r/{subreddit} - {subName[0].text}"
+
+            # Now check the RSS
             self.uri = f"https://reddit.com/r/{subreddit}/top.json"
 
             siteContent = self.getContent()
@@ -68,6 +82,8 @@ class RedditReader(ISources):
                 for i in json["data"]["children"]:
                     a = Articles()
                     a.siteName = f"Reddit {subreddit}"
+                    a.authorImage = authorImage
+                    a.authorName = authorName
 
                     d = i["data"]
 
@@ -95,18 +111,23 @@ class RedditReader(ISources):
 
             sleep(5.0)
 
+        self.__driverQuit__()
         return allArticles
 
-    def getContent(self) -> Response:
+    def getContent(self) -> str:
         try:
             headers = self.getHeaders()
-            return get(self.uri, headers=headers)
+            res = get(self.uri, headers=headers)
+            return res.text 
         except Exception as e:
             logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
-    def getParser(self, siteContent: Response) -> BeautifulSoup:
+    def getDriverContent(self) -> str:
+        return self.driver.page_source
+
+    def getParser(self, siteContent: str) -> BeautifulSoup:
         try:
-            return BeautifulSoup(siteContent.content, features="html.parser")
+            return BeautifulSoup(siteContent, features="html.parser")
         except Exception as e:
             logger.critical(f"failed to parse data returned from requests. {e}")
 
@@ -115,3 +136,27 @@ class RedditReader(ISources):
             return preview["images"][0]["source"]["url"]
         except:
             return ""
+
+    # Selenium Code
+    def getWebDriver(self) -> Chrome:
+        options = ChromeOptions()
+        options.add_argument("--disable-extensions")
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        try:
+            driver = Chrome(options=options)
+            return driver
+        except Exception as e:
+            logger.critical(f"Chrome Driver failed to start! Error: {e}")
+
+    def __driverGet__(self, uri: str) -> None:
+        try:
+            self.driver.get(uri)
+            #self.driver.implicitly_wait(30)
+            sleep(5)
+        except Exception as e:
+            logger.error(f"Driver failed to get {uri}. Error: {e}")
+
+    def __driverQuit__(self):
+        self.driver.quit()

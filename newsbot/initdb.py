@@ -77,20 +77,6 @@ class InitDb:
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
-    def checkYoutube(self):
-        for i in self.e.youtube_values:
-            r1 = f"Youtube {i.name}"
-            Sources(name=r1, url=i.site).add()
-            for h in i.hooks:
-                DiscordWebHooks(name=r1, key=h).add()
-
-    def checkInstagram(self):
-        for i in self.e.instagram_values:
-            r1 = f"Instagram {i.name}"
-            Sources(name=r1, url=i.site).add()
-            for h in i.hooks:
-                DiscordWebHooks(name=r1, key=h).add()
-
     def checkSite(self, siteName: str, siteValues: List[EnvDetails]):
         for i in siteValues:
             r1 = f"{siteName} {i.name}"
@@ -105,9 +91,7 @@ class InitDb:
         Icons(site="Default Twitter", fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png").add()
         Icons(site="Default Instagram", fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png").add()
 
-
-    def runDatabaseTasks(self):
-
+    def runDatabaseTasks(self) -> None:
         # Inject new values based off env values
         # if the user did not request a source, we will ignore it.
         self.checkPokemonGoHub()
