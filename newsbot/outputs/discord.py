@@ -21,8 +21,11 @@ class Discord(IOutputs):
                 queue = self.table.getQueue()
 
                 for i in queue:
-                    self.sendMessage(i)
-                    i.remove()
+                    resp = self.sendMessage(i)
+
+                    # Only remove the object from the queue if we sent it out correctly.
+                    if resp.status_code == 204:
+                        i.remove()
                     sleep(env.discord_delay_seconds)
             except Exception as e:
                 logger.error(f"Failed to post a message. {i.title}")
