@@ -83,99 +83,124 @@ class TwitterReader(ISources):
             
             # Figure out if we are looking for a user or tag
             if siteType == "user":
-                newArticles = self.getUserTweets(api, siteSplit[2])
-                for i in newArticles:
-                    allArticles.append(i)
+                #newArticles = self.getUserTweets(api, siteSplit[2])
+                #for i in newArticles:
+                #    allArticles.append(i)
                 pass
 
             elif siteType == "tag":
-                #self.getHashtagTweets(api, siteSplit[2])
-                pass
+                for i in self.getTweets(api=api, hashtag=siteSplit[2]):
+                    allArticles.append(i)
+
         self.__driverQuit__()
         return allArticles
 
-    def getUserTweets(self, api: API, username: str) -> List[Articles]:
+    def getTweets(self, api: API, username: str = "", hashtag: str = "") -> List[Articles]:
         l = list()
-        for tweet in Cursor(api.user_timeline, id=username).items(30):
-            if tweet.in_reply_to_screen_name == None:
-                a = Articles(siteName=self.currentSite.name)
-                a.description = tweet.text
+        tweets = list()
+        searchValue: str = ""
+        if username != "":
+            searchValue = f"{username}"
+            for tweet in Cursor(api.user_timeline, id=username).items(30):            
+                tweets.append(tweet)
 
-                a.authorName = f"{tweet.author.name} @{username}"
-                a.authorImage = tweet.author.profile_image_url
+        if hashtag != "":
+            searchValue = hashtag
+            for tweet in Cursor(api.search, q=f"#{hashtag}").items(15):
+                tweets.append(tweet)
 
-                # Find url for the post
+        for tweet in tweets:
+            a = Articles(siteName=self.currentSite.name)
+            a.description = tweet.text
+
+            a.authorName = f"{tweet.author.name} @{tweet.author.screen_name}"
+            a.authorImage = tweet.author.profile_image_url
+
+            # Find url for the post
+            a.url = self.getTweetUrl(tweet)
+
+            try:
+                tags = f'twitter, {searchValue}, '
+                for t in tweet.entities['hashtags']:
+                    tags += f"{t['text']}, "
+                a.tags = tags
+            except Exception as e:
+                logger.error(f"Failed to find 'hashtags' on the tweet. \r\nError: {e}")
+
+            try:
+                a.pubDate = str(tweet.created_at)
+            except Exception as e:
+                logger.error(f"Failed to find 'created_at' on the tweet. \r\nError: {e}")
+
+            # Thumbnail
+            try:
+                if len(tweet.entities['media']) >= 1:
+                    for img in tweet.entities['media']:
+                        if 'photo' in img['type'] and "twimg" in img['media_url']:
+                            a.thumbnail = img['media_url']
+                            break
+            except:
+                # I expect that this wont be found a lot, its not a problem.
+                pass
+            
+            if a.thumbnail == '':
                 try:
-                    a.url = tweet.entities['urls'][0]['expanded_url']
-                except Exception as e:
-                    #logger.warning(f"Failed to find the URL to the exact tweet. Checking the second location. \r\nError: {e}")
-                    pass
+                    # The API does not seem to expose all images attached to the tweet.. why idk.
+                    # We are going to try with Chrome to find the image.
+                    # It will try a couple times to try and find the image given the results are so hit and miss.
 
-                # if the primary locacation fails, try this location
-                if a.url == "":
-                    try:
-                        a.url = tweet.entities['media'][0]['expanded_url']
-                    except:
-                        logger.error(f"Failed to find the tweet url in 'entities['media'][0]['expanded_url']")
-                        pass
-
-                try:
-                    tags = f'twitter, {username}, '
-                    for t in tweet.entities['hashtags']:
-                        tags += f"{t['text']}, "
-                    a.tags = tags
-                except Exception as e:
-                    logger.error(f"Failed to find 'hashtags' on the tweet. \r\nError: {e}")
-
-                try:
-                    a.pubDate = str(tweet.created_at)
-                except Exception as e:
-                    logger.error(f"Failed to find 'created_at' on the tweet. \r\nError: {e}")
-
-                # Thumbnail
-                try:
-                    if len(tweet.entities['media']) >= 1:
-                        for img in tweet.entities['media']:
-                            if 'photo' in img['type'] and "twimg" in img['media_url']:
-                                a.thumbnail = img['media_url']
+                    self.__driverGet__(a.url)
+                    source = self.getContent()
+                    soup = self.getParser(source)
+                    images = soup.find_all(name='img') # attrs={"alt": "Image"})
+                    for img in images:
+                        try:
+                            # is the image in a card
+                            if "card_img" in img.attrs['src']:
+                                a.thumbnail = img.attrs['src']
                                 break
-                except:
-                    # I expect that this wont be found a lot, its not a problem.
+
+                            if img.attrs['alt'] == 'Image':
+                                a.thumbnail = img.attrs['src']
+                                break
+                        except:
+                                pass
+                except Exception as e:
                     pass
-                
-                if a.thumbnail == '':
-                    try:
-                        # The API does not seem to expose all images attached to the tweet.. why idk.
-                        # We are going to try with Chrome to find the image.
-                        # It will try a couple times to try and find the image given the results are so hit and miss.
 
-                        self.__driverGet__(a.url)
-                        source = self.getContent()
-                        soup = self.getParser(source)
-                        images = soup.find_all(name='img') # attrs={"alt": "Image"})
-                        for img in images:
-                            try:
-                                # is the image in a card
-                                if "card_img" in img.attrs['src']:
-                                    a.thumbnail = img.attrs['src']
-                                    break
-
-                                if img.attrs['alt'] == 'Image':
-                                    a.thumbnail = img.attrs['src']
-                                    break
-                            except:
-                                    pass
-                    except Exception as e:
-                        pass
-
-                l.append(a)
+            l.append(a)
 
         return l
 
-    def getHashtagTweets(self, api: API, hashtag: str) -> List[Articles]:
-        l = list()
-        for tweet in Cursor(api.search, q=hashtag, result_type="popular").items(30):
-            print(tweet)
+    def getTweetUrl(self, tweet: object) -> str:
+        url: str = ""
+        try:
+            url = tweet.entities['urls'][0]['expanded_url']
+        except Exception as e:
+            #logger.warning(f"Failed to find the URL to the exact tweet. Checking the second location. \r\nError: {e}")
+            pass
+
+        # if the primary locacation fails, try this location
+        if url == "":
+            try:
+                url = tweet.entities['media'][0]['expanded_url']
+            except:
+                #logger.error(f"Failed to find the tweet url in 'entities['media'][0]['expanded_url']")
+                pass
+
+        # if its a retweet look here
+        if url == "":
+            try:
+                url = tweet.retweeted_status.entities['urls'][0]['expanded_url']
+            except:
+                pass
+
+        if url == "":
+            try:
+                url = tweet.retweeted_status.entities['media'][0]['expanded_url']
+            except:
+                pass
+        return url
 
     # Selenium Code
     def getWebDriver(self) -> Chrome:
