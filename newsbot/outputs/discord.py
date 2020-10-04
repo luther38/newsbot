@@ -167,7 +167,7 @@ class Discord(IOutputs):
         elif "Youtube" in siteName:
             s = siteName.split(" ")
             footer = f"{s[1]} - {end}"
-        elif "Instagram" in siteName:
+        elif "Instagram" or "Twitter" in siteName:
             s = siteName.split(" ")
             if s[1] == "tag":
                 footer = f"#{s[2]} - {end}"
