@@ -11,6 +11,7 @@ class PSO2Reader(ISources):
     def __init__(self) -> None:
         self.uri: str = "https://pso2.com/news"
         self.siteName: str = "Phantasy Star Online 2"
+        self.authorName: str = f"{self.siteName} Offical Site"
         self.links = list()
         self.hooks = list()
         self.sourceEnabled: bool = False
@@ -33,8 +34,11 @@ class PSO2Reader(ISources):
 
             try:
                 for news in page.find_all("li", {"class", "news-item all sr"}):
-                    a = Articles()
-                    a.siteName = "Phantasy Star Online 2"
+                    a = Articles(
+                        siteName = self.siteName,
+                        authorName= self.authorName   
+                    )
+                    #a.siteName = "Phantasy Star Online 2"
                     a.thumbnail = re.findall(
                         "url[(](.*?)[)]", news.contents[1].attrs["style"]
                     )[0]
