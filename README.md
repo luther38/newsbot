@@ -71,6 +71,29 @@ NEWSBOT_INSTAGRAM_TAG_NAME_0=corgi
 NEWSBOT_INSTAGRAM_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
 ```
 
+### Twitter
+
+With the Twitter source you are able to monitor users or hashtags for posts.  This source will require that you have a Twitter Developer account already.  You can currently monitor up to 10 users and tags.
+
+```ini
+NEWSBOT_TWITTER_API_KEY=
+NEWSBOT_TWITTER_API_KEY_SECRET=
+NEWSBOT_TWITTER_USER_NAME_0=GenshinImpact
+NEWSBOT_TWITTER_USER_HOOK_0=https://discordapp.com/api/webhooks/...
+
+NEWSBOT_TWITTER_TAG_NAME_0=corgi
+NEWSBOT_TWITTER_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
+```
+
+#### Getting a Twitter Developer account
+
+1. Go To [Twitter Developer Account](https://developer.twitter.com/en/apply-for-access)
+2. Once you have your developer Account you will need to make a project. [Twitter Developer - Projects](https://developer.twitter.com/en/portal/projects)
+3. Once you make the project you will get your keys that you will give to NewsBot.
+4. The API Key will go to NEWSBOT_TWITTER_API_KEY
+5. The API Key Secret will go to NEWSBOT_TWITTER_API_KEY_SECRET
+
+
 [Configuration Template](https://github.com/jtom38/newsbot/blob/master/env.template)
 
 ## Known Issues
