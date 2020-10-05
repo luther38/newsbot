@@ -83,10 +83,8 @@ class TwitterReader(ISources):
             
             # Figure out if we are looking for a user or tag
             if siteType == "user":
-                #newArticles = self.getUserTweets(api, siteSplit[2])
-                #for i in newArticles:
-                #    allArticles.append(i)
-                pass
+                for i in self.getTweets(api, siteSplit[2]):
+                    allArticles.append(i)
 
             elif siteType == "tag":
                 for i in self.getTweets(api=api, hashtag=siteSplit[2]):
@@ -110,6 +108,11 @@ class TwitterReader(ISources):
                 tweets.append(tweet)
 
         for tweet in tweets:
+            
+            # Ignore retweets?
+            if tweet.in_reply_to_screen_name != None:
+                continue
+
             a = Articles(siteName=self.currentSite.name)
             a.description = tweet.text
 
@@ -117,7 +120,8 @@ class TwitterReader(ISources):
             a.authorImage = tweet.author.profile_image_url
 
             # Find url for the post
-            a.url = self.getTweetUrl(tweet)
+            a.url = f"https://twitter.com/{tweet.author.screen_name}/status/{tweet.id}"
+            #a.url = self.getTweetUrl(tweet)
 
             try:
                 tags = f'twitter, {searchValue}, '
@@ -148,7 +152,7 @@ class TwitterReader(ISources):
                     # The API does not seem to expose all images attached to the tweet.. why idk.
                     # We are going to try with Chrome to find the image.
                     # It will try a couple times to try and find the image given the results are so hit and miss.
-
+                    album: str = ""
                     self.__driverGet__(a.url)
                     source = self.getContent()
                     soup = self.getParser(source)
@@ -161,10 +165,14 @@ class TwitterReader(ISources):
                                 break
 
                             if img.attrs['alt'] == 'Image':
-                                a.thumbnail = img.attrs['src']
-                                break
-                        except:
+                                album += f"{img.attrs['src']} "
+                                #a.thumbnail = img.attrs['src']
+                                #break
+                        except Exception as e:
                                 pass
+
+                    # take all the images found, and flatten the list to a str for storage
+                    a.thumbnail = album
                 except Exception as e:
                     pass
 
