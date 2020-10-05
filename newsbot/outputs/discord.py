@@ -222,3 +222,9 @@ class Discord(IOutputs):
             return 1937134
         elif "Final Fantasy XIV" in siteName:
             return	11809847
+        elif "Pokemon Go Hub" in siteName:
+            return 	2081673
+        elif "Phantasy Star Online 2" in siteName:
+            return 	5557497
+        else:
+             return 0
