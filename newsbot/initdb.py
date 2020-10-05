@@ -86,6 +86,9 @@ class InitDb:
 
     def addStaticIcons(self) -> None:
         Icons().clearTable()
+        Icons(site="Default Pokemon Go Hub", fileName="https://pokemongohub.net/wp-content/uploads/2017/04/144.png").add()
+        Icons(site="Default Phantasy Star Online 2", fileName="https://cdn.pso2.com/wwwroot/favicon.ico").add()
+        Icons(site="Default Final Fantasy XIV", fileName="https://img.finalfantasyxiv.com/lds/h/0/U2uGfVX4GdZgU1jASO0m9h_xLg.png").add()
         Icons(site="Default Reddit", fileName="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png").add()
         Icons(site="Default YouTube", fileName="https://www.youtube.com/s/desktop/c46c1860/img/favicon_144.png").add()
         Icons(site="Default Twitter", fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png").add()

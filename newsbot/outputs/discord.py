@@ -48,13 +48,16 @@ class Discord(IOutputs):
             title = f"{title[0:128]}..."
 
         # Make a new Embed object
-        embed: DiscordEmbed = DiscordEmbed(title=title, url=article.link)
+        embed: DiscordEmbed = DiscordEmbed(title=title)#, url=article.link)
 
-        authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
-        embed.set_author(
-            name=article.authorName,
-            url=None,
-            icon_url=authorIcon)
+        try:
+            authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
+            embed.set_author(
+                name=article.authorName,
+                url=None,
+                icon_url=authorIcon)
+        except:
+            pass
 
         # Discord Embed Description can only contain 2048 characters
         if article.description != "":
@@ -152,9 +155,15 @@ class Discord(IOutputs):
         if authorIcon != "":
             return authorIcon
         else:
-            s: List[str] = siteName.split(' ')
-            res = Icons(site=f"Default {s[0]}").findAllByName()
-            return res[0].filename
+            if siteName == "Final Fantasy XIV" or \
+               siteName == "Phantasy Star Online 2" or \
+               siteName == "Pokemon Go Hub":
+               res = Icons(site=f"Default {siteName}").findAllByName()
+               return res[0].filename
+            else:
+                s: List[str] = siteName.split(' ')
+                res = Icons(site=f"Default {s[0]}").findAllByName()
+                return res[0].filename
 
     def buildFooter(self, siteName: str) -> str:
         footer = ""
@@ -183,13 +192,19 @@ class Discord(IOutputs):
         return footer
 
     def getFooterIcon(self, siteName: str) -> str:
-        s: List[str] = siteName.split(' ')
-
-        res = Icons(site=f"Default {s[0]}").findAllByName()
-        if res[0].filename != "":
+        if siteName == "Phatnasy Star Online 2" or \
+            siteName == "Pokemon Go Hub" or \
+            siteName == "Final Fantasy XIV":
+            res = Icons(site=f"Default {siteName}").findAllByName()
             return res[0].filename
         else:
-            return ""
+            s: List[str] = siteName.split(' ')
+
+            res = Icons(site=f"Default {s[0]}").findAllByName()
+            if res[0].filename != "":
+                return res[0].filename
+            else:
+                return ""
 
     def getEmbedColor(self, siteName: str) -> int:
         # Decimal values can be collected from https://www.spycolor.com
