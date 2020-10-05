@@ -74,7 +74,11 @@ class Discord(IOutputs):
             )
 
         if article.thumbnail != "":
-            embed.set_image(url=article.thumbnail)
+            if " " in article.thumbnail:
+                s = article.thumbnail.split(" ")
+                embed.set_image(url=s[0])
+            else:
+                embed.set_image(url=article.thumbnail)
 
         # Build our footer message
         footer = self.buildFooter(article.siteName)
