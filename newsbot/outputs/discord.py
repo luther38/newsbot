@@ -76,12 +76,15 @@ class Discord(IOutputs):
                 url=article.video, height=article.videoHeight, width=article.videoWidth
             )
 
-        if article.thumbnail != "":
-            if " " in article.thumbnail:
-                s = article.thumbnail.split(" ")
-                embed.set_image(url=s[0])
-            else:
-                embed.set_image(url=article.thumbnail)
+        try:
+            if article.thumbnail != "":
+                if " " in article.thumbnail:
+                    s = article.thumbnail.split(" ")
+                    embed.set_image(url=s[0])
+                else:
+                    embed.set_image(url=article.thumbnail)
+        except Exception as e:
+            logger.warning(f"Failed to attach a thumbnail. \r\n {e}\r\n thumbnails: {article.thumbnail}")
 
         # add the link to the embed
         embed.add_embed_field(name="Link:", value=article.link)
