@@ -249,6 +249,11 @@ class InstagramReader(ISources):
             except:
                 pass
 
+        # Checking for images that have people/objects tagged
+        for i in soup.find_all(name="img", attrs={"class": "FFVAD"}):
+            # we are just going to take the first one that shows up in the list.
+            return i.attrs['src']
+
     def __driverGet__(self, uri: str) -> None:
         try:
             self.driver.get(uri)
