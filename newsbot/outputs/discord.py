@@ -41,7 +41,7 @@ class Discord(IOutputs):
 
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
-        hook.content = article.link
+        #hook.content = article.link
 
         title = article.title
         if len(title) >= 128:
@@ -82,6 +82,9 @@ class Discord(IOutputs):
                 embed.set_image(url=s[0])
             else:
                 embed.set_image(url=article.thumbnail)
+
+        # add the link to the embed
+        embed.add_embed_field(name="Link:", value=article.link)
 
         # Build our footer message
         footer = self.buildFooter(article.siteName)
@@ -173,14 +176,15 @@ class Discord(IOutputs):
             footer = f"{end}"
         elif "Phantasy Star Online 2" in siteName:
             footer = f"Phantasy Star Online 2 - {end}"
-        elif "Final Fantasy XIV" in siteName:
-            footer = f"Final Fantasy XIV - {end}"
+        #elif "Final Fantasy XIV" in siteName:
+        #    footer = f"Final Fantasy XIV - {end}"
         elif "Pokemon Go Hub" in siteName:
             footer = f"Pokemon Go Hub - {end}"
         elif "Youtube" in siteName:
             s = siteName.split(" ")
             footer = f"{s[1]} - {end}"
-        elif "Instagram" or "Twitter" in siteName:
+        elif "Instagram" in siteName or \
+            "Twitter" in siteName:
             s = siteName.split(" ")
             if s[1] == "tag":
                 footer = f"#{s[2]} - {end}"
@@ -210,9 +214,11 @@ class Discord(IOutputs):
         # Decimal values can be collected from https://www.spycolor.com
         if "Reddit" in siteName:
             return 16395272
-        if "YouTube" in siteName:
+        elif "YouTube" in siteName:
             return 16449542
-        if "Instagram" in siteName:
+        elif "Instagram" in siteName:
             return 13303930
-        if "Twitter" in siteName:
+        elif "Twitter" in siteName:
             return 1937134
+        elif "Final Fantasy XIV" in siteName:
+            return	11809847
