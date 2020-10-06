@@ -23,6 +23,7 @@ class Env():
         self.reddit_values: List[EnvDetails] = list()
         self.youtube_values: List[EnvDetails] = list()
         self.instagram_values: List[EnvDetails] = list()
+        self.twitter_values: List[EnvDetails] = list()
 
         self.readEnv()
         pass
@@ -30,8 +31,6 @@ class Env():
     def readEnv(self):
         env = Path(".env")
         load_dotenv(dotenv_path=env)
-
-        # self.db_name = os.getenv("NEWSBOT_DATABASE_NAME")
 
         # Pokemon Go Hub
         self.pogo_enabled = self.readBoolEnv("NEWSBOT_POGO_ENABLED")
@@ -43,12 +42,10 @@ class Env():
 
         # Final Fantasy XIV
         self.readFfxivValues()
-
         self.readRedditValues()
-
         self.readYoutubeValues()
-
         self.readInstagramValues()
+        self.readTwitterValues()
 
     def readFfxivValues(self) -> None:
         self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
@@ -135,6 +132,39 @@ class Env():
             counter = counter + 1
 
         # self.instagram_values = items
+
+    def readTwitterValues(self) -> None:
+        counter = 0
+        self.twitter_values.clear()
+        base = "NEWSBOT_TWITTER"
+        while counter <= 10:
+            # User Posts
+            sub = os.getenv(f"{base}_USER_NAME_{counter}")
+            hooks = self.extractHooks(f"{base}_USER_HOOK_{counter}")
+
+            if sub != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = sub
+                details.hooks = hooks
+                details.name = f"user {sub}"
+                self.twitter_values.append(details)
+                # items.append(details)
+
+            # Tags Posts
+            tag = os.getenv(f"{base}_TAG_NAME_{counter}")
+            hooks = self.extractHooks(f"{base}_TAG_HOOK_{counter}")
+
+            if tag != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = tag
+                details.hooks = hooks
+                details.name = f"tag {tag}"
+                self.twitter_values.append(details)
+                # items.append(details)
+
+            counter = counter + 1
 
     def extractHooks(self, sourceHooks) -> List[str]:
         try:

@@ -71,7 +71,43 @@ NEWSBOT_INSTAGRAM_TAG_NAME_0=corgi
 NEWSBOT_INSTAGRAM_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
 ```
 
-[Configuration Template](https://github.com/jtom38/newsbot/blob/master/env.template)
+
+## Example Template
+
+```ini
+NEWSBOT_POGO_ENABLED=true
+NEWSBOT_POGO_HOOK=https://discordapp.com/api/webhooks/...
+
+NEWSBOT_PSO2_ENABLED=true
+NEWSBOT_PSO2_HOOK=https://discordapp.com/api/webhooks/...
+
+NEWSBOT_FFXIV_ALL=False
+NEWSBOT_FFXIV_TOPICS=True
+NEWSBOT_FFXIV_NOTICES=False
+NEWSBOT_FFXIV_MAINTENANCE=False
+NEWSBOT_FFXIV_UPDATES=False
+NEWSBOT_FFXIV_STATUS=False
+NEWSBOT_FFXIV_HOOK=https://discordapp.com/api/webhooks/...
+
+NEWSBOT_REDDIT_SUB_0=aww
+NEWSBOT_REDDIT_HOOK_0=https://discordapp.com/api/webhooks/...
+
+NEWSBOT_YOUTUBE_URL_0=https://www.youtube.com/user/gamegrumps
+NEWSBOT_YOUTUBE_HOOK_0=https://discordapp.com/api/webhooks/...
+NEWSBOT_YOUTUBE_NAME_0=GameGrumps
+
+NEWSBOT_INSTAGRAM_USER_NAME_0=madmax_fluffyroad
+NEWSBOT_INSTAGRAM_USER_HOOK_0=https://discordapp.com/api/webhooks/...
+NEWSBOT_INSTAGRAM_TAG_NAME_0=corgi
+NEWSBOT_INSTAGRAM_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
+
+NEWSBOT_TWITTER_API_KEY=
+NEWSBOT_TWITTER_API_KEY_SECRET=
+NEWSBOT_TWITTER_USER_NAME_0=dodo
+NEWSBOT_TWITTER_USER_HOOK_0=https://discordapp.com/api/webhooks/...
+NEWSBOT_TWITTER_TAG_NAME_0=corgi
+NEWSBOT_TWITTER_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
+```
 
 ## Known Issues
 

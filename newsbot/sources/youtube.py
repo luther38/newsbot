@@ -4,7 +4,8 @@ from newsbot.sources.isources import ISources, UnableToFindContent, UnableToPars
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
-
+from selenium.webdriver import Chrome, ChromeOptions
+from time import sleep
 
 class YoutubeReader(ISources):
     def __init__(self):
@@ -42,14 +43,35 @@ class YoutubeReader(ISources):
 
     def getArticles(self) -> List[Articles]:
         logger.debug(f"Checking YouTube for new content")
+        self.driver = self.getWebDriver()
 
         allArticles: List[Articles] = list()
 
         for site in self.links:
+            self.authorName = ''
+            self.authorImage = ''
             logger.debug(f"{site.name} - Checking for updates")
-            self.uri = f"{site.url}"
-            channelID: str = self.getChannelId()
 
+            # pull the source code from the main youtube page
+            self.uri = f"{site.url}"
+            self.__driverGet__(self.uri)
+            siteContent: str = self.getDriverContent()
+            page: BeautifulSoup = self.getParser(siteContent)
+            channelID: str = self.getChannelId(page)
+
+            # Not finding the values I want with just request.  Time for Chrome.
+            # We are collecting info that is not present in the RSS feed.  
+            # We are going to store them in the class.
+            authorImage = page.find_all(name='img', attrs={"id":"img"})
+            self.authorImage = authorImage[0].attrs['src']
+            authorImage.clear()
+
+
+            authorName = page.find_all(name='yt-formatted-string', attrs={"class": "style-scope ytd-channel-name", "id":"text"})
+            self.authorName = authorName[0].text
+            authorName.clear()
+
+            # Generatet he hidden RSS feed uri
             self.uri = f"{self.feedBase}{channelID}"
             siteContent = self.getContent()
             page = self.getParser(siteContent)
@@ -64,27 +86,38 @@ class YoutubeReader(ISources):
                     a.pubDate = item.contents[13].text
                     a.siteName = site.name
                     a.thumbnail = item.contents[17].contents[5].attrs["url"]
+                    a.authorImage = self.authorImage
+                    a.authorName = self.authorName
 
                     allArticles.append(a)
 
+        self.driver.quit()
         return allArticles
 
-    def getContent(self) -> Response:
+    def getContent(self) -> str:
         try:
             headers = self.getHeaders()
-            return get(self.uri, headers=headers)
+            res = get(self.uri, headers=headers)
+            return res.text 
         except Exception as e:
             logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
-    def getParser(self, siteContent: Response) -> BeautifulSoup:
+    def getDriverContent(self) -> str:
         try:
-            return BeautifulSoup(siteContent.content, features="html.parser")
+            return self.driver.page_source
+        except Exception as e:
+            logger.critical(f"Filed to collect source code from driver at {self.uri}. {e}")
+
+
+    def getParser(self, siteContent: str) -> BeautifulSoup:
+        try:
+            return BeautifulSoup(siteContent, features="html.parser")
         except Exception as e:
             logger.critical(f"failed to parse data returned from requests. {e}")
 
-    def getChannelId(self) -> str:
-        siteContent: Response = self.getContent()
-        page: BeautifulSoup = self.getParser(siteContent)
+    def getChannelId(self, page: BeautifulSoup) -> str:
+        #siteContent: Response = self.getContent()
+        #page: BeautifulSoup = self.getParser(siteContent)
 
         meta = page.find_all("meta")
         for i in meta:
@@ -96,3 +129,25 @@ class YoutubeReader(ISources):
                 pass
 
         return ""
+
+    # Selenium Code
+    def getWebDriver(self) -> Chrome:
+        options = ChromeOptions()
+        options.add_argument("--disable-extensions")
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        try:
+            driver = Chrome(options=options)
+            return driver
+        except Exception as e:
+            logger.critical(f"Chrome Driver failed to start! Error: {e}")
+
+    def __driverGet__(self, uri: str) -> None:
+        try:
+            self.driver.get(uri)
+            #self.driver.implicitly_wait(30)
+            sleep(5)
+        except Exception as e:
+            logger.error(f"Driver failed to get {uri}. Error: {e}")
+

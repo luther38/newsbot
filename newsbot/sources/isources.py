@@ -39,6 +39,9 @@ class ISources:
     def getContent(self) -> str:
         raise NotImplementedError
 
+    def getDriverContent(self) -> str:
+        raise NotImplementedError
+
     def getParser(self, souce: str) -> BeautifulSoup:
         raise NotImplementedError
 
