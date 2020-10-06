@@ -28,10 +28,10 @@ class Startup:
         # Turn on outputs first
         Thread(target=Discord().enableThread, name="Discord").start()
 
-#        Thread(target=Worker(FFXIVReader()).init, name="Final Fantasy XIV").start()
-#        Thread(target=Worker(PogohubReader()).init, name="Pokemon Go Hub").start()
-#        Thread(target=Worker(PSO2Reader()).init, name="PSO2").start()
+        Thread(target=Worker(FFXIVReader()).init, name="Final Fantasy XIV").start()
+        Thread(target=Worker(PogohubReader()).init, name="Pokemon Go Hub").start()
+        Thread(target=Worker(PSO2Reader()).init, name="PSO2").start()
         Thread(target=Worker(RedditReader()).init, name="Reddit").start()
-#        Thread(target=Worker(YoutubeReader()).init, name="Youtube").start()
-#        Thread(target=Worker(InstagramReader()).init, name="Instagram").start()
-#        Thread(target=Worker(TwitterReader()).init, name="Twitter").start()
+        Thread(target=Worker(YoutubeReader()).init, name="Youtube").start()
+        Thread(target=Worker(InstagramReader()).init, name="Instagram").start()
+        Thread(target=Worker(TwitterReader()).init, name="Twitter").start()
