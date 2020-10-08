@@ -12,6 +12,7 @@ class FFXIVReader(ISources):
         self.uri: str = "https://na.finalfantasyxiv.com/lodestone/news/"
         self.baseUri: str = "https://na.finalfantasyxiv.com"
         self.siteName: str = "Final Fantasy XIV"
+        self.authorName: str = "Final Fantasy XIV Offical Site"
         self.links = list()
         self.hooks = list()
         self.sourceEnabled: bool = False
@@ -33,15 +34,18 @@ class FFXIVReader(ISources):
                     for news in page.find_all(
                         "li", {"class", "news__list--topics ic__topics--list"}
                     ):
-                        a = Articles()
-                        a.siteName = self.siteName
+                        a = Articles(
+                            siteName=self.siteName,
+                            tags="ffxiv, topics, news",
+                            authorName=self.authorName)
+                        #a.siteName = self.siteName
                         header = news.contents[0].contents
                         body = news.contents[1].contents
                         a.title = header[0].text
                         a.url = f"{self.baseUri}{header[0].contents[0].attrs['href']}"
                         a.thumbnail = body[0].contents[0].attrs["src"]
                         a.description = body[0].contents[0].next_element.text
-                        a.tags = "Topics"
+                        #a.tags = "Topics"
                         allArticles.append(a)
                 except Exception as e:
                     logger.error(f"Failed to collect Topics from FFXIV. {e}")
@@ -51,11 +55,15 @@ class FFXIVReader(ISources):
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__info--list"}
                     ):
-                        a = Articles()
-                        a.siteName = self.siteName
+                        a = Articles(
+                            siteName=self.siteName,
+                            tags="ffxiv, notices, news",
+                            authorName=self.authorName
+                        )
+                        #a.siteName = self.siteName
                         a.title = news.text
                         a.url = f"{self.baseUri}{news.attrs['href']}"
-                        a.tags = "Notices"
+                        #a.tags = "Notices"
                         self.uri = a.link
                         subPage = self.getContent()
                         details = self.getParser(subPage)
@@ -73,11 +81,15 @@ class FFXIVReader(ISources):
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__maintenance--list"}
                     ):
-                        a = Articles()
-                        a.siteName = self.siteName
+                        a = Articles(
+                            siteName=self.siteName,
+                            tags="ffxiv, maintenance, news",
+                            authorName=self.authorName
+                        )
+                        #a.siteName = self.siteName
                         a.title = news.text
                         a.url = f"{self.baseUri}{news.attrs['href']}"
-                        a.tags = site["tag"]
+                        #a.tags = site["tag"]
                         self.uri = a.link
                         subPage = self.getContent()
                         details = self.getParser(subPage)
@@ -98,11 +110,13 @@ class FFXIVReader(ISources):
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__update--list"}
                     ):
-                        a = Articles()
-                        a.siteName = self.siteName
+                        a = Articles(
+                            siteName = self.siteName,
+                            tags = "ffxiv, updates, news",
+                            authorName=self.authorName
+                        )
                         a.title = news.text
                         a.url = f"{self.baseUri}{news.attrs['href']}"
-                        a.tags = site["tag"]
                         self.uri = a.link
 
                         subPage = self.getContent()
@@ -124,7 +138,11 @@ class FFXIVReader(ISources):
                     for news in page.find_all(
                         "a", {"class", "news__list--link ic__obstacle--list"}
                     ):
-                        a = Articles()
+                        a = Articles(
+                            siteName=self.siteName,
+                            tags="ffxiv, news, status",
+                            authorName=self.authorName
+                        )
                         a.siteName = self.siteName
                         a.title = news.text
                         a.link = f"{self.baseUri}{news.attrs['href']}"

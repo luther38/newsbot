@@ -2,7 +2,7 @@ from typing import List
 from newsbot import logger, env
 import re
 from time import sleep
-from newsbot.tables import DiscordQueue, DiscordWebHooks
+from newsbot.tables import DiscordQueue, DiscordWebHooks, Icons
 from newsbot.outputs.ioutputs import IOutputs
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
@@ -21,8 +21,11 @@ class Discord(IOutputs):
                 queue = self.table.getQueue()
 
                 for i in queue:
-                    self.sendMessage(i)
-                    i.remove()
+                    resp = self.sendMessage(i)
+
+                    # Only remove the object from the queue if we sent it out correctly.
+                    if resp.status_code == 204:
+                        i.remove()
                     sleep(env.discord_delay_seconds)
             except Exception as e:
                 logger.error(f"Failed to post a message. {i.title}")
@@ -38,15 +41,23 @@ class Discord(IOutputs):
 
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
+        #hook.content = article.link
 
         title = article.title
         if len(title) >= 128:
             title = f"{title[0:128]}..."
 
         # Make a new Embed object
-        embed: DiscordEmbed = DiscordEmbed(title=title, url=article.link)
-        # embed.title = article.title
-        # embed.url = article.link
+        embed: DiscordEmbed = DiscordEmbed(title=title)#, url=article.link)
+
+        try:
+            authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
+            embed.set_author(
+                name=article.authorName,
+                url=None,
+                icon_url=authorIcon)
+        except:
+            pass
 
         # Discord Embed Description can only contain 2048 characters
         if article.description != "":
@@ -65,12 +76,25 @@ class Discord(IOutputs):
                 url=article.video, height=article.videoHeight, width=article.videoWidth
             )
 
-        if article.thumbnail != "":
-            embed.set_image(url=article.thumbnail)
+        try:
+            if article.thumbnail != "":
+                if " " in article.thumbnail:
+                    s = article.thumbnail.split(" ")
+                    embed.set_image(url=s[0])
+                else:
+                    embed.set_image(url=article.thumbnail)
+        except Exception as e:
+            logger.warning(f"Failed to attach a thumbnail. \r\n {e}\r\n thumbnails: {article.thumbnail}")
+
+        # add the link to the embed
+        embed.add_embed_field(name="Link:", value=article.link)
 
         # Build our footer message
         footer = self.buildFooter(article.siteName)
-        embed.set_footer(text=footer)
+        footerIcon = self.getFooterIcon(article.siteName)
+        embed.set_footer(
+            icon_url=footerIcon,
+            text=footer)
 
         embed.set_color(color=self.getEmbedColor(article.siteName))
 
@@ -78,7 +102,10 @@ class Discord(IOutputs):
         self.tempMessage = hook
 
     def sendMessage(self, article: DiscordQueue) -> Response:
-        logger.debug(f"Discord - Sending article '{article.title}'")
+        if article.title != "":
+            logger.debug(f"Discord - Sending article '{article.title}'")
+        else:
+            logger.debug(f"Discord - Sending article '{article.description}'")
         self.buildMessage(article)
         try:
             res = self.tempMessage.execute()
@@ -130,36 +157,77 @@ class Discord(IOutputs):
             msg = msg.replace(f"<a{l}a>", discordLink)
         return msg
 
+    def getAuthorIcon(self, authorIcon: str, siteName: str) -> str:
+        if authorIcon != "":
+            return authorIcon
+        else:
+            if siteName == "Final Fantasy XIV" or \
+               siteName == "Phantasy Star Online 2" or \
+               siteName == "Pokemon Go Hub":
+               res = Icons(site=f"Default {siteName}").findAllByName()
+               return res[0].filename
+            else:
+                s: List[str] = siteName.split(' ')
+                res = Icons(site=f"Default {s[0]}").findAllByName()
+                return res[0].filename
+
     def buildFooter(self, siteName: str) -> str:
         footer = ""
         end: str = "Brought to you by NewsBot"
         if "reddit" in siteName.lower():
             s = siteName.split(" ")
-            footer = f"/r/{s[1]} - {end}"
-            # embed.add_embed_field(name="Source", value=f"Reddit /r/{s[1]}")
-        elif "Phantasy Star Online 2" in siteName:
-            footer = f"Phantasy Star Online 2 - {end}"
-        elif "Final Fantasy XIV" in siteName:
-            footer = f"Final Fantasy XIV - {end}"
-        elif "Pokemon Go Hub" in siteName:
-            footer = f"Pokemon Go Hub - {end}"
+            footer = f"{end}"
+        #elif "Phantasy Star Online 2" in siteName:
+        #    footer = f"Phantasy Star Online 2 - {end}"
+        #elif "Final Fantasy XIV" in siteName:
+        #    footer = f"Final Fantasy XIV - {end}"
+        #elif "Pokemon Go Hub" in siteName:
+        #    footer = f"Pokemon Go Hub - {end}"
         elif "Youtube" in siteName:
             s = siteName.split(" ")
-            footer = f"Youtube - {s[1]} - {end}"
-        elif "Instagram" in siteName:
+            footer = f"{s[1]} - {end}"
+        elif "Instagram" in siteName or \
+            "Twitter" in siteName:
             s = siteName.split(" ")
             if s[1] == "tag":
-                footer = f"Instagram - #{s[2]} - {end}"
+                footer = f"#{s[2]} - {end}"
             elif s[1] == "user":
-                footer = f"Instagram - {s[2]} - {end}"
+                footer = f"{s[2]} - {end}"
         else:
             footer = end
 
         return footer
 
+    def getFooterIcon(self, siteName: str) -> str:
+        if siteName == "Phatnasy Star Online 2" or \
+            siteName == "Pokemon Go Hub" or \
+            siteName == "Final Fantasy XIV":
+            res = Icons(site=f"Default {siteName}").findAllByName()
+            return res[0].filename
+        else:
+            s: List[str] = siteName.split(' ')
+
+            res = Icons(site=f"Default {s[0]}").findAllByName()
+            if res[0].filename != "":
+                return res[0].filename
+            else:
+                return ""
+
     def getEmbedColor(self, siteName: str) -> int:
         # Decimal values can be collected from https://www.spycolor.com
-        if "Youtube" in siteName:
-            return 16384771
-        if "Instagram" in siteName:
-            return 8913151
+        if "Reddit" in siteName:
+            return 16395272
+        elif "YouTube" in siteName:
+            return 16449542
+        elif "Instagram" in siteName:
+            return 13303930
+        elif "Twitter" in siteName:
+            return 1937134
+        elif "Final Fantasy XIV" in siteName:
+            return	11809847
+        elif "Pokemon Go Hub" in siteName:
+            return 	2081673
+        elif "Phantasy Star Online 2" in siteName:
+            return 	5557497
+        else:
+             return 0

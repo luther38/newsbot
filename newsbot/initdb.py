@@ -1,6 +1,8 @@
 from os import system
 from newsbot import Env
-from newsbot.tables import Sources, DiscordWebHooks
+from typing import List
+from newsbot.collections import EnvDetails
+from newsbot.tables import Sources, DiscordWebHooks, Icons
 
 
 class InitDb:
@@ -75,27 +77,31 @@ class InitDb:
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
-    def checkYoutube(self):
-        for i in self.e.youtube_values:
-            r1 = f"Youtube {i.name}"
+    def checkSite(self, siteName: str, siteValues: List[EnvDetails]):
+        for i in siteValues:
+            r1 = f"{siteName} {i.name}"
             Sources(name=r1, url=i.site).add()
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
-    def checkInstagram(self):
-        for i in self.e.instagram_values:
-            r1 = f"Instagram {i.name}"
-            Sources(name=r1, url=i.site).add()
-            for h in i.hooks:
-                DiscordWebHooks(name=r1, key=h).add()
+    def addStaticIcons(self) -> None:
+        Icons().clearTable()
+        Icons(site="Default Pokemon Go Hub", fileName="https://pokemongohub.net/wp-content/uploads/2017/04/144.png").add()
+        Icons(site="Default Phantasy Star Online 2", fileName="https://raw.githubusercontent.com/jtom38/newsbot/master/mounts/icons/pso2.jpg").add()
+        Icons(site="Default Final Fantasy XIV", fileName="https://img.finalfantasyxiv.com/lds/h/0/U2uGfVX4GdZgU1jASO0m9h_xLg.png").add()
+        Icons(site="Default Reddit", fileName="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png").add()
+        Icons(site="Default YouTube", fileName="https://www.youtube.com/s/desktop/c46c1860/img/favicon_144.png").add()
+        Icons(site="Default Twitter", fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png").add()
+        Icons(site="Default Instagram", fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png").add()
 
-    def runDatabaseTasks(self):
-
+    def runDatabaseTasks(self) -> None:
         # Inject new values based off env values
         # if the user did not request a source, we will ignore it.
         self.checkPokemonGoHub()
         self.checkPhantasyStarOnline2()
         self.checkFinalFantasyXIV()
         self.checkReddit()
-        self.checkYoutube()
-        self.checkInstagram()
+        self.checkSite(siteName="YouTube", siteValues=self.e.youtube_values)
+        self.checkSite(siteName="Instagram", siteValues=self.e.instagram_values)
+        self.checkSite(siteName="Twitter", siteValues=self.e.twitter_values)
+        self.addStaticIcons()

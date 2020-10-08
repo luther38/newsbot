@@ -30,6 +30,8 @@ class Articles(Base):
     videoWidth = Column(Integer)
     thumbnail = Column(String)
     description = Column(String)
+    authorName = Column(String)
+    authorImage = Column(String)
 
     def __init__(
         self,
@@ -43,6 +45,8 @@ class Articles(Base):
         videoWidth: int = -1,
         thumbnail: str = "",
         description: str = "",
+        authorName: str = "",
+        authorImage: str = ""
     ) -> None:
         self.id = str(uuid.uuid4())
         self.siteName = siteName
@@ -55,6 +59,8 @@ class Articles(Base):
         self.videoWidth = videoWidth
         self.thumbnail = thumbnail
         self.description = description
+        self.authorName = authorName
+        self.authorImage = authorImage
 
     def exists(self) -> bool:
         """
@@ -89,6 +95,8 @@ class Articles(Base):
         a.video = self.video
         a.videoHeight = self.videoHeight
         a.videoWidth = self.videoWidth
+        a.authorName = self.authorName
+        a.authorImage = self.authorImage
 
         try:
             s.add(a)
@@ -295,6 +303,8 @@ class DiscordQueue(Base):
     video = Column(String)
     videoHeight = Column(Integer)
     videoWidth = Column(Integer)
+    authorName = Column(String)
+    authorImage = Column(String)
 
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())
@@ -309,6 +319,8 @@ class DiscordQueue(Base):
         self.video = Article.video
         self.videoHeight = Article.videoHeight
         self.videoWidth = Article.videoWidth
+        self.authorName = Article.authorName
+        self.authorImage = Article.authorImage
 
     def getQueue(self) -> List:
         s = database.newSession()
@@ -337,11 +349,18 @@ class DiscordQueue(Base):
         dq.video = self.video
         dq.videoHeight = self.videoHeight
         dq.videoWidth = self.videoWidth
+        dq.authorName = self.authorName
+        dq.authorImage = self.authorImage
 
         try:
             s.add(dq)
             s.commit()
-            logger.debug(f" '{self.title}' was added to the Discord queue")
+            if self.title != "":
+                logger.debug(f"'{self.title}' was added to the Discord queue")
+            elif self.description != "":
+                logger.debug(f"'{self.description}' was added to the Discord queue") 
+            else:
+                pass
         except FailedToAddToDatabase as e:
             logger.critical(f"Failed to add {self.title} to DiscorQueue table! {e}")
         finally:
@@ -367,6 +386,87 @@ class DiscordQueue(Base):
         l = list()
         try:
             for res in s.query(Articles).filter(Articles.siteName == self.siteName):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+
+        return len(l)
+
+
+class Icons(Base):
+    __tablename__ = "icons"
+    id = Column(String, primary_key=True)
+    filename = Column(String)
+    site = Column(String)
+
+    def __init__(self,
+        fileName: str = "",
+        site: str = ""
+        ) -> None:
+        self.id = str(uuid.uuid4())
+        self.filename = fileName
+        self.site = site
+
+    def add(self) -> None:
+        s = database.newSession()
+
+        i = Icons()
+        i.filename = self.filename
+        i.site = self.site
+
+        try:
+            s.add(i)
+            s.commit()
+        except FailedToAddToDatabase as e:
+            logger.critical(f"Failed to add {self.site} to Icons table! {e}")
+        finally:
+            s.close()
+
+    def remove(self) -> None:
+        s = database.newSession()
+        try:
+            for d in s.query(Icons).filter(Icons.site == self.site):
+                s.delete(d)
+            s.commit()
+        except Exception as e:
+            logger.critical(f"{e}")
+        finally:
+            s.close()
+
+    def clearTable(self) -> None:
+        s = database.newSession()
+        try:
+            for d in s.query(Icons):
+                s.delete(d)
+            s.commit()
+        except Exception as e:
+            logger.critical(f"{e}")
+        finally:
+            s.close()
+
+    def findAllByName(self) -> List:
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(Icons).filter(Icons.site.contains(self.site)):
+                l.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return l
+
+    def __len__(self) -> int:
+        """
+        Returns the number of rows based off the Site value provieded.
+        """
+
+        s = database.newSession()
+        l = list()
+        try:
+            for res in s.query(Icons).filter(Icons.site == self.site):
                 l.append(res)
         except Exception as e:
             pass

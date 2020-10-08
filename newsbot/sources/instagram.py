@@ -169,18 +169,34 @@ class InstagramReader(ISources):
 
     def getPostInfo(self, link: str) -> Articles:
         a = Articles(url=link, siteName=self.currentLink.name, tags="instagram, posts")
-        nameSplit = self.currentLink.name.split(" ")
-        if "tag" in self.currentLink.name:
-            a.tags += f", tag, {nameSplit[2]}"
-        elif "user" in self.currentLink.name:
-            a.tags += f", user, {nameSplit[2]}"
 
         self.__driverGet__(link)
         source = self.getContent()
         soup = self.getParser(source)
 
+        nameSplit = self.currentLink.name.split(" ")
+        if nameSplit[1] == "tag":
+            a.tags += f", tag, {nameSplit[2]}"
+        elif nameSplit[1] == "user":
+            a.tags += f", user, {nameSplit[2]}"
+
         # Get the title from the post
         title = soup.find_all(name="span", attrs={"class", ""})
+
+        # Get the poster Avatar
+        authorImages = soup.find_all(name="img")
+        for i in authorImages:
+            try:
+                if "profile picture" in i.attrs['alt']:
+                    a.authorImage = i.attrs['src']
+                    break       
+            except:
+                pass
+
+        # get posters name
+        authorName = soup.find_all(name="a", attrs={"class": "sqdOP yWX7d _8A5w5 ZIAjV"})
+        a.authorName = authorName[0].text
+                
 
         # Check the title to make sure it was not just all tags... someone did that! - Done
         # TODO Need a better placeholder value
@@ -225,10 +241,18 @@ class InstagramReader(ISources):
     def getPicture(self, soup: BeautifulSoup) -> str:
         images = soup.find_all(name="img")
         for i in images:
-            if "photo by " in i.attrs["alt"].lower():
-                return i.attrs["src"]
-            elif "photo shared by" in i.attrs["alt"].lower():
-                return i.attrs["src"]
+            try:
+                if "photo by " in i.attrs["alt"].lower():
+                    return i.attrs["src"]
+                elif "photo shared by" in i.attrs["alt"].lower():
+                    return i.attrs["src"]
+            except:
+                pass
+
+        # Checking for images that have people/objects tagged
+        for i in soup.find_all(name="img", attrs={"class": "FFVAD"}):
+            # we are just going to take the first one that shows up in the list.
+            return i.attrs['src']
 
     def __driverGet__(self, uri: str) -> None:
         try:

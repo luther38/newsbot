@@ -11,6 +11,7 @@ class PogohubReader(ISources):
     def __init__(self) -> None:
         self.uri = "https://pokemongohub.net/rss"
         self.siteName: str = "Pokemon Go Hub"
+        self.authorName: str = "Pokemon Go Hub"
         self.links = list()
         self.hooks = list()
         self.sourceEnabled: bool = False
@@ -87,8 +88,11 @@ class PogohubReader(ISources):
             logger.critical(f"failed to parse data returned from requests. {e}")
 
     def processItem(self, item: object) -> Articles:
-        a = Articles()
-        a.siteName = "Pokemon Go Hub"
+        a = Articles(
+            siteName=self.siteName,
+            authorName=self.authorName,
+            tags="pokemon go hub, pokemon, go, hub, news"
+        )
 
         for i in item.contents:
             if i.name == "title":
