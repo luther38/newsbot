@@ -177,12 +177,6 @@ class Discord(IOutputs):
         if "reddit" in siteName.lower():
             s = siteName.split(" ")
             footer = f"{end}"
-        #elif "Phantasy Star Online 2" in siteName:
-        #    footer = f"Phantasy Star Online 2 - {end}"
-        #elif "Final Fantasy XIV" in siteName:
-        #    footer = f"Final Fantasy XIV - {end}"
-        #elif "Pokemon Go Hub" in siteName:
-        #    footer = f"Pokemon Go Hub - {end}"
         elif "Youtube" in siteName:
             s = siteName.split(" ")
             footer = f"{s[1]} - {end}"
@@ -193,6 +187,7 @@ class Discord(IOutputs):
                 footer = f"#{s[2]} - {end}"
             elif s[1] == "user":
                 footer = f"{s[2]} - {end}"
+        
         else:
             footer = end
 
@@ -229,5 +224,7 @@ class Discord(IOutputs):
             return 	2081673
         elif "Phantasy Star Online 2" in siteName:
             return 	5557497
+        elif "Twitch" in siteName:
+            return 	9718783
         else:
              return 0
