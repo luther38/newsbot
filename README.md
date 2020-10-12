@@ -116,3 +116,16 @@ NEWSBOT_TWITTER_TAG_HOOK_0=https://discordapp.com/api/webhooks/...
 At this time Discord webhooks do not support playing video links inside Discord.  This is a requested feature but it has not had any movement.  Because of this, if a video post is found it will let you know to "Watch the video online!"
 
 [Feature Request](https://support.discord.com/hc/en-us/community/posts/360037387352-Videos-in-Rich-Embeds)
+
+## Change Log
+
+### 0.5.1
+
+* Corrected a problem with the Reddit source that would crash the thread when it pulled Author information from a subreddit that did not have a custom CSS.  
+
+### 0.5.0
+
+* Twitter Support was added.
+  * To enable Twitter you will need to provide it with the Twitter Developer API keys.
+* Discord Template was updated
+* Database changes to enable storing the posters information
