@@ -47,6 +47,8 @@ class RedditReader(ISources):
         # rss = RSSRoot()
         allArticles: List[Articles] = list()
         for source in self.links:
+            authorImage = ""
+            authorName = ""
             subreddit = source.name.replace("Reddit ", "")
 
             logger.debug(f"Collecting posts for '/r/{subreddit}'...")
@@ -56,58 +58,25 @@ class RedditReader(ISources):
             self.__driverGet__(self.uri)
             source = self.getDriverContent()
             soup = self.getParser(source)
+            
             subImages = soup.find_all(name='img', attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"})
-            authorImage = subImages[0].attrs['src']
+            if len(subImages) != 0:
+                # Failed to find the custom icon.  The sub might not have a custom CSS.
+                authorImage = subImages[0].attrs['src']
+
+            if authorImage == "":
+                # I am not sure how to deal with svg images at this time.  Going to throw in the default reddit icon.
+                subImages = soup.find_all(name="svg", attrs={"class": "ixfotyd9YXZz0LNAtJ25N"})
+                if len(subImages) == 1:
+                    authorImage = "https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png"
 
             subName = soup.find_all(name='h1', attrs={"class": "_2yYPPW47QxD4lFQTKpfpLQ"})
             authorName = f"/r/{subreddit} - {subName[0].text}"
 
             # Now check the RSS
-            self.uri = f"https://reddit.com/r/{subreddit}/top.json"
-
-            siteContent = self.getContent()
-            page = self.getParser(siteContent)
-            json = loads(page.text)
-
-            try:
-                if json["error"] == 404:
-                    logger.error(
-                        f"Tried to access subreddit '{subreddit}' but got a 404.  Check to ensure that the name is correct and try again.'"
-                    )
-            except:
-                # This only does the thing if we error out.
-                pass
-
-            try:
-                for i in json["data"]["children"]:
-                    a = Articles()
-                    a.siteName = f"Reddit {subreddit}"
-                    a.authorImage = authorImage
-                    a.authorName = authorName
-
-                    d = i["data"]
-
-                    a.title = f"{d['title']}"
-                    a.tags = d["subreddit"]
-                    a.url = f"https://reddit.com{d['permalink']}"
-
-                    # figure out what url we are going to display
-                    if d["is_video"] == True:
-                        a.video = d["media"]["reddit_video"]["fallback_url"]
-                        a.videoHeight = d["media"]["reddit_video"]["height"]
-                        a.videoWidth = d["media"]["reddit_video"]["width"]
-                        a.thumbnail = self.getVideoThumbnail(d["preview"])
-
-                    elif d["media_only"] == True:
-                        print("review dis")
-                    else:
-                        a.thumbnail = d["url"]
-
-                    allArticles.append(a)
-            except Exception as e:
-                logger.error(
-                    f"Failed to extract Reddit post.  Too many connections? {e}"
-                )
+            posts = self.getPosts(subreddit)
+            for p in posts:
+                allArticles.append(self.getPostDetails(p['data'], subreddit, authorName, authorImage))
 
             sleep(5.0)
 
@@ -136,6 +105,53 @@ class RedditReader(ISources):
             return preview["images"][0]["source"]["url"]
         except:
             return ""
+
+    def getPosts(self, subreddit: str) -> None:
+        rootUri = f"https://reddit.com/r/{subreddit}"
+        items = (
+            f"{rootUri}/top.json",
+            f"{rootUri}.json"
+        )
+        for i in items:
+            try:
+                self.uri = i
+                siteContent = self.getContent()
+                page = self.getParser(siteContent)
+                json = loads(page.text)
+                items = json['data']['children']
+                if len(items) >= 25:
+                    return items
+            except:
+                pass    
+
+    def getPostDetails(self, obj: dict, subreddit:str, authorName:str, authorImage:str) -> Articles:
+        try:    
+            a = Articles()
+            a.siteName = f"Reddit {subreddit}"
+            a.authorImage = authorImage
+            a.authorName = authorName
+
+            a.title = f"{obj['title']}"
+            a.tags = obj["subreddit"]
+            a.url = f"https://reddit.com{obj['permalink']}"
+
+            # figure out what url we are going to display
+            if obj["is_video"] == True:
+                a.video = obj["media"]["reddit_video"]["fallback_url"]
+                a.videoHeight = obj["media"]["reddit_video"]["height"]
+                a.videoWidth = obj["media"]["reddit_video"]["width"]
+                a.thumbnail = self.getVideoThumbnail(obj["preview"])
+
+            elif obj["media_only"] == True:
+                print("review dis")
+            else:
+                a.thumbnail = obj["url"]
+
+            return a
+        except Exception as e:
+            logger.error(
+                f"Failed to extract Reddit post.  Too many connections? {e}"
+            )
 
     # Selenium Code
     def getWebDriver(self) -> Chrome:
