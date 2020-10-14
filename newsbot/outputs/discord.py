@@ -21,14 +21,21 @@ class Discord(IOutputs):
                 queue = self.table.getQueue()
 
                 for i in queue:
+                    
                     resp = self.sendMessage(i)
-
+                
                     # Only remove the object from the queue if we sent it out correctly.
-                    if resp.status_code == 204:
+                    safeToRemove: bool = True
+                    for r in resp:
+                        if r.status_code != 204:
+                            safeToRemove = False
+
+                    if safeToRemove == True:
                         i.remove()
+
                     sleep(env.discord_delay_seconds)
             except Exception as e:
-                logger.error(f"Failed to post a message. {i.title}")
+                logger.error(f"Failed to post a message. {i.title}. Status_code: {resp.status_code}. msg: {resp.text}. error {e}")
 
             sleep(env.discord_delay_seconds)
 
@@ -101,7 +108,7 @@ class Discord(IOutputs):
         hook.add_embed(embed)
         self.tempMessage = hook
 
-    def sendMessage(self, article: DiscordQueue) -> Response:
+    def sendMessage(self, article: DiscordQueue) -> List[Response]:
         if article.title != "":
             logger.debug(f"Discord - Sending article '{article.title}'")
         else:
@@ -114,7 +121,16 @@ class Discord(IOutputs):
                 f"Failed to send to Discord.  Check to ensure the webhook is correct. Error: {e}"
             )
 
-        return res
+        hooks: int = len(self.getHooks(article.siteName))
+
+        # Chcekcing to see if we returned a single responce or multiple.
+        if hooks == 1:
+            responces = list()
+            responces.append(res)
+        else:
+            responces = res
+
+        return responces
 
     def getHooks(self, newsSource: str) -> List[str]:
         hooks = list()
