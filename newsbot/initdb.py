@@ -2,7 +2,8 @@ from os import system
 from newsbot import Env
 from typing import List
 from newsbot.collections import EnvDetails
-from newsbot.tables import Sources, DiscordWebHooks, Icons
+from newsbot.tables import Sources, DiscordWebHooks, Icons, Settings
+from os import getenv
 
 
 class InitDb:
@@ -95,6 +96,11 @@ class InitDb:
         Icons(site="Default Instagram", fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png").add()
         Icons(site="Default Twitch", fileName="https://static.twitchcdn.net/assets/favicon-32-d6025c14e900565d6177.png").add()
 
+    def rebuildCache(self) -> None:
+        Settings().clearTable()
+        Settings(key="twitch clips enabled", value=getenv("NEWSBOT_TWITCH_MONITOR_CLIPS")).add()
+        Settings(key="twitch vod enabled", value=getenv("NEWSBOT_TWITCH_MONITOR_VOD")).add()
+
     def runDatabaseTasks(self) -> None:
         # Inject new values based off env values
         # if the user did not request a source, we will ignore it.
@@ -107,3 +113,4 @@ class InitDb:
         self.checkSite(siteName="Twitter", siteValues=self.e.twitter_values)
         self.checkSite(siteName="Twitch", siteValues=self.e.twitch_values)
         self.addStaticIcons()
+        self.rebuildCache()
