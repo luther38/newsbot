@@ -2,8 +2,8 @@
 from newsbot import logger
 from os import getenv
 from requests import post, get
-from json import loads
-from typing import Dict, List
+from json import loads, JSONEncoder
+from typing import Dict, List, NamedTuple
 
 class TwitchAuth():
     def __init__(self, access_token: str = '', expires_in: int = 0, token_type: str = '', client_id: str = ''):
@@ -86,6 +86,20 @@ class TwitchGameData():
         self.name: str = obj.get("name")
         self.box_art_url: str = obj.get("box_art_url")
         pass
+
+class TwitchStream():
+    def __init__(self, obj: Dict = {}):
+        self.id = obj.get('id')
+        self.user_id = obj.get('user_id')
+        self.user_name = obj.get('user_name')
+        self.game_id = obj.get('game_id')
+        self.type = obj.get('type')
+        self.title = obj.get('title')
+        self.viewer_count = obj.get('viewer_count')
+        self.started_at = obj.get('started_at')
+        self.language = obj.get('language')
+        self.thumbnail_url = obj.get("thumbnail_url")
+        self.tags_ids = obj.get('tag_ids')
 
 class TwitchAPI():
     def __init__(self):
@@ -209,6 +223,30 @@ class TwitchAPI():
         
         return clips
 
+    def getStreams(self, auth: TwitchAuth, game_id: int = 0, user_id: int = 0, user_login: str = '') -> None:
+        uri = f"{self.apiUri}/streams"
+        if game_id != 0:
+            uri = f"{uri}?game_id={game_id}"
+        elif user_id != 0:
+            uri = f"{uri}?user_id={user_id}"
+        elif user_login != '':
+            uri = f"{uri}?user_login={user_login}"
+        else:
+            pass
+       
+        res = get(uri, headers=self.__header__(auth))
+        streams = list()
+        if res.status_code != 200:
+            logger.error(f"Streams request returned a bad status_code. Code: {res.status_code}, Error: {res.test}")
+            return streams
+        else:
+            json = loads(res.content)
+            if len(json['data']) == 0:
+                streams.append(TwitchStream())
+            for i in json['data']:
+                streams.append(TwitchStream(i))
+        
+        return streams
 
     def __header__(self, auth: TwitchAuth) -> Dict:
         return {
