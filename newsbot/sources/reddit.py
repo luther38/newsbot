@@ -76,7 +76,8 @@ class RedditReader(ISources):
             # Now check the RSS
             posts = self.getPosts(subreddit)
             for p in posts:
-                allArticles.append(self.getPostDetails(p['data'], subreddit, authorName, authorImage))
+                if Articles(url=f"https://reddit.com{p['data']['permalink']}").exists() == False:
+                    allArticles.append(self.getPostDetails(p['data'], subreddit, authorName, authorImage))
 
             sleep(5.0)
 
@@ -126,14 +127,15 @@ class RedditReader(ISources):
 
     def getPostDetails(self, obj: dict, subreddit:str, authorName:str, authorImage:str) -> Articles:
         try:    
+
+
             a = Articles()
+            a.url = f"https://reddit.com{obj['permalink']}"
             a.siteName = f"Reddit {subreddit}"
             a.authorImage = authorImage
             a.authorName = authorName
-
             a.title = f"{obj['title']}"
             a.tags = obj["subreddit"]
-            a.url = f"https://reddit.com{obj['permalink']}"
 
             # figure out what url we are going to display
             if obj["is_video"] == True:
@@ -144,6 +146,18 @@ class RedditReader(ISources):
 
             elif obj["media_only"] == True:
                 print("review dis")
+            elif "gallery" in obj['url']:
+                self.uri = obj['url']
+                source = self.getContent()
+                soup = self.getParser(source)
+                try:
+                    images = soup.find_all(name='img', attrs={"class": "_1dwExqTGJH2jnA-MYGkEL-"})
+                    pictures: str = ""
+                    for i in images:
+                        pictures += f"{i.attrs['src']} "
+                    a.thumbnail = pictures
+                except Exception as e:
+                    logger.error(f"Failed to find the images on a reddit gallery.  CSS might have changed.")
             else:
                 a.thumbnail = obj["url"]
 

@@ -24,6 +24,7 @@ class Env():
         self.youtube_values: List[EnvDetails] = list()
         self.instagram_values: List[EnvDetails] = list()
         self.twitter_values: List[EnvDetails] = list()
+        self.twitch_values: List[EnvDetails] = list()
 
         self.readEnv()
         pass
@@ -46,6 +47,7 @@ class Env():
         self.readYoutubeValues()
         self.readInstagramValues()
         self.readTwitterValues()
+        self.readTwitchValues()
 
     def readFfxivValues(self) -> None:
         self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
@@ -114,7 +116,6 @@ class Env():
                 details.hooks = hooks
                 details.name = f"user {sub}"
                 self.instagram_values.append(details)
-                # items.append(details)
 
             # Tags Posts
             tag = os.getenv(f"{base}_TAG_NAME_{counter}")
@@ -127,11 +128,8 @@ class Env():
                 details.hooks = hooks
                 details.name = f"tag {tag}"
                 self.instagram_values.append(details)
-                # items.append(details)
 
             counter = counter + 1
-
-        # self.instagram_values = items
 
     def readTwitterValues(self) -> None:
         counter = 0
@@ -149,7 +147,6 @@ class Env():
                 details.hooks = hooks
                 details.name = f"user {sub}"
                 self.twitter_values.append(details)
-                # items.append(details)
 
             # Tags Posts
             tag = os.getenv(f"{base}_TAG_NAME_{counter}")
@@ -162,7 +159,24 @@ class Env():
                 details.hooks = hooks
                 details.name = f"tag {tag}"
                 self.twitter_values.append(details)
-                # items.append(details)
+
+            counter = counter + 1
+
+    def readTwitchValues(self) -> None:
+        counter = 0
+        self.twitch_values.clear()
+
+        while counter <= 10:
+            name = os.getenv(f"NEWSBOT_TWITCH_USER_NAME_{counter}")
+            hooks = self.extractHooks(f"NEWSBOT_TWITCH_HOOK_{counter}")
+
+            if name != None or len(hooks) >= 1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = name
+                details.hooks = hooks
+                details.name = f"user {name}"
+                self.twitch_values.append(details)
 
             counter = counter + 1
 

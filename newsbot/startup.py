@@ -8,6 +8,7 @@ from newsbot.sources.reddit import RedditReader
 from newsbot.sources.pokemongohub import PogohubReader
 from newsbot.sources.instagram import InstagramReader
 from newsbot.sources.twitter import TwitterReader
+from newsbot.sources.twitch import TwitchReader
 
 from newsbot.tables import Sources, DiscordWebHooks
 from newsbot.initdb import InitDb
@@ -35,3 +36,4 @@ class Startup:
         Thread(target=Worker(YoutubeReader()).init, name="Youtube").start()
         Thread(target=Worker(InstagramReader()).init, name="Instagram").start()
         Thread(target=Worker(TwitterReader()).init, name="Twitter").start()
+        Thread(target=Worker(TwitchReader()).init, name="Twitch").start()
