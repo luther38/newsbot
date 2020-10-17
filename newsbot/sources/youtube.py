@@ -2,6 +2,7 @@ from typing import List
 from newsbot import logger, env
 from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
+from newsbot.cache import Cache
 from requests import get, Response
 from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome, ChromeOptions
@@ -48,28 +49,42 @@ class YoutubeReader(ISources):
         allArticles: List[Articles] = list()
 
         for site in self.links:
+            s = site.name.split(' ')
             self.authorName = ''
             self.authorImage = ''
             logger.debug(f"{site.name} - Checking for updates")
 
             # pull the source code from the main youtube page
-            self.uri = f"{site.url}"
-            self.__driverGet__(self.uri)
-            siteContent: str = self.getDriverContent()
-            page: BeautifulSoup = self.getParser(siteContent)
-            channelID: str = self.getChannelId(page)
+            channelID = Cache(key=f'youtube {s[1]} channelID').find()
+            if channelID == "":
+                self.uri = f"{site.url}"
+                self.__driverGet__(self.uri)
+                siteContent: str = self.getDriverContent()
+                page: BeautifulSoup = self.getParser(siteContent)
+                channelID: str = self.getChannelId(page)
+                Cache(key=f'youtube {s[1]} channelID', value=channelID).add()
 
-            # Not finding the values I want with just request.  Time for Chrome.
-            # We are collecting info that is not present in the RSS feed.  
-            # We are going to store them in the class.
-            authorImage = page.find_all(name='img', attrs={"id":"img"})
-            self.authorImage = authorImage[0].attrs['src']
-            authorImage.clear()
+                # Not finding the values I want with just request.  Time for Chrome.
+                # We are collecting info that is not present in the RSS feed.  
+                # We are going to store them in the class.
+                try:
+                    authorImage = page.find_all(name='img', attrs={"id":"img"})
+                    self.authorImage = authorImage[0].attrs['src']
+                    Cache(key=f"youtube {s[1]} authorImage", value=self.authorImage).add()
+                except Exception as e:
+                    logger.error(f"Failed to find the authorImage for {s[1]}.  CSS might have changed. {e}")
+                authorImage.clear()
 
-
-            authorName = page.find_all(name='yt-formatted-string', attrs={"class": "style-scope ytd-channel-name", "id":"text"})
-            self.authorName = authorName[0].text
-            authorName.clear()
+                try:
+                    authorName = page.find_all(name='yt-formatted-string', attrs={"class": "style-scope ytd-channel-name", "id":"text"})
+                    self.authorName = authorName[0].text
+                    Cache(key=f"youtube {s[1]} authorName", value=self.authorName).add()
+                except Exception as e:
+                    logger.error(f"Failed to find the authorName for {s[1]}.  CSS might have changed. {e}")
+                authorName.clear()
+            else:
+                self.authorName = Cache(key=f"youtube {s[1]} authorName").find()
+                self.authorImage = Cache(key=f"youtube {s[1]} authorImage").find()
 
             # Generatet he hidden RSS feed uri
             self.uri = f"{self.feedBase}{channelID}"
