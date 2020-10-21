@@ -25,6 +25,7 @@ class Env():
         self.instagram_values: List[EnvDetails] = list()
         self.twitter_values: List[EnvDetails] = list()
         self.twitch_values: List[EnvDetails] = list()
+        self.rss_values: List[EnvDetails] = list()
 
         self.readEnv()
         pass
@@ -48,6 +49,7 @@ class Env():
         self.readInstagramValues()
         self.readTwitterValues()
         self.readTwitchValues()
+        self.readRssValues()
 
     def readFfxivValues(self) -> None:
         self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
@@ -178,6 +180,23 @@ class Env():
                 details.name = f"user {name}"
                 self.twitch_values.append(details)
 
+            counter = counter + 1
+
+    def readRssValues(self) -> None:
+        counter = 0
+        self.rss_values.clear()
+
+        while counter <= 10:
+            name = os.getenv(f"NEWSBOT_RSS_NAME_{counter}")
+            link = os.getenv(f"NEWSBOT_RSS_LINK_{counter}")
+            hooks = self.extractHooks(f"NEWSBOT_RSS_HOOK_{counter}")
+            if link != None or len(hooks) >=1:
+                details = EnvDetails()
+                details.enabled = True
+                details.site = link
+                details.hooks = hooks
+                details.name = name
+                self.rss_values.append(details)
             counter = counter + 1
 
     def extractHooks(self, sourceHooks) -> List[str]:
