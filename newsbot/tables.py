@@ -424,6 +424,18 @@ class Icons(Base):
         finally:
             s.close()
 
+    def update(self) -> None:
+        #s = database.newSession()
+        
+        res = self.findAllByName()
+        if len(res) == 0:
+            self.add()
+        elif res[0].site != self.site or res[0].filename != self.filename:
+            self.remove()
+            self.add()
+        else:
+            pass
+
     def remove(self) -> None:
         s = database.newSession()
         try:
