@@ -86,15 +86,19 @@ class InitDb:
                 DiscordWebHooks(name=r1, key=h).add()
 
     def addStaticIcons(self) -> None:
-        Icons().clearTable()
-        Icons(site="Default Pokemon Go Hub", fileName="https://pokemongohub.net/wp-content/uploads/2017/04/144.png").add()
-        Icons(site="Default Phantasy Star Online 2", fileName="https://raw.githubusercontent.com/jtom38/newsbot/master/mounts/icons/pso2.jpg").add()
-        Icons(site="Default Final Fantasy XIV", fileName="https://img.finalfantasyxiv.com/lds/h/0/U2uGfVX4GdZgU1jASO0m9h_xLg.png").add()
-        Icons(site="Default Reddit", fileName="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png").add()
-        Icons(site="Default YouTube", fileName="https://www.youtube.com/s/desktop/c46c1860/img/favicon_144.png").add()
-        Icons(site="Default Twitter", fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png").add()
-        Icons(site="Default Instagram", fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png").add()
-        Icons(site="Default Twitch", fileName="https://static.twitchcdn.net/assets/favicon-32-d6025c14e900565d6177.png").add()
+        #Icons().clearTable()
+        Icons(site="Default Pokemon Go Hub", fileName="https://pokemongohub.net/wp-content/uploads/2017/04/144.png").update()
+        Icons(site="Default Phantasy Star Online 2", fileName="https://raw.githubusercontent.com/jtom38/newsbot/master/mounts/icons/pso2.jpg").update()
+        Icons(site="Default Final Fantasy XIV", fileName="https://img.finalfantasyxiv.com/lds/h/0/U2uGfVX4GdZgU1jASO0m9h_xLg.png").update()
+        Icons(site="Default Reddit", fileName="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png").update()
+        Icons(site="Default YouTube", fileName="https://www.youtube.com/s/desktop/c46c1860/img/favicon_144.png").update()
+        Icons(site="Default Twitter", fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png").update()
+        Icons(site="Default Instagram", fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png").update()
+        Icons(site="Default Twitch", fileName="https://static.twitchcdn.net/assets/favicon-32-d6025c14e900565d6177.png").update()
+        
+        # RSS based sites
+        Icons(site="Default Engadget", fileName="https://s.yimg.com/kw/assets/apple-touch-icon-120x120.png").update()
+
 
     def rebuildCache(self) -> None:
         Settings().clearTable()
@@ -112,5 +116,6 @@ class InitDb:
         self.checkSite(siteName="Instagram", siteValues=self.e.instagram_values)
         self.checkSite(siteName="Twitter", siteValues=self.e.twitter_values)
         self.checkSite(siteName="Twitch", siteValues=self.e.twitch_values)
+        self.checkSite(siteName="RSS", siteValues=self.e.rss_values)
         self.addStaticIcons()
         self.rebuildCache()
