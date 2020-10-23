@@ -156,6 +156,13 @@ class Discord(IOutputs):
         msg = msg.replace("&#8220;", '"')
         msg = msg.replace("&#8221;", '"')
         msg = msg.replace("&#8230;", "...")
+        msg = msg.replace("<b>", '**')
+        msg = msg.replace("</b>", '**')
+        msg = msg.replace("<br>", "\r\n")
+        msg = msg.replace("\xe2\x96\xa0", "*")
+        msg = msg.replace("\xa0", "\r\n")
+        msg = msg.replace("<p>", '')
+        msg = msg.replace('</p>', '\r\n')
 
         msg = self.replaceLinks(msg)
         return msg
@@ -184,7 +191,10 @@ class Discord(IOutputs):
                return res[0].filename
             else:
                 s: List[str] = siteName.split(' ')
-                res = Icons(site=f"Default {s[0]}").findAllByName()
+                if s[0] == "RSS":
+                    res = Icons(site=f"Default {s[1]}").findAllByName()
+                else:
+                    res = Icons(site=f"Default {s[0]}").findAllByName()
                 return res[0].filename
 
     def buildFooter(self, siteName: str) -> str:
@@ -203,7 +213,9 @@ class Discord(IOutputs):
                 footer = f"#{s[2]} - {end}"
             elif s[1] == "user":
                 footer = f"{s[2]} - {end}"
-        
+        elif "RSS" in siteName:
+            s = siteName.split(" ")
+            footer = f"{s[1]} - {end}"
         else:
             footer = end
 
@@ -217,11 +229,17 @@ class Discord(IOutputs):
             return res[0].filename
         else:
             s: List[str] = siteName.split(' ')
-
-            res = Icons(site=f"Default {s[0]}").findAllByName()
-            if res[0].filename != "":
-                return res[0].filename
+            if s[0].lower() == 'rss':
+                res = Icons(site=f"Default {s[1]}").findAllByName()
             else:
+                res = Icons(site=f"Default {s[0]}").findAllByName()
+
+            try:
+                if res[0].filename != "":
+                    return res[0].filename
+                else:
+                    return ""
+            except:
                 return ""
 
     def getEmbedColor(self, siteName: str) -> int:
