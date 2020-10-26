@@ -27,17 +27,21 @@ class InitDb:
         if self.e.pogo_enabled == True:
             # Pokemon Go Hub only has one source
             Sources(name="Pokemon Go Hub", url="https://pokemongohub.net/rss").add()
-            # Sources(name="Pokemon Go Hub", url="https://pokemongohub.net/post/category/news/").add()
+            if self.e.pogo_icon != "":
+                Icons(site=f"Custom Pokemon Go Hub", fileName=self.e.pogo_icon).update()
             for i in self.e.pogo_hooks:
                 DiscordWebHooks(name="Pokemon Go Hub", key=i).add()
 
     def checkPhantasyStarOnline2(self):
         if self.e.pso2_enabled == True:
             Sources(name="Phantasy Star Online 2", url="https://pso2.com/news").add()
+            if self.e.pso2_icon != '':
+                Icons(site=f"Custom Phantasy Star Online 2", fileName=self.e.pso2_icon).update()
             for i in self.e.pso2_hooks:
                 DiscordWebHooks(name="Phantasy Star Online 2", key=i).add()
 
     def checkFinalFantasyXIV(self):
+
         if self.e.ffxiv_all == True or self.e.ffxiv_topics == True:
             Sources(
                 name="Final Fantasy XIV Topics",
@@ -70,18 +74,29 @@ class InitDb:
 
         for i in self.e.ffxiv_hooks:
             DiscordWebHooks(name="Final Fantasy XIV", key=i).add()
+        if self.e.ffxiv_icon != '':
+            Icons(site=f"Custom Final Fantasy XIV", fileName=self.e.ffxiv_icon).update()
 
     def checkReddit(self):
         for i in self.e.reddit_values:
             r1 = f"Reddit {i.site}"
             Sources(name=r1, url=f"https://reddit.com/r/{i.site}").add()
+            if i.icon != "":
+                Icons(site=f"Custom Reddit {i.site}", fileName=i.icon).update()
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
     def checkSite(self, siteName: str, siteValues: List[EnvDetails]):
         for i in siteValues:
-            r1 = f"{siteName} {i.name}"
+            if siteName == i.name:
+                r1 = i.name
+            elif siteName == "Reddit":
+                r1 = f"{siteName} {i.site}"
+            else:
+                r1 = f"{siteName} {i.name}"
             Sources(name=r1, url=i.site).add()
+            if i.icon != '':
+                Icons(site=f"Custom {r1}", fileName=i.icon).update()
             for h in i.hooks:
                 DiscordWebHooks(name=r1, key=h).add()
 
@@ -99,7 +114,6 @@ class InitDb:
         # RSS based sites
         Icons(site="Default Engadget", fileName="https://s.yimg.com/kw/assets/apple-touch-icon-120x120.png").update()
 
-
     def rebuildCache(self) -> None:
         Settings().clearTable()
         Settings(key="twitch clips enabled", value=getenv("NEWSBOT_TWITCH_MONITOR_CLIPS")).add()
@@ -108,10 +122,13 @@ class InitDb:
     def runDatabaseTasks(self) -> None:
         # Inject new values based off env values
         # if the user did not request a source, we will ignore it.
-        self.checkPokemonGoHub()
-        self.checkPhantasyStarOnline2()
-        self.checkFinalFantasyXIV()
-        self.checkReddit()
+        #self.checkPokemonGoHub()
+        self.checkSite(siteName="Pokemon Go Hub", siteValues=self.e.pogo_values)
+        #self.checkPhantasyStarOnline2()
+        self.checkSite(siteName="Phantasy Star Online 2", siteValues=self.e.pso2_values)
+        #self.checkFinalFantasyXIV()
+        #self.checkReddit()
+        self.checkSite(siteName="Reddit", siteValues=self.e.reddit_values)
         self.checkSite(siteName="YouTube", siteValues=self.e.youtube_values)
         self.checkSite(siteName="Instagram", siteValues=self.e.instagram_values)
         self.checkSite(siteName="Twitter", siteValues=self.e.twitter_values)

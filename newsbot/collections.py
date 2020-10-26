@@ -52,9 +52,16 @@ class Env:
 
 
 class EnvDetails:
-    def __init__(self) -> None:
+    def __init__(self, 
+        site: str = '',
+        name: str = '',
+        hooks: List[str] = list(),
+        options: str = '',
+        icon: str = ''
+        ) -> None:
         self.enabled: bool = False
-        self.site: str = ""
-        self.name: str = ""
-        self.hooks: List[str] = list()
-        self.options: str = ""
+        self.site: str = site
+        self.name: str = name
+        self.hooks: List[str] = hooks
+        self.options: str = options
+        self.icon: str = icon
