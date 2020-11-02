@@ -70,11 +70,13 @@ class Discord(IOutputs):
         if article.description != "":
             description: str = str(article.description)
             description = self.convertFromHtml(description)
+            description = self.replaceImages(description)
             descriptionCount = len(description)
             if descriptionCount >= 2048:
                 description = description[0:2040]
                 description = f"{description}..."
             embed.description = description
+
 
         # Figure out if we have video based content
         if article.video != "":
@@ -159,6 +161,7 @@ class Discord(IOutputs):
         msg = msg.replace("<b>", '**')
         msg = msg.replace("</b>", '**')
         msg = msg.replace("<br>", "\r\n")
+        msg = msg.replace("<br/>", "\r\n")
         msg = msg.replace("\xe2\x96\xa0", "*")
         msg = msg.replace("\xa0", "\r\n")
         msg = msg.replace("<p>", '')
@@ -172,13 +175,24 @@ class Discord(IOutputs):
         Find the HTML links and replace them with something discord supports.
         """
         # links = re.findall("(?<=<a )(.*)(?=</a>)", msg)
+        msg = msg.replace("'", '"')
         links = re.findall("<a(.*?)a>", msg)
         for l in links:
             hrefs = re.findall('href="(.*?)"', l)
             texts = re.findall(">(.*?)</", l)
-            discordLink = f"[{texts[0]}]({hrefs[0]})"
-            msg = msg.replace(f"<a{l}a>", discordLink)
+            if len(hrefs) >= 1 and len(texts) >= 1:
+                discordLink = f"[{texts[0]}]({hrefs[0]})"
+                msg = msg.replace(f"<a{l}a>", discordLink)
         return msg
+    
+    def replaceImages(self, msg: str ) -> str:
+        imgs = re.findall('<img (.*?)">', msg)
+        for i in imgs:
+            # Removing the images for now. 
+            #src = re.findall('src=(.*?)">', i)
+            msg = msg.replace(f'<img {i}">', "")
+        return msg
+
 
     def getAuthorIcon(self, authorIcon: str, siteName: str) -> str:
         if authorIcon != "":
