@@ -16,7 +16,6 @@ from newsbot import Base, database, logger
 class FailedToAddToDatabase(Exception):
     pass
 
-
 class Articles(Base):
     __tablename__ = "articles"
     id = Column(String, primary_key=True)
@@ -85,18 +84,20 @@ class Articles(Base):
     def add(self) -> None:
         s = database.newSession()
 
-        a = Articles()
-        a.siteName = self.siteName
-        a.tags = self.tags
-        a.title = self.title
-        a.url = self.url
-        a.pubDate = self.pubDate
-        a.thumbnail = self.thumbnail
-        a.video = self.video
-        a.videoHeight = self.videoHeight
-        a.videoWidth = self.videoWidth
-        a.authorName = self.authorName
-        a.authorImage = self.authorImage
+        a = Articles(
+            siteName=self.siteName,
+            tags=self.tags,
+            title=self.title,
+            url=self.url,
+            pubDate=self.pubDate,
+            video=self.video,
+            videoWidth=self.videoWidth,
+            videoHeight=self.videoHeight,
+            thumbnail=self.thumbnail,
+            description=self.description,
+            authorImage=self.authorImage,
+            authorName=self.authorName
+        )
 
         try:
             s.add(a)
@@ -144,7 +145,7 @@ class Sources(Base):
         h.url = self.url
         h.enabled = self.enabled
         try:
-            s.add(h)
+            s.add(self)
             s.commit()
             # logger.debug(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
@@ -227,7 +228,7 @@ class DiscordWebHooks(Base):
         h.name = self.name
         h.enabled = self.enabled
         try:
-            s.add(h)
+            s.add(self)
             s.commit()
             # logger.debug(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
@@ -339,21 +340,8 @@ class DiscordQueue(Base):
     def add(self) -> None:
         s = database.newSession()
 
-        dq = DiscordQueue()
-        dq.siteName = self.siteName
-        dq.title = self.title
-        dq.link = self.link
-        dq.tags = self.tags
-        dq.thumbnail = self.thumbnail
-        dq.description = self.description
-        dq.video = self.video
-        dq.videoHeight = self.videoHeight
-        dq.videoWidth = self.videoWidth
-        dq.authorName = self.authorName
-        dq.authorImage = self.authorImage
-
         try:
-            s.add(dq)
+            s.add(self)
             s.commit()
             if self.title != "":
                 logger.debug(f"'{self.title}' was added to the Discord queue")
@@ -412,12 +400,8 @@ class Icons(Base):
     def add(self) -> None:
         s = database.newSession()
 
-        i = Icons()
-        i.filename = self.filename
-        i.site = self.site
-
         try:
-            s.add(i)
+            s.add(self)
             s.commit()
         except FailedToAddToDatabase as e:
             logger.critical(f"Failed to add {self.site} to Icons table! {e}")
