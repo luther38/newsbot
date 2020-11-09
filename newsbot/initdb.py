@@ -113,6 +113,7 @@ class InitDb:
         
         # RSS based sites
         Icons(site="Default Engadget", fileName="https://s.yimg.com/kw/assets/apple-touch-icon-120x120.png").update()
+        Icons(site="Default GitHub", fileName='https://github.githubassets.com/images/modules/open_graph/github-logo.png').update()
 
     def rebuildCache(self) -> None:
         Settings().clearTable()
