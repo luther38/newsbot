@@ -1,6 +1,7 @@
 from typing import List
 from json import loads
-from newsbot import env, logger
+from newsbot import env
+from newsbot.logger import logger
 from newsbot.sources.isources import ISources
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from newsbot.cache import Cache

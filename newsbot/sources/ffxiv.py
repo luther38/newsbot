@@ -2,7 +2,8 @@ from typing import List
 from requests import get, Response
 from bs4 import BeautifulSoup
 import re
-from newsbot import logger, env
+from newsbot import env
+from newsbot.logger import logger
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from newsbot.sources.isources import ISources
 

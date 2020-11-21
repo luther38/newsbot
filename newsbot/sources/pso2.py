@@ -1,4 +1,5 @@
-from newsbot import logger, env
+from newsbot import env
+from newsbot.logger import logger
 from newsbot.sources.isources import ISources, UnableToFindContent
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from bs4 import BeautifulSoup

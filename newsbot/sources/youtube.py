@@ -1,5 +1,6 @@
 from typing import List
-from newsbot import logger, env
+from newsbot import env
+from newsbot.logger import logger
 from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache

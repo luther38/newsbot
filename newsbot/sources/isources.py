@@ -1,7 +1,7 @@
 from typing import List
 from requests import get, Response
 from bs4 import BeautifulSoup
-from newsbot import logger
+from newsbot.logger import logger
 from newsbot.tables import Articles
 
 
