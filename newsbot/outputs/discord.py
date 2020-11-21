@@ -1,5 +1,6 @@
 from typing import List
-from newsbot import logger, env
+from newsbot import env
+from newsbot.logger import logger
 import re
 from time import sleep
 from newsbot.tables import DiscordQueue, DiscordWebHooks, Icons
@@ -186,11 +187,12 @@ class Discord(IOutputs):
         return msg
     
     def replaceImages(self, msg: str ) -> str:
-        imgs = re.findall('<img (.*?)">', msg)
+        imgs = re.findall('<img (.*?)>', msg)
         for i in imgs:
             # Removing the images for now. 
             #src = re.findall('src=(.*?)">', i)
-            msg = msg.replace(f'<img {i}">', "")
+            replace = f"<img {i}>"
+            msg = msg.replace(replace, "")
         return msg
 
 
@@ -206,7 +208,8 @@ class Discord(IOutputs):
             else:
                 s: List[str] = siteName.split(' ')
                 if s[0] == "RSS":
-                    res = Icons(site=f"Default {s[1]}").findAllByName()
+                    #res = Icons(site=f"Default {s[1]}").findAllByName()
+                    res = Icons(site=siteName).findAllByName()
                 else:
                     res = Icons(site=f"Default {s[0]}").findAllByName()
                 return res[0].filename
@@ -243,10 +246,15 @@ class Discord(IOutputs):
             return res[0].filename
         else:
             s: List[str] = siteName.split(' ')
-            if s[0].lower() == 'rss':
-                res = Icons(site=f"Default {s[1]}").findAllByName()
-            else:
-                res = Icons(site=f"Default {s[0]}").findAllByName()
+            values = (f'Default {s[1]}', f'Default {s[0]}', siteName)
+            for v in values:
+                r = Icons(site=v).findAllByName()
+                if len(r) == 1:
+                    res = r
+            #if s[0].lower() == 'rss':
+            #    res = Icons(site=f"Default {s[1]}").findAllByName()
+            #else:
+            #    res = Icons(site=f"Default {s[0]}").findAllByName()
 
             try:
                 if res[0].filename != "":
