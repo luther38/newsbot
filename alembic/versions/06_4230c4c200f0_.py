@@ -10,8 +10,8 @@ from sqlalchemy import Column, String
 
 
 # revision identifiers, used by Alembic.
-revision = '4230c4c200f0'
-down_revision = 'b558571d13aa'
+revision = "4230c4c200f0"
+down_revision = "b558571d13aa"
 branch_labels = None
 depends_on = None
 
@@ -22,6 +22,7 @@ def upgrade():
     add_column("DiscordQueue", Column("authorName", String()))
     add_column("DiscordQueue", Column("authorImage", String()))
     pass
+
 
 def downgrade():
     drop_column("Articles", "authorName")
