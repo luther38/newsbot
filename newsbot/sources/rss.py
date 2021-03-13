@@ -1,9 +1,13 @@
 from typing import List, Dict
 from newsbot import env
-from newsbot.logger import logger
-from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
+from newsbot.logger import Logger
+from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent, 
 from newsbot.sources.rssHelper import *
-from newsbot.common.requestContent import RequestContent, RequestArticleContent, RequestSiteContent
+from newsbot.common.requestContent import (
+    RequestContent,
+    RequestArticleContent,
+    RequestSiteContent,
+)
 from newsbot.tables import Articles, Sources, DiscordWebHooks, Icons
 from newsbot.cache import Cache
 from requests import get, Response
@@ -11,51 +15,60 @@ import re
 from bs4 import BeautifulSoup
 from json import loads
 
+
 class RssReader(ISources):
     def __init__(self) -> None:
+        self.logger = Logger(__class__)
         self.uri = "https://example.net/"
         self.siteName: str = "RSS"
         self.feedName: str = ""
         self.RssHelper: IRssContent = IRssContent()
+        self.bs
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
         self.checkEnv()
 
-        #self.articleSource: str = ""
+        self.isSourceEnabled(self.siteName)
         pass
 
     def checkEnv(self) -> None:
         # Check if site was requested.
-        self.isSourceEnabled()
-        self.isDiscordOutputEnabled()
-
-    def isSourceEnabled(self) -> None:
-        res = Sources(name=self.siteName).findAllByName()
-        if len(res) >= 1:
+        self.links = self.isSourceEnabled(self.siteName)
+        if len(self.links) >= 1:
             self.sourceEnabled = True
-            for i in res:
-                self.links.append(i)
 
-    def isDiscordOutputEnabled(self) -> None:
-        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-        if len(dwh) >= 1:
+        self.hooks = self.isDiscordOutputEnabled(self.siteName)
+        if len(self.hooks) >= 1:
             self.outputDiscord = True
-            for i in dwh:
-                self.hooks.append(i)
+        
+
+    def isSourceEnabled(self, siteName: str) -> List[Sources]:
+        l = list()
+        res = Sources(name=siteName).findAllByName()
+        for i in res: l.append(i)
+        return l
+        
+    def isDiscordOutputEnabled(self,siteName: str) -> List[DiscordWebHooks]:
+        h = list()
+        dwh = DiscordWebHooks(siteName).findAllByName()
+        for i in dwh:
+            h.append(i)
+        return h
+        
 
     def getArticles(self) -> List[Articles]:
-        allArticles: list[Articles] = list()
+        allArticles: List[Articles] = list()
         for l in self.links:
-            l:Sources = l
-            
+            l: Sources = l
+
             # Check if this source was disabled in the previous run
             if l.enabled == False:
                 continue
 
-            logger.debug(f"{l.name} - Checking for updates")
-            self.feedName = l.name.split(' ')[1]
+            self.logger.debug(f"{l.name} - Checking for updates")
+            self.feedName = l.name.split(" ")[1]
 
             # Cache the root site
             self.uri = l.url
@@ -65,38 +78,38 @@ class RssReader(ISources):
             # Check if the site icon has been cached
             iconsExists = Icons(site=l.name).findAllByName()
             if len(iconsExists) == 0:
-                siteIcon:str = rsc.findSiteIcon(l.url)
+                siteIcon: str = rsc.findSiteIcon(l.url)
                 Icons(site=l.name, fileName=siteIcon).update()
 
             # Check if we have helper code for deeper RSS integration
-            #hasHelper: bool = self.enableHelper(l.url)
+            # hasHelper: bool = self.enableHelper(l.url)
 
             # Determin what typ of feed is on the site
             feed = rsc.findFeedLink(siteUrl=l.url)
-            if feed['type'] == 'atom':
-                ap = AtomParser(url=feed['content'], siteName=l.name)
+            if feed["type"] == "atom":
+                ap = AtomParser(url=feed["content"], siteName=l.name)
                 items = ap.getPosts()
                 for i in items:
                     a: Articles = ap.parseItem(i)
                     if a.title != "":
                         allArticles.append(a)
 
-            elif feed['type'] == 'rss':
-                rp = RssParser(url=feed['content'], siteName=l.name)
+            elif feed["type"] == "rss":
+                rp = RssParser(url=feed["content"], siteName=l.name)
                 items = rp.getPosts()
                 for item in items:
                     a = rp.processItem(item=item, title=l.name)
                     if a.title != "":
                         allArticles.append(a)
 
-            elif feed['type'] == 'json':
-                jp = JsonParser(url=feed['content'], siteName=l.name)
+            elif feed["type"] == "json":
+                jp = JsonParser(url=feed["content"], siteName=l.name)
                 items = jp.getPosts()
                 for i in items:
                     a: Articles = jp.parseItem(i)
-                    if a.title != '':
+                    if a.title != "":
                         allArticles.append(a)
-            
+
             else:
                 # Unable to find a feed in the page's source code.
                 # Asumining that it is RSS
@@ -108,26 +121,28 @@ class RssReader(ISources):
                         if a.title != "":
                             allArticles.append(a)
                 else:
-                    logger.error(f"Unable to find a feed for '{l.name}'.  This source is getting disabled.")
+                    self.logger.error(
+                        f"Unable to find a feed for '{l.name}'.  This source is getting disabled."
+                    )
                     for link in self.links:
                         link: Sources = link
                         if link.name == l.name:
                             link.enabled = False
-                
+
         return allArticles
 
-    #def contentWorker(self)
+    # def contentWorker(self)
 
-    def getContent(self, url: str = '') -> str:
+    def getContent(self, url: str = "") -> str:
         try:
             headers = self.getHeaders()
-            if url != '':
+            if url != "":
                 res: Response = get(url, headers=headers)
             else:
                 res: Response = get(self.uri, headers=headers)
             return str(res.text)
         except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
             return ""
 
     def getDriverContent(self) -> str:
@@ -137,7 +152,7 @@ class RssReader(ISources):
         try:
             return BeautifulSoup(siteContent, features="html.parser")
         except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def enableHelper(self, url: str) -> bool:
         r: bool = False
@@ -153,7 +168,7 @@ class RssReader(ISources):
         return r
 
 
-class IParser():
+class IParser:
     def checkSiteIcon(self) -> None:
         raise NotImplementedError()
 
@@ -166,69 +181,69 @@ class IParser():
     def findItemLink(self) -> str:
         raise NotImplementedError()
 
+
 class AtomParser(IParser):
     def __init__(self, url: str, siteName: str) -> None:
-        self.url:str = url
-        self.siteName:str = siteName
+        self.url: str = url
+        self.siteName: str = siteName
         self.content = RequestSiteContent(url=url)
         self.content.getPageDetails()
         pass
 
     def findFeedTitle(self) -> str:
-        title = self.content.findSingle(name='title')
+        title = self.content.findSingle(name="title")
         return title
 
     def getPosts(self) -> List:
-        return self.content.findMany(name='entry')
+        return self.content.findMany(name="entry")
 
     def parseItem(self, item: BeautifulSoup) -> Articles:
-        feedTitle: str = self.content.findSingle(name='title')
+        feedTitle: str = self.content.findSingle(name="title")
 
         a = Articles()
-        a.url = item.find(name='link', attrs={'type': 'text/html'}).attrs['href']
+        a.url = item.find(name="link", attrs={"type": "text/html"}).attrs["href"]
         if a.exists() == False:
-            rc = RequestContent(url = a.url)
+            rc = RequestContent(url=a.url)
             rc.getPageDetails()
-            thumbnail = rc.findThumbnail()
-            
+            thumbnail = rc.findArticleThumbnail()
+
             a.siteName = self.siteName
-            a.tags = f'RSS, {self.siteName}'
-            a.title = item.find(name='title').text.replace('\n', '').strip()
-            a.pubDate = item.find(name='updated').text
-            text:str = item.find(name='content').text
+            a.tags = f"RSS, {self.siteName}"
+            a.title = item.find(name="title").text.replace("\n", "").strip()
+            a.pubDate = item.find(name="updated").text
+            text: str = item.find(name="content").text
             a.thumbnail = thumbnail
-        
+
             # this works on github commits
             if ">" in text and "<" in text:
-                text = re.findall('>(.*?)<', text)[0]
-            a.description = text 
+                text = re.findall(">(.*?)<", text)[0]
+            a.description = text
 
-            author = item.find(name='author')
-            if 'github.com' in self.url:
-                a.authorName = author.find(name='name').text
+            author = item.find(name="author")
+            if "github.com" in self.url:
+                a.authorName = author.find(name="name").text
             else:
                 a.authorName = author.text
-        
+
         return a
 
-class RssParser():
-    def __init__(self, url:str, siteName: str) -> None:
+
+class RssParser:
+    def __init__(self, url: str, siteName: str) -> None:
         self.url: str = url
         self.siteName: str = siteName
         self.content: RequestSiteContent = RequestContent(url=url)
         self.content.getPageDetails()
-        #self.rssHelper: IRssContent = rssHelper
+        # self.rssHelper: IRssContent = rssHelper
         pass
 
     def getPosts(self) -> List:
-        return self.content.findMany(name='item')
+        return self.content.findMany(name="item")
 
     def processItem(self, item: BeautifulSoup, title: str) -> Articles:
         # get the link for the article
         url = self.findItemLink(item)
-        if url == "" or \
-            url == None or \
-            url == "https://":
+        if url == "" or url == None or url == "https://":
 
             # did not find a valid url, pass back a blank object
             return Articles()
@@ -236,22 +251,22 @@ class RssParser():
         # Check if we have already looked atthis link
         if Articles(url=url).exists() == False:
             # Set the new URI and store the source for now to avoid extra calls
-            #rc = RequestContent(url=url)
+            # rc = RequestContent(url=url)
             ra = RequestArticleContent(url=url)
             ra.getPageDetails()
             thumb = ra.findArticleThumbnail()
 
-            description = ''
-            #description = ra.findArticleDescription()
-            
+            description = ""
+            # description = ra.findArticleDescription()
+
             a = Articles(
                 siteName=title,
-                title=item.find(name='title').text,
+                title=item.find(name="title").text,
                 description=self.findItemDescription(item, description),
                 tags=self.findItemTags(item),
-                url = url,
+                url=url,
                 pubDate=item.find(name="pubdate").text,
-                authorName=self.findItemAuthor(item)
+                authorName=self.findItemAuthor(item),
             )
             a.thumbnail = thumb
         else:
@@ -259,29 +274,31 @@ class RssParser():
         return a
 
     def findItemDescription(self, item: BeautifulSoup, desc: str) -> str:
-        i: str = ''
+        i: str = ""
         if desc != "":
             return desc
         else:
-            items = ("description", 'content:encoded')
+            items = ("description", "content:encoded")
             for i in items:
                 try:
-                    #i:str = item.find(name="description").text
+                    # i:str = item.find(name="description").text
                     i = item.find(name=i).text
-                    if i != '':
+                    if i != "":
                         return i
                 except:
                     pass
-            
+
             if i == "":
-                logger.critical(f"Failed to locate RSS body.  Review {self.uri} for the reason")
-            return ''
+                self.logger.critical(
+                    f"Failed to locate RSS body.  Review {self.url} for the reason"
+                )
+            return ""
 
     def findItemLink(self, item: BeautifulSoup) -> str:
-        url:str = item.find(name='link').next
-        url = url.replace('\n','')
-        url = url.replace('\t','')
-        url = url.replace('\r','')
+        url: str = item.find(name="link").next
+        url = url.replace("\n", "")
+        url = url.replace("\t", "")
+        url = url.replace("\r", "")
         url = url.strip()
         return url
 
@@ -291,23 +308,24 @@ class RssParser():
             # lets vsc see the expected class
             i: BeautifulSoup = i
             tags.append(i.text)
-        
+
         s = str(tags)
         return s
 
-    def findItemAuthor(self, item:BeautifulSoup) -> str:
-        items = ( 'author', "dc:creator" )
+    def findItemAuthor(self, item: BeautifulSoup) -> str:
+        items = ("author", "dc:creator")
         for i in items:
             try:
                 itemAuthor = item.find(name=i).text
-                if itemAuthor != '':
+                if itemAuthor != "":
                     return itemAuthor
             except:
                 pass
-        
-        return ''
 
-class JsonParser():
+        return ""
+
+
+class JsonParser:
     def __init__(self, url: str, siteName: str):
         self.url: str = url
         self.siteName: str = siteName
@@ -316,22 +334,21 @@ class JsonParser():
         self.json = loads(self.rc.__source__)
 
     def getPosts(self) -> List:
-        return self.json['items']
+        return self.json["items"]
 
     def parseItem(self, item: Dict) -> Articles:
-        a = Articles(url=item['url'])
+        a = Articles(url=item["url"])
         if a.exists() == False:
-            rc = RequestContent(url = item['url'])
+            rc = RequestContent(url=item["url"])
             rc.getPageDetails()
             a = Articles(
-                siteName=self.siteName, 
-                tags=f'RSS, {self.siteName}',
-                title=item['title'],
-                url=item['url'],
-                pubDate=item['date_published'],
+                siteName=self.siteName,
+                tags=f"RSS, {self.siteName}",
+                title=item["title"],
+                url=item["url"],
+                pubDate=item["date_published"],
                 thumbnail=rc.findArticleThumbnail(),
-                authorName= item['author']['name'],
-                description=item['content_html']
-                )        
+                authorName=item["author"]["name"],
+                description=item["content_html"],
+            )
         return a
-

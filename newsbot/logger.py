@@ -1,43 +1,49 @@
 
-from loguru import logger
+#from loguru import logger
+from loguru import logger as _logger
 from newsbot.tables import Logs
 from datetime import datetime
 
+class Logger():
+    def __init__(self, callerClass: str = '') -> None:
+        """
+        This class generates the logger used in NewsBot.
+        When you call it, call it like this Logger(__class__).
+        Doing this will let the logger know the source class
 
-class Logger:
-    def __init__(self) -> None:
-        self.logger = self.init()
+        Examples:
+        logger = Logger(__class__)
+        Logger(__class__).debug("hello world")
+        """
+        self.callerClass: str = callerClass
+        _logger.add("./mounts/logs/newsbot.log", rotation="5 MB")
         pass
 
-    def init(self) -> logger:
-        logger.add("./mounts/logs/newsbot.log", rotation="5 MB")
-        return logger
-
     def debug(self, message: str) -> None:
-        self.logger.debug(message)
-        self.__writeDb__(message, 'debug')
+        _logger.debug(message)
+        self.__writeDb(message, 'debug')
 
     def info(self, message: str) -> None:
-        self.logger.info(message)
-        self.__writeDb__(message, 'info')
+        _logger.info(message)
+        self.__writeDb(message, 'info')
 
     def warning(self, message: str) -> None:
-        self.logger.warning(message)
-        self.__writeDb__(message, 'warning')
+        _logger.warning(message)
+        self.__writeDb(message, 'warning')
 
     def error(self, message: str) -> None:
-        self.logger.error(message)
-        self.__writeDb__(message, 'error')
+        _logger.error(message)
+        self.__writeDb(message, 'error')
 
     def critical(self, message: str) -> None:
-        self.logger.critical(message)
-        self.__writeDb__(message, 'critical')
+        _logger.critical(message)
+        self.__writeDb(message, 'critical')
 
-    def __writeDb__(self, message, type) -> None:
+    def __writeDb(self, message, type) -> None:
         dt = datetime.now()
         Logs(date=f"{dt.year}-{dt.month}-{dt.day}", 
             time=f"{dt.hour}:{dt.minute}:{dt.second}:{dt.microsecond}",
             type=type,
-            caller='',
+            caller=self.callerClass,
             message=message).add()
         pass
