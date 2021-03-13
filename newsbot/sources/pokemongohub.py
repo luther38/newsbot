@@ -1,6 +1,6 @@
 from typing import List
 from newsbot import env
-from newsbot.logger import logger
+from newsbot.logger import Logger
 from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 import re
@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 
 class PogohubReader(ISources):
     def __init__(self) -> None:
+        self.logger = Logger(__class__)
         self.uri = "https://pokemongohub.net/rss"
         self.siteName: str = "Pokemon Go Hub"
         self.authorName: str = "Pokemon Go Hub"
@@ -40,7 +41,7 @@ class PogohubReader(ISources):
 
     def getArticles(self) -> List[Articles]:
         for site in self.links:
-            logger.debug(f"{site.name} - Checking for updates.")
+            self.logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
 
             siteContent: Response = self.getContent()
@@ -67,9 +68,9 @@ class PogohubReader(ISources):
                             item.thumbnail = self.getArticleThumbnail(item.url)
                             allArticles.append(item)
 
-                logger.debug(f"Pokemon Go Hub - Finished checking.")
+                self.logger.debug(f"Pokemon Go Hub - Finished checking.")
             except Exception as e:
-                logger.error(
+                self.logger.error(
                     f"Failed to parse articles from Pokemon Go Hub.  Chances are we have a malformed responce. {e}"
                 )
 
@@ -80,19 +81,19 @@ class PogohubReader(ISources):
             headers = self.getHeaders()
             return get(self.uri, headers=headers)
         except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def getParser(self, siteContent: Response) -> BeautifulSoup:
         try:
             return BeautifulSoup(siteContent.content, features="html.parser")
         except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def processItem(self, item: object) -> Articles:
         a = Articles(
             siteName=self.siteName,
             authorName=self.authorName,
-            tags="pokemon go hub, pokemon, go, hub, news"
+            tags="pokemon go hub, pokemon, go, hub, news",
         )
 
         for i in item.contents:
@@ -133,4 +134,4 @@ class PogohubReader(ISources):
             res = bs.find_all("img", class_="entry-thumb")
             return res[0].attrs["src"]
         except Exception as e:
-            logger.error(f"Failed to pull Pokemon Go Hub thumbnail or {link}. {e}")
+            self.logger.error(f"Failed to pull Pokemon Go Hub thumbnail or {link}. {e}")

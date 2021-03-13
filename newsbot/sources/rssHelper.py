@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 from newsbot.common.requestContent import RequestContent
 
-class IRssContent():
+
+class IRssContent:
     """
     This interface is used to define how the RssReader can intagrate with sites witout a full source.
     """
@@ -17,34 +18,40 @@ class IRssContent():
         """
         raise NotImplementedError
 
-class RssCache():
+
+class RssCache:
     def cacheSite(self, soup: BeautifulSoup):
         self.soup = soup
+
 
 class Engadget(IRssContent, RssCache):
     def __init__(self) -> None:
         pass
 
     def getArticleContent(self) -> str:
-        content = self.soup.find(name='div', attrs={'id': 'engadget-post-contents'})
+        content = self.soup.find(name="div", attrs={"id": "engadget-post-contents"})
         return content.text
+
 
 class ArsTechnica(IRssContent, RssCache):
     def __init__(self) -> None:
         pass
 
     def getArticleContent(self) -> str:
-        content = self.soup.find(name='div', attrs={'class': 'article-content post-page'})
-        p = content.find_all(name='p')
+        content = self.soup.find(
+            name="div", attrs={"class": "article-content post-page"}
+        )
+        p = content.find_all(name="p")
         body = ""
         for i in p:
-            body += i.text + '\r\n'
+            body += i.text + "\r\n"
         return body
+
 
 class HowToGeek(IRssContent):
     def __init__(self) -> None:
         self.rc = RequestContent()
-        
+
     def getArticleContent(self) -> str:
-        #c = self.soup.find
+        # c = self.soup.find
         pass

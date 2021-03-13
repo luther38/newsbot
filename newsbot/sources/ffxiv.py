@@ -3,13 +3,14 @@ from requests import get, Response
 from bs4 import BeautifulSoup
 import re
 from newsbot import env
-from newsbot.logger import logger
+from newsbot.logger import Logger
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from newsbot.sources.isources import ISources
 
 
 class FFXIVReader(ISources):
     def __init__(self) -> None:
+        self.logger = Logger(__class__)
         self.uri: str = "https://na.finalfantasyxiv.com/lodestone/news/"
         self.baseUri: str = "https://na.finalfantasyxiv.com"
         self.siteName: str = "Final Fantasy XIV"
@@ -24,7 +25,7 @@ class FFXIVReader(ISources):
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
         for site in self.links:
-            logger.debug(f"{site.name} - Checking for updates.")
+            self.logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
 
             siteContent: Response = self.getContent()
@@ -38,18 +39,19 @@ class FFXIVReader(ISources):
                         a = Articles(
                             siteName=self.siteName,
                             tags="ffxiv, topics, news",
-                            authorName=self.authorName)
-                        #a.siteName = self.siteName
+                            authorName=self.authorName,
+                        )
+                        # a.siteName = self.siteName
                         header = news.contents[0].contents
                         body = news.contents[1].contents
                         a.title = header[0].text
                         a.url = f"{self.baseUri}{header[0].contents[0].attrs['href']}"
                         a.thumbnail = body[0].contents[0].attrs["src"]
                         a.description = body[0].contents[0].next_element.text
-                        #a.tags = "Topics"
+                        # a.tags = "Topics"
                         allArticles.append(a)
                 except Exception as e:
-                    logger.error(f"Failed to collect Topics from FFXIV. {e}")
+                    self.logger.error(f"Failed to collect Topics from FFXIV. {e}")
 
             if "Notices" in site.name:
                 try:
@@ -59,12 +61,12 @@ class FFXIVReader(ISources):
                         a = Articles(
                             siteName=self.siteName,
                             tags="ffxiv, notices, news",
-                            authorName=self.authorName
+                            authorName=self.authorName,
                         )
-                        #a.siteName = self.siteName
+                        # a.siteName = self.siteName
                         a.title = news.text
                         a.url = f"{self.baseUri}{news.attrs['href']}"
-                        #a.tags = "Notices"
+                        # a.tags = "Notices"
                         self.uri = a.link
                         subPage = self.getContent()
                         details = self.getParser(subPage)
@@ -74,7 +76,7 @@ class FFXIVReader(ISources):
                             a.description = d.text
                         allArticles.append(a)
                 except Exception as e:
-                    logger.error(f"Failed to collect Notice from FFXIV. {e}")
+                    self.logger.error(f"Failed to collect Notice from FFXIV. {e}")
                     pass
 
             if "Maintenance" in site.name:
@@ -85,12 +87,12 @@ class FFXIVReader(ISources):
                         a = Articles(
                             siteName=self.siteName,
                             tags="ffxiv, maintenance, news",
-                            authorName=self.authorName
+                            authorName=self.authorName,
                         )
-                        #a.siteName = self.siteName
+                        # a.siteName = self.siteName
                         a.title = news.text
                         a.url = f"{self.baseUri}{news.attrs['href']}"
-                        #a.tags = site["tag"]
+                        # a.tags = site["tag"]
                         self.uri = a.link
                         subPage = self.getContent()
                         details = self.getParser(subPage)
@@ -101,7 +103,7 @@ class FFXIVReader(ISources):
 
                         allArticles.append(a)
                 except Exception as e:
-                    logger.error(
+                    self.logger.error(
                         f"Failed to collect {site['tag']} records from FFXIV. {e}"
                     )
                     pass
@@ -112,9 +114,9 @@ class FFXIVReader(ISources):
                         "a", {"class", "news__list--link ic__update--list"}
                     ):
                         a = Articles(
-                            siteName = self.siteName,
-                            tags = "ffxiv, updates, news",
-                            authorName=self.authorName
+                            siteName=self.siteName,
+                            tags="ffxiv, updates, news",
+                            authorName=self.authorName,
                         )
                         a.title = news.text
                         a.url = f"{self.baseUri}{news.attrs['href']}"
@@ -129,7 +131,7 @@ class FFXIVReader(ISources):
                             a.description = d.text
                         allArticles.append(a)
                 except Exception as e:
-                    logger.error(
+                    self.logger.error(
                         f"Failed to collect {site['tag']} records from FFXIV. {e}"
                     )
                     pass
@@ -142,7 +144,7 @@ class FFXIVReader(ISources):
                         a = Articles(
                             siteName=self.siteName,
                             tags="ffxiv, news, status",
-                            authorName=self.authorName
+                            authorName=self.authorName,
                         )
                         a.siteName = self.siteName
                         a.title = news.text
@@ -158,7 +160,7 @@ class FFXIVReader(ISources):
                             a.description = d.text
                         allArticles.append(a)
                 except Exception as e:
-                    logger.error(
+                    self.logger.error(
                         f"Failed to collect {site['tag']} records from FFXIV. {e}"
                     )
                     pass
@@ -187,10 +189,10 @@ class FFXIVReader(ISources):
             headers = self.getHeaders()
             return get(self.uri, headers=headers)
         except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def getParser(self, siteContent: Response) -> BeautifulSoup:
         try:
             return BeautifulSoup(siteContent.content, features="html.parser")
         except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")

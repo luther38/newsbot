@@ -1,6 +1,6 @@
 from typing import List
 from newsbot import env
-from newsbot.logger import logger
+from newsbot.logger import Logger
 from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
@@ -11,6 +11,7 @@ from selenium.webdriver import Chrome, ChromeOptions
 
 class InstagramReader(ISources):
     def __init__(self) -> None:
+        self.logger = Logger(__class__)
         self.uri = "https://www.instagram.com/"
         self.baseUri = self.uri
         self.siteName: str = "Instagram"
@@ -32,7 +33,7 @@ class InstagramReader(ISources):
             driver = Chrome(options=options)
             return driver
         except Exception as e:
-            logger.critical(f"Chrome Driver failed to start! Error: {e}")
+            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
     def checkEnv(self) -> None:
         # Check if Pokemon Go was requested
@@ -63,7 +64,7 @@ class InstagramReader(ISources):
             nameSplit = site.name.split(" ")
             igType = nameSplit[1]
             self.siteName = f"Instagram {nameSplit[2]}"
-            logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
+            self.logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
 
             # Figure out if we are looking for a user or tag
             if igType == "user":
@@ -82,11 +83,11 @@ class InstagramReader(ISources):
                     # Get the content
                     allArticles.append(self.getPostInfo(l))
 
-            logger.debug(f"{self.siteName} - Finished checking.")
+            self.logger.debug(f"{self.siteName} - Finished checking.")
             try:
                 pass
             except Exception as e:
-                logger.error(
+                self.logger.error(
                     f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed responce. {e}"
                 )
 
@@ -102,13 +103,13 @@ class InstagramReader(ISources):
             # return res.content
             return self.driver.page_source
         except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def getParser(self, source: str) -> BeautifulSoup:
         try:
             return BeautifulSoup(source, features="html.parser")
         except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getUserArticleLinks(self) -> List[str]:
         """
@@ -126,7 +127,7 @@ class InstagramReader(ISources):
                     )
 
         except Exception as e:
-            logger.error(e)
+            self.logger.error(e)
             self.__close__()
 
         return links
@@ -152,7 +153,7 @@ class InstagramReader(ISources):
             # links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
 
         except Exception as e:
-            logger.error("Driver ran into a problem pulling links from a tag.")
+            self.logger.error("Driver ran into a problem pulling links from a tag.")
 
         return links
 
@@ -165,7 +166,7 @@ class InstagramReader(ISources):
                         f"https://www.instagram.com{l.contents[0].attrs['href']}"
                     )
             except Exception as e:
-                logger.error(f"Failed to extract post link. {e}")
+                self.logger.error(f"Failed to extract post link. {e}")
         return linkList
 
     def getPostInfo(self, link: str) -> Articles:
@@ -188,16 +189,17 @@ class InstagramReader(ISources):
         authorImages = soup.find_all(name="img")
         for i in authorImages:
             try:
-                if "profile picture" in i.attrs['alt']:
-                    a.authorImage = i.attrs['src']
-                    break       
+                if "profile picture" in i.attrs["alt"]:
+                    a.authorImage = i.attrs["src"]
+                    break
             except:
                 pass
 
         # get posters name
-        authorName = soup.find_all(name="a", attrs={"class": "sqdOP yWX7d _8A5w5 ZIAjV"})
+        authorName = soup.find_all(
+            name="a", attrs={"class": "sqdOP yWX7d _8A5w5 ZIAjV"}
+        )
         a.authorName = authorName[0].text
-                
 
         # Check the title to make sure it was not just all tags... someone did that! - Done
         # TODO Need a better placeholder value
@@ -253,20 +255,20 @@ class InstagramReader(ISources):
         # Checking for images that have people/objects tagged
         for i in soup.find_all(name="img", attrs={"class": "FFVAD"}):
             # we are just going to take the first one that shows up in the list.
-            return i.attrs['src']
+            return i.attrs["src"]
 
     def __driverGet__(self, uri: str) -> None:
         try:
             self.driver.get(uri)
             self.driver.implicitly_wait(5)
         except Exception as e:
-            logger.error(f"Driver failed to get {uri}. Error: {e}")
+            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
 
     def __close__(self) -> None:
         try:
             self.driver.close()
         except Exception as e:
-            logger.error(f"Driver failed to close. Error: {e}")
+            self.logger.error(f"Driver failed to close. Error: {e}")
 
     def getTags(self, text: str) -> str:
         t = ""

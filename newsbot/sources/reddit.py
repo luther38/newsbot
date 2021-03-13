@@ -1,7 +1,7 @@
 from typing import List
 from json import loads
 from newsbot import env
-from newsbot.logger import logger
+from newsbot.logger import Logger
 from newsbot.sources.isources import ISources
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from newsbot.cache import Cache
@@ -10,8 +10,10 @@ from requests import get, Response
 from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome, ChromeOptions
 
+
 class RedditReader(ISources):
     def __init__(self) -> None:
+        self.logger = Logger(__class__)
         self.uri = "https://reddit.com/r/aww/top.json"
         self.siteName = "Reddit"
         self.links: List[Sources] = list()
@@ -53,40 +55,51 @@ class RedditReader(ISources):
             authorName = ""
             subreddit = source.name.replace("Reddit ", "")
 
-            logger.debug(f"Collecting posts for '/r/{subreddit}'...")
+            self.logger.debug(f"Collecting posts for '/r/{subreddit}'...")
 
             # Add the info we get via Selenium to the Cache to avoid pulling it each time.
             authorImage = Cache(key=f"reddit {subreddit} authorImage").find()
             authorName = Cache(key=f"reddit {subreddit} authorName").find()
-            if authorImage == '':
+            if authorImage == "":
                 # Collect values that we do not get from the RSS
                 self.uri = f"https://reddit.com/r/{subreddit}"
                 self.__driverGet__(self.uri)
                 source = self.getDriverContent()
                 soup = self.getParser(source)
-                
-                subImages = soup.find_all(name='img', attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"})
+
+                subImages = soup.find_all(
+                    name="img", attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"}
+                )
                 if len(subImages) != 0:
                     # Failed to find the custom icon.  The sub might not have a custom CSS.
-                    authorImage = subImages[0].attrs['src']
+                    authorImage = subImages[0].attrs["src"]
 
                 if authorImage == "":
                     # I am not sure how to deal with svg images at this time.  Going to throw in the default reddit icon.
-                    subImages = soup.find_all(name="svg", attrs={"class": "ixfotyd9YXZz0LNAtJ25N"})
+                    subImages = soup.find_all(
+                        name="svg", attrs={"class": "ixfotyd9YXZz0LNAtJ25N"}
+                    )
                     if len(subImages) == 1:
                         authorImage = "https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png"
-                
-                subName = soup.find_all(name='h1', attrs={"class": "_2yYPPW47QxD4lFQTKpfpLQ"})
+
+                subName = soup.find_all(
+                    name="h1", attrs={"class": "_2yYPPW47QxD4lFQTKpfpLQ"}
+                )
                 authorName = f"/r/{subreddit} - {subName[0].text}"
                 Cache(key=f"reddit {subreddit} authorImage", value=authorImage).add()
                 Cache(key=f"reddit {subreddit} authorName", value=authorName).add()
-            
 
             # Now check the RSS
             posts = self.getPosts(subreddit)
             for p in posts:
-                if Articles(url=f"https://reddit.com{p['data']['permalink']}").exists() == False:
-                    allArticles.append(self.getPostDetails(p['data'], subreddit, authorName, authorImage))
+                if (
+                    Articles(url=f"https://reddit.com{p['data']['permalink']}").exists() == False
+                ):
+                    allArticles.append(
+                        self.getPostDetails(
+                            p["data"], subreddit, authorName, authorImage
+                        )
+                    )
 
             sleep(5.0)
 
@@ -97,9 +110,9 @@ class RedditReader(ISources):
         try:
             headers = self.getHeaders()
             res = get(self.uri, headers=headers)
-            return res.text 
+            return res.text
         except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def getDriverContent(self) -> str:
         return self.driver.page_source
@@ -108,7 +121,7 @@ class RedditReader(ISources):
         try:
             return BeautifulSoup(siteContent, features="html.parser")
         except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getVideoThumbnail(self, preview) -> str:
         try:
@@ -118,25 +131,23 @@ class RedditReader(ISources):
 
     def getPosts(self, subreddit: str) -> None:
         rootUri = f"https://reddit.com/r/{subreddit}"
-        items = (
-            f"{rootUri}/top.json",
-            f"{rootUri}.json"
-        )
+        items = (f"{rootUri}/top.json", f"{rootUri}.json")
         for i in items:
             try:
                 self.uri = i
                 siteContent = self.getContent()
                 page = self.getParser(siteContent)
                 json = loads(page.text)
-                items = json['data']['children']
+                items = json["data"]["children"]
                 if len(items) >= 25:
                     return items
             except:
-                pass    
+                pass
 
-    def getPostDetails(self, obj: dict, subreddit:str, authorName:str, authorImage:str) -> Articles:
-        try:    
-
+    def getPostDetails(
+        self, obj: dict, subreddit: str, authorName: str, authorImage: str
+    ) -> Articles:
+        try:
 
             a = Articles()
             a.url = f"https://reddit.com{obj['permalink']}"
@@ -155,26 +166,28 @@ class RedditReader(ISources):
 
             elif obj["media_only"] == True:
                 print("review dis")
-            elif "gallery" in obj['url']:
-                self.uri = obj['url']
+            elif "gallery" in obj["url"]:
+                self.uri = obj["url"]
                 source = self.getContent()
                 soup = self.getParser(source)
                 try:
-                    images = soup.find_all(name='img', attrs={"class": "_1dwExqTGJH2jnA-MYGkEL-"})
+                    images = soup.find_all(
+                        name="img", attrs={"class": "_1dwExqTGJH2jnA-MYGkEL-"}
+                    )
                     pictures: str = ""
                     for i in images:
                         pictures += f"{i.attrs['src']} "
                     a.thumbnail = pictures
                 except Exception as e:
-                    logger.error(f"Failed to find the images on a reddit gallery.  CSS might have changed.")
+                    self.logger.error(
+                        f"Failed to find the images on a reddit gallery.  CSS might have changed."
+                    )
             else:
                 a.thumbnail = obj["url"]
 
             return a
         except Exception as e:
-            logger.error(
-                f"Failed to extract Reddit post.  Too many connections? {e}"
-            )
+            self.logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
 
     # Selenium Code
     def getWebDriver(self) -> Chrome:
@@ -187,15 +200,15 @@ class RedditReader(ISources):
             driver = Chrome(options=options)
             return driver
         except Exception as e:
-            logger.critical(f"Chrome Driver failed to start! Error: {e}")
+            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
     def __driverGet__(self, uri: str) -> None:
         try:
             self.driver.get(uri)
-            #self.driver.implicitly_wait(30)
+            # self.driver.implicitly_wait(30)
             sleep(5)
         except Exception as e:
-            logger.error(f"Driver failed to get {uri}. Error: {e}")
+            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
 
     def __driverQuit__(self):
         self.driver.quit()

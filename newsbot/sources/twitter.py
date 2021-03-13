@@ -13,6 +13,7 @@ from time import sleep
 
 class TwitterReader(ISources):
     def __init__(self):
+        self.logger = Logger(__class__)
         self.uri: str = "https://twitter.com"
         self.baseUri = self.uri
         self.siteName: str = "Twitter"
@@ -51,13 +52,13 @@ class TwitterReader(ISources):
             # return res.content
             return self.driver.page_source
         except Exception as e:
-            Logger().critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def getParser(self, source: str) -> BeautifulSoup:
         try:
             return BeautifulSoup(source, features="html.parser")
         except Exception as e:
-            Logger().critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
@@ -72,7 +73,7 @@ class TwitterReader(ISources):
             # auth to twitter
             api = API(appAuth)
         except Exception as e:
-            Logger().critical(f"Failed to authenicate with Twitter. Error: {e}")
+            self.logger.critical(f"Failed to authenicate with Twitter. Error: {e}")
             return allArticles
 
         for site in self.links:
@@ -81,7 +82,7 @@ class TwitterReader(ISources):
             siteSplit = site.name.split(" ")
             self.siteName = f"Twitter {siteSplit[2]}"
             siteType = siteSplit[1]
-            Logger().debug(
+            self.logger.debug(
                 f"Twitter - {siteSplit[1]} - {siteSplit[2]} - Checking for updates."
             )
 
@@ -137,12 +138,12 @@ class TwitterReader(ISources):
                         tags += f"{t['text']}, "
                     a.tags = tags
                 except Exception as e:
-                    Logger().error(f"Failed to find 'hashtags' on the tweet. \r\nError: {e}")
+                    self.logger.error(f"Failed to find 'hashtags' on the tweet. \r\nError: {e}")
 
                 try:
                     a.pubDate = str(tweet.created_at)
                 except Exception as e:
-                    Logger().error(
+                    self.logger.error(
                         f"Failed to find 'created_at' on the tweet. \r\nError: {e}"
                     )
 
@@ -195,7 +196,7 @@ class TwitterReader(ISources):
         try:
             url = tweet.entities["urls"][0]["expanded_url"]
         except Exception as e:
-            # Logger().warning(f"Failed to find the URL to the exact tweet. Checking the second location. \r\nError: {e}")
+            # self.logger.warning(f"Failed to find the URL to the exact tweet. Checking the second location. \r\nError: {e}")
             pass
 
         # if the primary locacation fails, try this location
@@ -203,7 +204,7 @@ class TwitterReader(ISources):
             try:
                 url = tweet.entities["media"][0]["expanded_url"]
             except:
-                # Logger().error(f"Failed to find the tweet url in 'entities['media'][0]['expanded_url']")
+                # self.logger.error(f"Failed to find the tweet url in 'entities['media'][0]['expanded_url']")
                 pass
 
         # if its a retweet look here
@@ -231,7 +232,7 @@ class TwitterReader(ISources):
             driver = Chrome(options=options)
             return driver
         except Exception as e:
-            Logger().critical(f"Chrome Driver failed to start! Error: {e}")
+            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
     def __driverGet__(self, uri: str) -> None:
         try:
@@ -239,7 +240,7 @@ class TwitterReader(ISources):
             # self.driver.implicitly_wait(30)
             sleep(5)
         except Exception as e:
-            Logger().error(f"Driver failed to get {uri}. Error: {e}")
+            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
 
     def __driverQuit__(self):
         self.driver.quit()

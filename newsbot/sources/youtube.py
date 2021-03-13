@@ -1,6 +1,6 @@
 from typing import List
 from newsbot import env
-from newsbot.logger import logger
+from newsbot.logger import Logger
 from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache
@@ -9,8 +9,10 @@ from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome, ChromeOptions
 from time import sleep
 
+
 class YoutubeReader(ISources):
     def __init__(self):
+        self.logger= Logger(__class__)
         self.uri: str = "https://youtube.com"
         self.siteName: str = "Youtube"
         self.feedBase: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
@@ -44,44 +46,53 @@ class YoutubeReader(ISources):
                 self.hooks.append(i)
 
     def getArticles(self) -> List[Articles]:
-        logger.debug(f"Checking YouTube for new content")
+        self.logger.debug(f"Checking YouTube for new content")
         self.driver = self.getWebDriver()
 
         allArticles: List[Articles] = list()
 
         for site in self.links:
-            s = site.name.split(' ')
-            self.authorName = ''
-            self.authorImage = ''
-            logger.debug(f"{site.name} - Checking for updates")
+            s = site.name.split(" ")
+            self.authorName = ""
+            self.authorImage = ""
+            self.logger.debug(f"{site.name} - Checking for updates")
 
             # pull the source code from the main youtube page
-            channelID = Cache(key=f'youtube {s[1]} channelID').find()
+            channelID = Cache(key=f"youtube {s[1]} channelID").find()
             if channelID == "":
                 self.uri = f"{site.url}"
                 self.__driverGet__(self.uri)
                 siteContent: str = self.getDriverContent()
                 page: BeautifulSoup = self.getParser(siteContent)
                 channelID: str = self.getChannelId(page)
-                Cache(key=f'youtube {s[1]} channelID', value=channelID).add()
+                Cache(key=f"youtube {s[1]} channelID", value=channelID).add()
 
                 # Not finding the values I want with just request.  Time for Chrome.
-                # We are collecting info that is not present in the RSS feed.  
+                # We are collecting info that is not present in the RSS feed.
                 # We are going to store them in the class.
                 try:
-                    authorImage = page.find_all(name='img', attrs={"id":"img"})
-                    self.authorImage = authorImage[0].attrs['src']
-                    Cache(key=f"youtube {s[1]} authorImage", value=self.authorImage).add()
+                    authorImage = page.find_all(name="img", attrs={"id": "img"})
+                    self.authorImage = authorImage[0].attrs["src"]
+                    Cache(
+                        key=f"youtube {s[1]} authorImage", value=self.authorImage
+                    ).add()
                 except Exception as e:
-                    logger.error(f"Failed to find the authorImage for {s[1]}.  CSS might have changed. {e}")
+                    self.logger.error(
+                        f"Failed to find the authorImage for {s[1]}.  CSS might have changed. {e}"
+                    )
                 authorImage.clear()
 
                 try:
-                    authorName = page.find_all(name='yt-formatted-string', attrs={"class": "style-scope ytd-channel-name", "id":"text"})
+                    authorName = page.find_all(
+                        name="yt-formatted-string",
+                        attrs={"class": "style-scope ytd-channel-name", "id": "text"},
+                    )
                     self.authorName = authorName[0].text
                     Cache(key=f"youtube {s[1]} authorName", value=self.authorName).add()
                 except Exception as e:
-                    logger.error(f"Failed to find the authorName for {s[1]}.  CSS might have changed. {e}")
+                    self.logger.error(
+                        f"Failed to find the authorName for {s[1]}.  CSS might have changed. {e}"
+                    )
                 authorName.clear()
             else:
                 self.authorName = Cache(key=f"youtube {s[1]} authorName").find()
@@ -114,26 +125,27 @@ class YoutubeReader(ISources):
         try:
             headers = self.getHeaders()
             res = get(self.uri, headers=headers)
-            return res.text 
+            return res.text
         except Exception as e:
-            logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def getDriverContent(self) -> str:
         try:
             return self.driver.page_source
         except Exception as e:
-            logger.critical(f"Filed to collect source code from driver at {self.uri}. {e}")
-
+            self.logger.critical(
+                f"Filed to collect source code from driver at {self.uri}. {e}"
+            )
 
     def getParser(self, siteContent: str) -> BeautifulSoup:
         try:
             return BeautifulSoup(siteContent, features="html.parser")
         except Exception as e:
-            logger.critical(f"failed to parse data returned from requests. {e}")
+            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getChannelId(self, page: BeautifulSoup) -> str:
-        #siteContent: Response = self.getContent()
-        #page: BeautifulSoup = self.getParser(siteContent)
+        # siteContent: Response = self.getContent()
+        # page: BeautifulSoup = self.getParser(siteContent)
 
         meta = page.find_all("meta")
         for i in meta:
@@ -157,13 +169,12 @@ class YoutubeReader(ISources):
             driver = Chrome(options=options)
             return driver
         except Exception as e:
-            logger.critical(f"Chrome Driver failed to start! Error: {e}")
+            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
     def __driverGet__(self, uri: str) -> None:
         try:
             self.driver.get(uri)
-            #self.driver.implicitly_wait(30)
+            # self.driver.implicitly_wait(30)
             sleep(5)
         except Exception as e:
-            logger.error(f"Driver failed to get {uri}. Error: {e}")
-
+            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
