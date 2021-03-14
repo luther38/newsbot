@@ -1,15 +1,17 @@
-from newsbot import logger, env, database
+from newsbot import env, database, logger
+from newsbot.logger import Logger
 from newsbot.tables import Articles, DiscordQueue
 from newsbot.sources.isources import ISources
 from time import sleep
 
 
-class Worker:
+class Worker():
     """
     This is a generic worker that will contain the source it will monitor.
     """
 
     def __init__(self, source: ISources):
+        self.logger = Logger(__class__)
         self.source: ISources = source
         self.enabled: bool = False
         pass
@@ -19,7 +21,7 @@ class Worker:
             self.enabled = True
         else:
             self.enabled = False
-            logger.info(f"{self.source.siteName} was not enabled.  Thread will exit.")
+            self.logger.info(f"{self.source.siteName} was not enabled.  Thread will exit.")
 
     def init(self) -> None:
         """
@@ -27,7 +29,7 @@ class Worker:
         Once its turned on it will check the Source for new items.
         """
         if self.source.sourceEnabled == True:
-            logger.debug(f"{self.source.siteName} Worker has started.")
+            self.logger.debug(f"{self.source.siteName} Worker has started.")
 
             while True:
                 news = self.source.getArticles()
@@ -42,7 +44,22 @@ class Worker:
                         if len(self.source.hooks) >= 1:
                             dq = DiscordQueue()
                             dq.convert(i)
-                            dq.add()
+                            res = dq.add()
 
-                logger.debug(f"{self.source.siteName} Worker is going to sleep.")
+                            self.discordQueueMessage(i, res)
+
+                self.logger.debug(f"{self.source.siteName} Worker is going to sleep.")
                 sleep(env.threadSleepTimer)
+
+
+    def discordQueueMessage(self, i: Articles, added: bool) -> None:
+        msg: str = ''
+        if i.title != '':
+            msg = i.title
+        else:
+            msg = i.description
+
+        if added == True:
+            self.logger.info(f"{msg} was added to the Discord queue.")
+        else:
+            self.logger.error(f"{msg} was not added to add to the Discord queue.")
