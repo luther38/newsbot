@@ -3,17 +3,21 @@ from newsbot.logger import Logger
 from requests import get, Response
 from bs4 import BeautifulSoup
 
-class SiteContent():
+
+class SiteContent:
     """
     This object contains information returned from BeautifulSoup.
     It acts as a buffer layer incase any changes to the API
     """
+
     attrs: dict = {}
-    source: str = ''
+    source: str = ""
+
     def __init__(self) -> None:
         pass
 
-class RequestContent():
+
+class RequestContent:
     """
     This is a common class that will request site information.
     This class will make use of the Requests and BeautifulSoup librarys.
@@ -22,8 +26,10 @@ class RequestContent():
     RequestContent(url='www').
     RequestContent().setUrl("www").
     """
-    def __init__(self, url: str = '') -> None:
+
+    def __init__(self, url: str = "") -> None:
         self.url = url
+        self.logger = Logger(__class__)
         pass
 
     def setUrl(self, url: str) -> None:
@@ -48,68 +54,84 @@ class RequestContent():
                 self.__response__: Response = res
                 return res.text
             else:
-                Logger().error(f"Attempted to get data from '{self.url}' but did not get any data.  StatusCode={res.status_code}")
+                self.logger.error(
+                    f"Attempted to get data from '{self.url}' but did not get any data.  StatusCode={res.status_code}"
+                )
                 return ""
         except Exception as e:
-            Logger().critical(f"Failed to get data from '{self.url}' but resulted in an error. {e} ")
+            self.logger.critical(
+                f"Failed to get data from '{self.url}' but resulted in an error. {e} "
+            )
 
     def __getSoup__(self) -> BeautifulSoup:
         try:
             soup = BeautifulSoup(self.__source__, features="html.parser")
             return soup
         except Exception as e:
-            Logger().error(e)
+            self.logger.error(e)
             return BeautifulSoup()
-        
+
     def getPageDetails(self) -> None:
         """
         This pulls the source code and converts it into a BeautifulSoup object.
         """
-        if self.url == '':
-            Logger().error("Was requested to pull data from a site, but no URL was passed.")
+        if self.url == "":
+            self.logger.error(
+                "Was requested to pull data from a site, but no URL was passed."
+            )
         else:
             self.__source__ = self.__getSource__()
 
         try:
-            if self.__soup__.text == '':
+            if self.__soup__.text == "":
                 self.__soup__ = self.__getSoup__()
             else:
                 pass
         except:
             self.__soup__ = self.__getSoup__()
-            
+
         pass
 
-    def findSingle(self, name: str = '', attrKey: str = '', attrValue: str = '') -> BeautifulSoup:
-        if attrKey != '':
+    def findSingle(
+        self, name: str = "", attrKey: str = "", attrValue: str = ""
+    ) -> BeautifulSoup:
+        if attrKey != "":
             attrs = {attrKey: attrValue}
             res = self.__soup__.find(name=name, attrs=attrs)
             return res
         else:
             return self.__soup__.find(name=name)
-    
-    def findMany(self, name: str = '', attrKey: str = '', attrValue: str = '') -> List[BeautifulSoup]:
-        if attrKey != '':
+
+    def findMany(
+        self, name: str = "", attrKey: str = "", attrValue: str = ""
+    ) -> List[BeautifulSoup]:
+        if attrKey != "":
             return self.__soup__.find_all(name=name, attrs={attrKey: attrValue})
         else:
             return self.__soup__.find_all(name=name)
 
     def findFeedLink(self) -> dict:
-        atom = self.findSingle(name='link', attrKey='type', attrValue='application/atom+xml')
-        rss = self.findSingle(name='link', attrKey='type', attrValue='application/rss+xml')
-        json = self.findSingle(name='link', attrKey='type', attrValue='application/json')
+        atom = self.findSingle(
+            name="link", attrKey="type", attrValue="application/atom+xml"
+        )
+        rss = self.findSingle(
+            name="link", attrKey="type", attrValue="application/rss+xml"
+        )
+        json = self.findSingle(
+            name="link", attrKey="type", attrValue="application/json"
+        )
 
         if atom != None:
-            return self.__buildFeedDict__('atom', atom.attrs['href'])
+            return self.__buildFeedDict__("atom", atom.attrs["href"])
         elif rss != None:
-            return self.__buildFeedDict__('rss', rss.attrs['href'])
+            return self.__buildFeedDict__("rss", rss.attrs["href"])
         elif json != None:
-            return self.__buildFeedDict__('json', json.attrs['href'])
+            return self.__buildFeedDict__("json", json.attrs["href"])
         else:
-            return self.__buildFeedDict__('none', None)
+            return self.__buildFeedDict__("none", None)
 
-    def __buildFeedDict__(self, type:str, content: str) -> dict:
-        return {'type': type, 'content': content}
+    def __buildFeedDict__(self, type: str, content: str) -> dict:
+        return {"type": type, "content": content}
 
     def findSiteIcon(self, siteUrl: str) -> str:
         """
@@ -118,28 +140,27 @@ class RequestContent():
         return: str
         """
         # if a site url contains the / lets remove it
-        if siteUrl.endswith('/') == True:
-            siteUrl = siteUrl.strip('/')
+        if siteUrl.endswith("/") == True:
+            siteUrl = siteUrl.strip("/")
 
         bestSize: int = -1
-        icons = self.findMany(name='link', attrKey='rel', attrValue='apple-touch-icon')
+        icons = self.findMany(name="link", attrKey="rel", attrValue="apple-touch-icon")
         # look though all the icons given, find the largest one.
         for icon in icons:
-            size:int = int(icon.attrs['sizes'].split('x')[0])
+            size: int = int(icon.attrs["sizes"].split("x")[0])
             if size > bestSize:
                 bestSize = size
-            
+
         # take what we found as the largest icon and store it.
         for icon in icons:
-            size:int = int(icon.attrs['sizes'].split('x')[0])
+            size: int = int(icon.attrs["sizes"].split("x")[0])
             if size == bestSize:
-                href = icon.attrs['href']
-                if 'http' in href or \
-                    'https' in href:
+                href = icon.attrs["href"]
+                if "http" in href or "https" in href:
                     return href
                 else:
                     return f"{siteUrl}{href}"
-        return ''
+        return ""
 
     def findArticleThumbnail(self) -> str:
         """
@@ -149,53 +170,64 @@ class RequestContent():
         return: str
         """
         meta = (
-            { 'name': 'meta','attrKey': 'property', 'attrValue': 'og:image'},
-            { 'name': 'meta', 'attrKey': 'name', 'attrValue': 'twitter:image:src'}
+            {"name": "meta", "attrKey": "property", "attrValue": "og:image"},
+            {"name": "meta", "attrKey": "name", "attrValue": "twitter:image:src"},
         )
 
         for i in meta:
             try:
-                item = self.findSingle(name=i['name'], attrKey=i['attrKey'], attrValue=i['attrValue'])
-                if item.attrs['content'] != '':
-                    thumb = item.attrs['content']
+                item = self.findSingle(
+                    name=i["name"], attrKey=i["attrKey"], attrValue=i["attrValue"]
+                )
+                if item.attrs["content"] != "":
+                    thumb = item.attrs["content"]
                     return thumb
             except:
                 pass
-        return ''
+        return ""
 
     def findArticleDescription(self) -> str:
         lookups = (
-            { 'name':'div', 'key':'class', 'value':'entry-content e-content'},
-            { 'name':'div', 'key':'class', 'value':'engadget-post-contents'},
-            { 'name':'div', 'key':'class', 'value':'article-content post-page'}
+            {"name": "div", "key": "class", "value": "entry-content e-content"},
+            {"name": "div", "key": "class", "value": "engadget-post-contents"},
+            {"name": "div", "key": "class", "value": "article-content post-page"},
         )
-       
+
         for l in lookups:
-            content = self.findSingle(name=l['name'], attrKey=l['key'], attrValue=l['value'])
-            if content.text != '':
+            content = self.findSingle(
+                name=l["name"], attrKey=l["key"], attrValue=l["value"]
+            )
+            if content.text != "":
                 return content.text
 
+
 class RequestSiteContent(RequestContent):
-    def findFeedLink(self, siteUrl:str) -> dict:
-        atom = self.findSingle(name='link', attrKey='type', attrValue='application/atom+xml')
-        rss = self.findSingle(name='link', attrKey='type', attrValue='application/rss+xml')
-        json = self.findSingle(name='link', attrKey='type', attrValue='application/json')
+    def findFeedLink(self, siteUrl: str) -> dict:
+        atom = self.findSingle(
+            name="link", attrKey="type", attrValue="application/atom+xml"
+        )
+        rss = self.findSingle(
+            name="link", attrKey="type", attrValue="application/rss+xml"
+        )
+        json = self.findSingle(
+            name="link", attrKey="type", attrValue="application/json"
+        )
 
         if atom != None:
-            href = self.__cleanUrl__(atom.attrs['href'], siteUrl)
-            return self.__buildFeedDict__('atom', href)
+            href = self.__cleanUrl__(atom.attrs["href"], siteUrl)
+            return self.__buildFeedDict__("atom", href)
         elif rss != None:
-            href = self.__cleanUrl__(rss.attrs['href'], siteUrl)
-            return self.__buildFeedDict__('rss', href)
+            href = self.__cleanUrl__(rss.attrs["href"], siteUrl)
+            return self.__buildFeedDict__("rss", href)
         elif json != None:
-            href = self.__cleanUrl__(json.attrs['href'], siteUrl)
-            return self.__buildFeedDict__('json', href)
+            href = self.__cleanUrl__(json.attrs["href"], siteUrl)
+            return self.__buildFeedDict__("json", href)
         else:
-            return self.__buildFeedDict__('none', None)
+            return self.__buildFeedDict__("none", None)
 
-    def __cleanUrl__(self, href:str, siteUrl:str) -> str:
-        if href.startswith('//') == True:
-            href = href.replace('//', '')
+    def __cleanUrl__(self, href: str, siteUrl: str) -> str:
+        if href.startswith("//") == True:
+            href = href.replace("//", "")
         if "http://" in href or "https://" in href:
             return href
         elif "http://" in siteUrl:
@@ -203,8 +235,8 @@ class RequestSiteContent(RequestContent):
         elif "https://" in siteUrl:
             return f"https://{href}"
 
-    def __buildFeedDict__(self, type:str, content: str) -> dict:
-        return {'type': type, 'content': content}
+    def __buildFeedDict__(self, type: str, content: str) -> dict:
+        return {"type": type, "content": content}
 
     def findSiteIcon(self, siteUrl: str) -> str:
         """
@@ -213,47 +245,47 @@ class RequestSiteContent(RequestContent):
         return: str
         """
         # if a site url contains the / lets remove it
-        if siteUrl.endswith('/') == True:
-            siteUrl = siteUrl.strip('/')
+        if siteUrl.endswith("/") == True:
+            siteUrl = siteUrl.strip("/")
 
         bestSize: int = -1
-        href = ''
-        icons = self.findMany(name='link', attrKey='rel', attrValue='apple-touch-icon')
+        href = ""
+        icons = self.findMany(name="link", attrKey="rel", attrValue="apple-touch-icon")
         if len(icons) >= 2:
             try:
                 # look though all the icons given, find the largest one.
                 for icon in icons:
                     try:
-                        size:int = int(icon.attrs['sizes'].split('x')[0])
+                        size: int = int(icon.attrs["sizes"].split("x")[0])
                         if size > bestSize:
                             bestSize = size
                     except:
-                        Logger().warning(f"'{siteUrl}' did not have sizes present on the site icon.")
-                        pass    
+                        self.logger.warning(
+                            f"'{siteUrl}' did not have sizes present on the site icon."
+                        )
+                        pass
 
                 # take what we found as the largest icon and store it.
                 for icon in icons:
-                    size:int = int(icon.attrs['sizes'].split('x')[0])
+                    size: int = int(icon.attrs["sizes"].split("x")[0])
                     if size == bestSize:
-                        href = icon.attrs['href']
+                        href = icon.attrs["href"]
             except Exception as e:
-                Logger().warning(f'Failed to find the size of the siteIcon. {e}')
+                self.logger.warning(f"Failed to find the size of the siteIcon. {e}")
         elif len(icons) == 1:
-            href = icons[0].attrs['href']
+            href = icons[0].attrs["href"]
         else:
-            href = ''
+            href = ""
 
-        if 'http' in href or \
-            'https' in href:
+        if "http" in href or "https" in href:
             return href
-        elif href == '':
+        elif href == "":
             return href
         else:
             return f"{siteUrl}{href}"
 
 
 class RequestArticleContent(RequestContent):
-
     def findArticleThumbnail(self) -> str:
         """
         This is best used on articles, not on root the main site page.
@@ -262,38 +294,54 @@ class RequestArticleContent(RequestContent):
         return: str
         """
         meta = (
-            { 'name': 'meta','attrKey': 'property', 'attrValue': 'og:image'},
-            { 'name': 'meta', 'attrKey': 'name', 'attrValue': 'twitter:image:src'}
+            {"name": "meta", "attrKey": "property", "attrValue": "og:image"},
+            {"name": "meta", "attrKey": "name", "attrValue": "twitter:image:src"},
         )
 
         for i in meta:
             try:
-                item = self.findSingle(name=i['name'], attrKey=i['attrKey'], attrValue=i['attrValue'])
-                if item.attrs['content'] != '':
-                    thumb = item.attrs['content']
+                item = self.findSingle(
+                    name=i["name"], attrKey=i["attrKey"], attrValue=i["attrValue"]
+                )
+                if item.attrs["content"] != "":
+                    thumb = item.attrs["content"]
                     return thumb
             except:
                 pass
-        return ''   
-    
+        return ""
+
     def findArticleDescription(self) -> str:
         lookups = (
-            { 'name':'div', 'key':'class', 'value':'entry-content e-content'},  # HowToGeek
-            { 'name':'div', 'key':'class', 'value':'engadget-post-contents'},   # Engadget
-            { 'name':'div', 'key':'class', 'value':'article-content post-page'} # ArsTechnica
+            {
+                "name": "div",
+                "key": "class",
+                "value": "entry-content e-content",
+            },  # HowToGeek
+            {
+                "name": "div",
+                "key": "class",
+                "value": "engadget-post-contents",
+            },  # Engadget
+            {
+                "name": "div",
+                "key": "class",
+                "value": "article-content post-page",
+            },  # ArsTechnica
         )
-       
+
         for l in lookups:
             try:
-                content = self.findSingle(name=l['name'], attrKey=l['key'], attrValue=l['value'])
-                if content.text != '':
-                    text = ''
+                content = self.findSingle(
+                    name=l["name"], attrKey=l["key"], attrValue=l["value"]
+                )
+                if content.text != "":
+                    text = ""
                     # Look for just p blocks to avoid ads and junk we dont care about
-                    pBlocks = self.findMany(name='p')
+                    pBlocks = self.findMany(name="p")
                     if len(pBlocks) >= 1:
                         for p in pBlocks:
                             text += f"{p} \r\n"
                     return content.text
             except:
                 pass
-        return ''
+        return ""
