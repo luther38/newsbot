@@ -1,14 +1,14 @@
 from typing import List
+#import bs4
 from requests import get, Response
 from bs4 import BeautifulSoup
-import re
-from newsbot import env
+#import re
+#from newsbot import env
 from newsbot.logger import Logger
 from newsbot.tables import Articles, Sources, DiscordWebHooks
-from newsbot.sources.isources import ISources
+from newsbot.sources.common import ISources, BSources, UnableToParseContent, UnableToFindContent
 
-
-class FFXIVReader(ISources):
+class FFXIVReader(ISources, BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri: str = "https://na.finalfantasyxiv.com/lodestone/news/"
@@ -19,7 +19,7 @@ class FFXIVReader(ISources):
         self.hooks = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv()
+        self.checkEnv(self.siteName)
         pass
 
     def getArticles(self) -> List[Articles]:
@@ -28,8 +28,8 @@ class FFXIVReader(ISources):
             self.logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
 
-            siteContent: Response = self.getContent()
-            page = self.getParser(siteContent)
+            #siteContent: Response = self.getContent()
+            page = self.getParser(requestsContent=self.getContent())
 
             if "Topics" in site.name:
                 try:
@@ -68,8 +68,8 @@ class FFXIVReader(ISources):
                         a.url = f"{self.baseUri}{news.attrs['href']}"
                         # a.tags = "Notices"
                         self.uri = a.link
-                        subPage = self.getContent()
-                        details = self.getParser(subPage)
+                        #subPage = self.getContent()
+                        details = self.getParser(requestsContent=self.getContent())
                         for d in details.find_all(
                             "div", {"class", "news__detail__wrapper"}
                         ):
@@ -94,8 +94,8 @@ class FFXIVReader(ISources):
                         a.url = f"{self.baseUri}{news.attrs['href']}"
                         # a.tags = site["tag"]
                         self.uri = a.link
-                        subPage = self.getContent()
-                        details = self.getParser(subPage)
+                        #subPage = self.getContent()
+                        details = self.getParser(requestsContent=self.getContent())
                         for d in details.find_all(
                             "div", {"class", "news__detail__wrapper"}
                         ):
@@ -122,8 +122,8 @@ class FFXIVReader(ISources):
                         a.url = f"{self.baseUri}{news.attrs['href']}"
                         self.uri = a.link
 
-                        subPage = self.getContent()
-                        details = self.getParser(subPage)
+                        #subPage = self.getContent()
+                        details = self.getParser(requestsContent=self.getContent())
 
                         for d in details.find_all(
                             "div", {"class", "news__detail__wrapper"}
@@ -151,8 +151,9 @@ class FFXIVReader(ISources):
                         a.link = f"{self.baseUri}{news.attrs['href']}"
                         a.tags = site["tag"]
                         self.uri = a.link
-                        subPage = self.getContent()
-                        details = self.getParser(subPage)
+
+                        #subPage = self.getContent()
+                        details = self.getParser(requestsContent=self.getContent())
 
                         for d in details.find_all(
                             "div", {"class", "news__detail__wrapper"}
@@ -167,32 +168,25 @@ class FFXIVReader(ISources):
 
         return allArticles
 
-    def checkEnv(self) -> None:
-        self.isSourceEnabled()
-        self.isDiscordOutputEnabled()
+#    def checkEnv(self) -> None:
+#        # Check if site was requested.
+#        self.outputDiscord = self.isDiscordEnabled(self.siteName)
+#        if self.outputDiscord == True:
+#            self.hooks = self.getDiscordList(self.siteName)
+#
+#        self.sourceEnabled = self.isSourceEnabled(self.siteName)
+#        if self.sourceEnabled == True:
+#            self.links = self.getSourceList(self.siteName)
 
-    def isSourceEnabled(self) -> None:
-        res = Sources(name=self.siteName).findAllByName()
-        if len(res) >= 1:
-            self.links.append(res[0])
-            self.sourceEnabled = True
-
-    def isDiscordOutputEnabled(self) -> None:
-        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-        if len(dwh) >= 1:
-            self.outputDiscord = True
-            for i in dwh:
-                self.hooks.append(i)
-
-    def getContent(self) -> Response:
-        try:
-            headers = self.getHeaders()
-            return get(self.uri, headers=headers)
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-    def getParser(self, siteContent: Response) -> BeautifulSoup:
-        try:
-            return BeautifulSoup(siteContent.content, features="html.parser")
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
+#    def getContent(self) -> Response:
+#        try:
+#            headers = self.getHeaders()
+#            return get(self.uri, headers=headers)
+#        except Exception as e:
+#            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
+#
+#    def getParser(self, siteContent: Response) -> BeautifulSoup:
+#        try:
+#            return BeautifulSoup(siteContent.content, features="html.parser")
+#        except Exception as e:
+#            self.logger.critical(f"failed to parse data returned from requests. {e}")

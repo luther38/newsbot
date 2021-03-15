@@ -1,7 +1,7 @@
 from typing import List, Dict
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent, 
+from newsbot.sources.common import BSources, ISources, UnableToFindContent, UnableToParseContent
 from newsbot.sources.rssHelper import *
 from newsbot.common.requestContent import (
     RequestContent,
@@ -16,48 +16,20 @@ from bs4 import BeautifulSoup
 from json import loads
 
 
-class RssReader(ISources):
+class RssReader(ISources, BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://example.net/"
         self.siteName: str = "RSS"
         self.feedName: str = ""
         self.RssHelper: IRssContent = IRssContent()
-        self.bs
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv()
-
-        self.isSourceEnabled(self.siteName)
+        self.checkEnv(self.siteName)
         pass
-
-    def checkEnv(self) -> None:
-        # Check if site was requested.
-        self.links = self.isSourceEnabled(self.siteName)
-        if len(self.links) >= 1:
-            self.sourceEnabled = True
-
-        self.hooks = self.isDiscordOutputEnabled(self.siteName)
-        if len(self.hooks) >= 1:
-            self.outputDiscord = True
-        
-
-    def isSourceEnabled(self, siteName: str) -> List[Sources]:
-        l = list()
-        res = Sources(name=siteName).findAllByName()
-        for i in res: l.append(i)
-        return l
-        
-    def isDiscordOutputEnabled(self,siteName: str) -> List[DiscordWebHooks]:
-        h = list()
-        dwh = DiscordWebHooks(siteName).findAllByName()
-        for i in dwh:
-            h.append(i)
-        return h
-        
-
+   
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
         for l in self.links:
@@ -130,29 +102,6 @@ class RssReader(ISources):
                             link.enabled = False
 
         return allArticles
-
-    # def contentWorker(self)
-
-    def getContent(self, url: str = "") -> str:
-        try:
-            headers = self.getHeaders()
-            if url != "":
-                res: Response = get(url, headers=headers)
-            else:
-                res: Response = get(self.uri, headers=headers)
-            return str(res.text)
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-            return ""
-
-    def getDriverContent(self) -> str:
-        raise NotImplementedError
-
-    def getParser(self, siteContent: str) -> BeautifulSoup:
-        try:
-            return BeautifulSoup(siteContent, features="html.parser")
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def enableHelper(self, url: str) -> bool:
         r: bool = False
@@ -230,6 +179,7 @@ class AtomParser(IParser):
 
 class RssParser:
     def __init__(self, url: str, siteName: str) -> None:
+        self.logger = Logger(__class__)
         self.url: str = url
         self.siteName: str = siteName
         self.content: RequestSiteContent = RequestContent(url=url)

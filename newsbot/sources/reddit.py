@@ -2,16 +2,16 @@ from typing import List
 from json import loads
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.isources import ISources
 from newsbot.tables import Sources, DiscordWebHooks, Articles
 from newsbot.cache import Cache
+from newsbot.sources.common import BChrome, ISources, BSources
 from time import sleep
 from requests import get, Response
 from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome, ChromeOptions
 
 
-class RedditReader(ISources):
+class RedditReader(ISources, BSources, BChrome):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://reddit.com/r/aww/top.json"
@@ -21,32 +21,23 @@ class RedditReader(ISources):
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
 
-        self.checkEnv()
+        self.checkEnv(self.siteName)
 
-    def checkEnv(self) -> None:
-        # Check if Pokemon Go was requested
-        self.isSourceEnabled()
-        self.isDiscordOutputEnabled()
-
-    def isSourceEnabled(self) -> None:
-        res = Sources(name=self.siteName).findAllByName()
-        if len(res) >= 1:
-            self.sourceEnabled = True
-            for i in res:
-                self.links.append(i)
-
-    def isDiscordOutputEnabled(self) -> None:
-        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-        if len(dwh) >= 1:
-            self.outputDiscord = True
-            for i in dwh:
-                self.hooks.append(i)
+#    def checkEnv(self) -> None:
+#        # Check if site was requested.
+#        self.outputDiscord = self.isDiscordEnabled(self.siteName)
+#        if self.outputDiscord == True:
+#            self.hooks = self.getDiscordList(self.siteName)
+#
+#        self.sourceEnabled = self.isSourceEnabled(self.siteName)
+#        if self.sourceEnabled == True:
+#            self.links = self.getSourceList(self.siteName)
 
     def getArticles(self) -> List[Articles]:
         # TODO Flag NSFW
-        allowNSFW = True
+        #allowNSFW = True
 
-        self.driver = self.getWebDriver()
+        self.driver = self.driverStart()
 
         # rss = RSSRoot()
         allArticles: List[Articles] = list()
@@ -63,9 +54,9 @@ class RedditReader(ISources):
             if authorImage == "":
                 # Collect values that we do not get from the RSS
                 self.uri = f"https://reddit.com/r/{subreddit}"
-                self.__driverGet__(self.uri)
-                source = self.getDriverContent()
-                soup = self.getParser(source)
+                self.driverGoTo(self.uri)
+                #source = self.driverGetContent()
+                soup = self.getParser(seleniumContent=self.driverGetContent())
 
                 subImages = soup.find_all(
                     name="img", attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"}
@@ -103,25 +94,25 @@ class RedditReader(ISources):
 
             sleep(5.0)
 
-        self.__driverQuit__()
+        self.driverClose()
         return allArticles
 
-    def getContent(self) -> str:
-        try:
-            headers = self.getHeaders()
-            res = get(self.uri, headers=headers)
-            return res.text
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-    def getDriverContent(self) -> str:
-        return self.driver.page_source
-
-    def getParser(self, siteContent: str) -> BeautifulSoup:
-        try:
-            return BeautifulSoup(siteContent, features="html.parser")
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
+#    def getContent(self) -> str:
+#        try:
+#            headers = self.getHeaders()
+#            res = get(self.uri, headers=headers)
+#            return res.text
+#        except Exception as e:
+#            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
+#
+#    def getDriverContent(self) -> str:
+#        return self.driver.page_source
+#
+#    def getParser(self, siteContent: str) -> BeautifulSoup:
+#        try:
+#            return BeautifulSoup(siteContent, features="html.parser")
+#        except Exception as e:
+#            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getVideoThumbnail(self, preview) -> str:
         try:
@@ -136,7 +127,7 @@ class RedditReader(ISources):
             try:
                 self.uri = i
                 siteContent = self.getContent()
-                page = self.getParser(siteContent)
+                page = self.getParser(requestsContent=siteContent)
                 json = loads(page.text)
                 items = json["data"]["children"]
                 if len(items) >= 25:
@@ -146,7 +137,7 @@ class RedditReader(ISources):
 
     def getPostDetails(
         self, obj: dict, subreddit: str, authorName: str, authorImage: str
-    ) -> Articles:
+        ) -> Articles:
         try:
 
             a = Articles()
@@ -169,7 +160,7 @@ class RedditReader(ISources):
             elif "gallery" in obj["url"]:
                 self.uri = obj["url"]
                 source = self.getContent()
-                soup = self.getParser(source)
+                soup = self.getParser(requestsContent=source)
                 try:
                     images = soup.find_all(
                         name="img", attrs={"class": "_1dwExqTGJH2jnA-MYGkEL-"}
@@ -190,25 +181,25 @@ class RedditReader(ISources):
             self.logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
 
     # Selenium Code
-    def getWebDriver(self) -> Chrome:
-        options = ChromeOptions()
-        options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        try:
-            driver = Chrome(options=options)
-            return driver
-        except Exception as e:
-            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
-
-    def __driverGet__(self, uri: str) -> None:
-        try:
-            self.driver.get(uri)
-            # self.driver.implicitly_wait(30)
-            sleep(5)
-        except Exception as e:
-            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
-
-    def __driverQuit__(self):
-        self.driver.quit()
+#    def getWebDriver(self) -> Chrome:
+#        options = ChromeOptions()
+#        options.add_argument("--disable-extensions")
+#        options.add_argument("--headless")
+#        options.add_argument("--no-sandbox")
+#        options.add_argument("--disable-dev-shm-usage")
+#        try:
+#            driver = Chrome(options=options)
+#            return driver
+#        except Exception as e:
+#            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
+#
+#    def __driverGet__(self, uri: str) -> None:
+#        try:
+#            self.driver.get(uri)
+#            # self.driver.implicitly_wait(30)
+#            sleep(5)
+#        except Exception as e:
+#            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
+#
+#    def __driverQuit__(self):
+#        self.driver.quit()

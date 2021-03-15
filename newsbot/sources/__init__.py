@@ -9,5 +9,3 @@ from .twitter import TwitterReader
 from .twitch import TwitchReader
 
 from .rss import RssReader
-from .isources import ISources
-from .bsources import BSources

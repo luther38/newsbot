@@ -1,7 +1,7 @@
 from typing import List
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import BChrome, ISources, BSources ,UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache
 from requests import get, Response
@@ -9,8 +9,7 @@ from bs4 import BeautifulSoup
 from selenium.webdriver import Chrome, ChromeOptions
 from time import sleep
 
-
-class YoutubeReader(ISources):
+class YoutubeReader(ISources, BSources, BChrome):
     def __init__(self):
         self.logger= Logger(__class__)
         self.uri: str = "https://youtube.com"
@@ -23,31 +22,12 @@ class YoutubeReader(ISources):
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
 
-        self.checkEnv()
+        self.checkEnv(self.siteName)
         pass
-
-    def checkEnv(self) -> None:
-        # Check if Pokemon Go was requested
-        self.isSourceEnabled()
-        self.isDiscordOutputEnabled()
-
-    def isSourceEnabled(self) -> None:
-        res = Sources(name=self.siteName).findAllByName()
-        if len(res) >= 1:
-            self.sourceEnabled = True
-            for i in res:
-                self.links.append(i)
-
-    def isDiscordOutputEnabled(self) -> None:
-        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-        if len(dwh) >= 1:
-            self.outputDiscord = True
-            for i in dwh:
-                self.hooks.append(i)
 
     def getArticles(self) -> List[Articles]:
         self.logger.debug(f"Checking YouTube for new content")
-        self.driver = self.getWebDriver()
+        self.driver = self.driverStart()
 
         allArticles: List[Articles] = list()
 
@@ -61,9 +41,10 @@ class YoutubeReader(ISources):
             channelID = Cache(key=f"youtube {s[1]} channelID").find()
             if channelID == "":
                 self.uri = f"{site.url}"
-                self.__driverGet__(self.uri)
-                siteContent: str = self.getDriverContent()
-                page: BeautifulSoup = self.getParser(siteContent)
+                self.driverGoTo(self.uri)
+                #self.driver.save_screenshot("youtube_step1.png")
+                siteContent: str = self.driverGetContent()
+                page: BeautifulSoup = self.getParser(seleniumContent=siteContent)
                 channelID: str = self.getChannelId(page)
                 Cache(key=f"youtube {s[1]} channelID", value=channelID).add()
 
@@ -118,30 +99,8 @@ class YoutubeReader(ISources):
 
                     allArticles.append(a)
 
-        self.driver.quit()
+        self.driverClose()
         return allArticles
-
-    def getContent(self) -> str:
-        try:
-            headers = self.getHeaders()
-            res = get(self.uri, headers=headers)
-            return res.text
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-    def getDriverContent(self) -> str:
-        try:
-            return self.driver.page_source
-        except Exception as e:
-            self.logger.critical(
-                f"Filed to collect source code from driver at {self.uri}. {e}"
-            )
-
-    def getParser(self, siteContent: str) -> BeautifulSoup:
-        try:
-            return BeautifulSoup(siteContent, features="html.parser")
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getChannelId(self, page: BeautifulSoup) -> str:
         # siteContent: Response = self.getContent()
@@ -157,24 +116,3 @@ class YoutubeReader(ISources):
                 pass
 
         return ""
-
-    # Selenium Code
-    def getWebDriver(self) -> Chrome:
-        options = ChromeOptions()
-        options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        try:
-            driver = Chrome(options=options)
-            return driver
-        except Exception as e:
-            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
-
-    def __driverGet__(self, uri: str) -> None:
-        try:
-            self.driver.get(uri)
-            # self.driver.implicitly_wait(30)
-            sleep(5)
-        except Exception as e:
-            self.logger.error(f"Driver failed to get {uri}. Error: {e}")

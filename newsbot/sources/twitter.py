@@ -1,7 +1,7 @@
 from typing import List
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import BChrome, ISources, BSources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
@@ -11,7 +11,7 @@ from os import getenv
 from time import sleep
 
 
-class TwitterReader(ISources):
+class TwitterReader(ISources, BSources, BChrome):
     def __init__(self):
         self.logger = Logger(__class__)
         self.uri: str = "https://twitter.com"
@@ -23,46 +23,11 @@ class TwitterReader(ISources):
 
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        # self.driver: Chrome = Chrome()
-        self.checkEnv()
-
-    def checkEnv(self) -> None:
-        # Check if Pokemon Go was requested
-        self.isSourceEnabled()
-        self.isDiscordOutputEnabled()
-
-    def isSourceEnabled(self) -> None:
-        res = Sources(name=self.siteName).findAllByName()
-        if len(res) >= 1:
-            self.sourceEnabled = True
-            for i in res:
-                self.links.append(i)
-
-    def isDiscordOutputEnabled(self) -> None:
-        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-        if len(dwh) >= 1:
-            self.outputDiscord = True
-            for i in dwh:
-                self.hooks.append(i)
-
-    def getContent(self) -> str:
-        try:
-
-            # res: Response = get(self.uri, headers=self.getHeaders())
-            # return res.content
-            return self.driver.page_source
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-    def getParser(self, source: str) -> BeautifulSoup:
-        try:
-            return BeautifulSoup(source, features="html.parser")
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
+        self.checkEnv(self.siteName)
 
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
-        self.driver = self.getWebDriver()
+        self.driver = self.driverStart()
         # Authenicate with Twitter
         appAuth = AppAuthHandler(
             consumer_key=getenv("NEWSBOT_TWITTER_API_KEY"),
@@ -95,12 +60,12 @@ class TwitterReader(ISources):
                 for i in self.getTweets(api=api, hashtag=siteSplit[2]):
                     allArticles.append(i)
 
-        self.__driverQuit__()
+        self.driverClose()
         return allArticles
 
     def getTweets(
         self, api: API, username: str = "", hashtag: str = ""
-    ) -> List[Articles]:
+        ) -> List[Articles]:
 
         l = list()
         tweets = list()
@@ -164,9 +129,9 @@ class TwitterReader(ISources):
                         # We are going to try with Chrome to find the image.
                         # It will try a couple times to try and find the image given the results are so hit and miss.
                         album: str = ""
-                        self.__driverGet__(a.url)
-                        source = self.getContent()
-                        soup = self.getParser(source)
+                        self.driverGoTo(a.url)
+                        source = self.getDriverContent()
+                        soup = self.getParser(seleniumContent=source)
                         images = soup.find_all(name="img")  # attrs={"alt": "Image"})
                         for img in images:
                             try:
@@ -195,7 +160,7 @@ class TwitterReader(ISources):
         url: str = ""
         try:
             url = tweet.entities["urls"][0]["expanded_url"]
-        except Exception as e:
+        except:
             # self.logger.warning(f"Failed to find the URL to the exact tweet. Checking the second location. \r\nError: {e}")
             pass
 
@@ -221,29 +186,7 @@ class TwitterReader(ISources):
                 pass
         return url
 
-    # Selenium Code
-    def getWebDriver(self) -> Chrome:
-        options = ChromeOptions()
-        options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        try:
-            driver = Chrome(options=options)
-            return driver
-        except Exception as e:
-            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
 
-    def __driverGet__(self, uri: str) -> None:
-        try:
-            self.driver.get(uri)
-            # self.driver.implicitly_wait(30)
-            sleep(5)
-        except Exception as e:
-            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
-
-    def __driverQuit__(self):
-        self.driver.quit()
 
     def getImages(self, url: str) -> List[str]:
         pass

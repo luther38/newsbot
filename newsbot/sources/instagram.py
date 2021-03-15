@@ -1,7 +1,7 @@
 from typing import List
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.isources import ISources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import BChrome, BSources, ISources, UnableToFindContent, UnableToParseContent
 from newsbot.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
@@ -9,7 +9,7 @@ from re import findall
 from selenium.webdriver import Chrome, ChromeOptions
 
 
-class InstagramReader(ISources):
+class InstagramReader(ISources, BSources, BChrome):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://www.instagram.com/"
@@ -20,42 +20,11 @@ class InstagramReader(ISources):
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
         self.currentLink: Sources = Sources()
-        self.checkEnv()
+        self.checkEnv(self.siteName)
         pass
 
-    def getWebDriver(self) -> Chrome:
-        options = ChromeOptions()
-        options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        try:
-            driver = Chrome(options=options)
-            return driver
-        except Exception as e:
-            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
-
-    def checkEnv(self) -> None:
-        # Check if Pokemon Go was requested
-        self.isSourceEnabled()
-        self.isDiscordOutputEnabled()
-
-    def isSourceEnabled(self) -> None:
-        res = Sources(name=self.siteName).findAllByName()
-        if len(res) >= 1:
-            self.sourceEnabled = True
-            for i in res:
-                self.links.append(i)
-
-    def isDiscordOutputEnabled(self) -> None:
-        dwh = DiscordWebHooks(name=self.siteName).findAllByName()
-        if len(dwh) >= 1:
-            self.outputDiscord = True
-            for i in dwh:
-                self.hooks.append(i)
-
     def getArticles(self) -> List[Articles]:
-        self.driver = self.getWebDriver()
+        self.driver = self.driverStart()
         allArticles: List[Articles] = list()
 
         for site in self.links:
@@ -65,15 +34,19 @@ class InstagramReader(ISources):
             igType = nameSplit[1]
             self.siteName = f"Instagram {nameSplit[2]}"
             self.logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
+            
+            self.uri = f"{self.baseUri}directory/hashtags/"
+            self.driverGoTo(self.uri)
 
             # Figure out if we are looking for a user or tag
             if igType == "user":
-                self.uri = f"{self.baseUri}{nameSplit[2]}"
-                self.__driverGet__(self.uri)
+                #self.uri = f"{self.baseUri}{nameSplit[2]}"
+                self.driver.save_screenshot('ig_hashtag.png')
+                res = self.driver.find_element_by_xpath('/html/body/div[1]/section/nav/div[2]/div/div/div[2]/div/div/span[2]')
                 links = self.getUserArticleLinks()
             elif igType == "tag":
                 self.uri = f"{self.baseUri}explore/tags/{nameSplit[2]}/"
-                self.__driverGet__(self.uri)
+                self.driverGoTo(self.uri)
                 links = self.getTagArticleLinks()
 
             for l in links:
@@ -91,25 +64,10 @@ class InstagramReader(ISources):
                     f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed responce. {e}"
                 )
 
-        self.driver.quit()
+        self.driverClose()
         self.siteName = "Instagram"
 
         return allArticles
-
-    def getContent(self) -> str:
-        try:
-            # headers = self.getHeaders()
-            # res: Response = get(self.uri, headers=headers)
-            # return res.content
-            return self.driver.page_source
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-    def getParser(self, source: str) -> BeautifulSoup:
-        try:
-            return BeautifulSoup(source, features="html.parser")
-        except Exception as e:
-            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getUserArticleLinks(self) -> List[str]:
         """
@@ -117,8 +75,8 @@ class InstagramReader(ISources):
         """
         links = list()
         try:
-            source = self.getContent()
-            soup: BeautifulSoup = self.getParser(source)
+            #source = self.getContent()
+            soup: BeautifulSoup = self.getParser(requestsContent=self.getContent())
             res = soup.find_all(name="article")
             for i in res[0].contents[0].contents[0].contents:
                 for l in i.contents:
@@ -128,7 +86,7 @@ class InstagramReader(ISources):
 
         except Exception as e:
             self.logger.error(e)
-            self.__close__()
+            self.driverClose()
 
         return links
 
@@ -139,8 +97,8 @@ class InstagramReader(ISources):
         links = list()
 
         try:
-            source: str = self.getContent()
-            soup: BeautifulSoup = self.getParser(source)
+            #source: str = self.getContent()
+            soup: BeautifulSoup = self.getParser(requestsContent=self.getContent())
             res = soup.find_all(name="article")
 
             # Top Posts
@@ -153,7 +111,7 @@ class InstagramReader(ISources):
             # links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
 
         except Exception as e:
-            self.logger.error("Driver ran into a problem pulling links from a tag.")
+            self.logger.error(f"Driver ran into a problem pulling links from a tag. {e}")
 
         return links
 
@@ -172,9 +130,9 @@ class InstagramReader(ISources):
     def getPostInfo(self, link: str) -> Articles:
         a = Articles(url=link, siteName=self.currentLink.name, tags="instagram, posts")
 
-        self.__driverGet__(link)
-        source = self.getContent()
-        soup = self.getParser(source)
+        self.driverGoTo(link)
+        #source = self.getContent()
+        soup = self.getParser(requestsContent=self.getContent())
 
         nameSplit = self.currentLink.name.split(" ")
         if nameSplit[1] == "tag":
@@ -257,18 +215,18 @@ class InstagramReader(ISources):
             # we are just going to take the first one that shows up in the list.
             return i.attrs["src"]
 
-    def __driverGet__(self, uri: str) -> None:
-        try:
-            self.driver.get(uri)
-            self.driver.implicitly_wait(5)
-        except Exception as e:
-            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
-
-    def __close__(self) -> None:
-        try:
-            self.driver.close()
-        except Exception as e:
-            self.logger.error(f"Driver failed to close. Error: {e}")
+#    def __driverGet__(self, uri: str) -> None:
+#        try:
+#            self.driver.get(uri)
+#            self.driver.implicitly_wait(5)
+#        except Exception as e:
+#            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
+#
+#    def __close__(self) -> None:
+#        try:
+#            self.driver.close()
+#        except Exception as e:
+#            self.logger.error(f"Driver failed to close. Error: {e}")
 
     def getTags(self, text: str) -> str:
         t = ""
