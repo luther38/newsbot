@@ -1,11 +1,26 @@
 from typing import List
 from dotenv import load_dotenv
 from pathlib import Path
-from newsbot.collections import RSSArticle, EnvDetails
+from newsbot.collections import RSSArticle
 import os
 
+class EnvDetails:
+    def __init__(
+        self,
+        site: str = "",
+        name: str = "",
+        hooks: List[str] = list(),
+        options: str = "",
+        icon: str = "",
+    ) -> None:
+        self.enabled: bool = False
+        self.site: str = site
+        self.name: str = name
+        self.hooks: List[str] = hooks
+        self.options: str = options
+        self.icon: str = icon
 
-class Env():
+class Env:
     def __init__(self) -> None:
         self.interval_seconds: int = 30 * 60
         self.discord_delay_seconds: int = 15
@@ -16,8 +31,8 @@ class Env():
         self.pogo_hooks: List[str] = list()
 
         self.pso2_values: List[EnvDetails] = list()
-        #self.newsbot_pso2_enabled: bool = False
-        #self.pso2_hooks: List[str] = list()
+        # self.newsbot_pso2_enabled: bool = False
+        # self.pso2_hooks: List[str] = list()
 
         self.ffxiv_values: List[EnvDetails] = list()
         self.ffxiv_all: bool = False
@@ -26,13 +41,13 @@ class Env():
         self.reddit_values: List[EnvDetails] = list()
         self.youtube_values: List[EnvDetails] = list()
         self.instagram_values: List[EnvDetails] = list()
-        #self.instagram_user_values: List[EnvDetails] = list()
-        #self.instagram_tag_values: List[EnvDetails] = list()
+        # self.instagram_user_values: List[EnvDetails] = list()
+        # self.instagram_tag_values: List[EnvDetails] = list()
         self.twitter_values: List[EnvDetails] = list()
         self.twitch_values: List[EnvDetails] = list()
         self.rss_values: List[EnvDetails] = list()
 
-        #self.readEnv()
+        # self.readEnv()
         pass
 
     def readEnv(self):
@@ -46,8 +61,8 @@ class Env():
                 EnvDetails(
                     name="Pokemon Go Hub",
                     site="https://pokemongohub.net/rss",
-                    hooks=self.extractHooks('NEWSBOT_POGO_HOOK'),
-                    icon=self.getCustomIcon("NEWSBOT_POGO_ICON")
+                    hooks=self.extractHooks("NEWSBOT_POGO_HOOK"),
+                    icon=self.getCustomIcon("NEWSBOT_POGO_ICON"),
                 )
             )
 
@@ -57,49 +72,46 @@ class Env():
             self.pso2_values.append(
                 EnvDetails(
                     name="Phantasy Star Online 2",
-                    site='https://pso2.com/news',
+                    site="https://pso2.com/news",
                     hooks=self.extractHooks("NEWSBOT_PSO2_HOOK"),
-                    icon=self.getCustomIcon("NEWSBOT_PSO2_ICON")
+                    icon=self.getCustomIcon("NEWSBOT_PSO2_ICON"),
                 )
             )
 
         # Final Fantasy XIV
-        self.ffxiv_values.append(
-            EnvDetails(
-
-            )
-        )
+        self.ffxiv_values.append(EnvDetails())
         self.readFfxivValues()
-        #self.readRedditValues()
+        # self.readRedditValues()
         self.reddit_values.clear()
         self.reddit_values = self.readValues(
             site="NEWSBOT_REDDIT_SUB",
             hooks="NEWSBOT_REDDIT_HOOK",
-            icon="NEWSBOT_REDDIT_ICON")
-        #self.readYoutubeValues()
+            icon="NEWSBOT_REDDIT_ICON",
+        )
+        # self.readYoutubeValues()
         self.youtube_values.clear()
         self.youtube_values = self.readValues(
             site="NEWSBOT_YOUTUBE_URL",
             hooks="NEWSBOT_YOUTUBE_HOOK",
             icon="NEWSBOT_YOUTUBE_ICON",
-            name="NEWSBOT_YOUTUBE_NAME"
-            )
-        #self.readInstagramValues()
+            name="NEWSBOT_YOUTUBE_NAME",
+        )
+        # self.readInstagramValues()
         self.instagram_values.clear()
         for igu in self.readValues(
             site="NEWSBOT_INSTAGRAM_USER_NAME",
             hooks="NEWSBOT_INSTAGRAM_USER_HOOK",
             icon="NEWSBOT_INSTAGRAM_USER_ICON",
-            type="user"
-            ):
+            type="user",
+        ):
             self.instagram_values.append(igu)
 
         for igt in self.readValues(
             site="NEWSBOT_INSTAGRAM_TAG_NAME",
             hooks="NEWSBOT_INSTAGRAM_TAG_HOOK",
             icon="NEWSBOT_INSTAGRAM_TAG_ICON",
-            type="tag"
-            ):
+            type="tag",
+        ):
             self.instagram_values.append(igt)
 
         t = "NEWSBOT_TWITTER"
@@ -108,37 +120,31 @@ class Env():
             site=f"{t}_USER_NAME",
             hooks=f"{t}_USER_HOOK",
             icon=f"{t}_USER_ICON",
-            type="user"
-            ):
+            type="user",
+        ):
             self.twitter_values.append(tu)
 
         for tt in self.readValues(
             site=f"{t}_TAG_NAME",
             hooks=f"{t}_TAG_HOOK",
             icon=f"{t}_TAG_ICON",
-            type="tag"
-            ):
+            type="tag",
+        ):
             self.twitter_values.append(tt)
 
-        #self.readTwitterValues()
+        # self.readTwitterValues()
         t = "NEWSBOT_TWITCH"
         self.twitch_values.clear()
         self.twitch_values = self.readValues(
-            site=f"{t}_USER_NAME",
-            hooks=f"{t}_HOOK",
-            icon=f"{t}_ICON",
-            type="user"
+            site=f"{t}_USER_NAME", hooks=f"{t}_HOOK", icon=f"{t}_ICON", type="user"
         )
-        #self.readTwitchValues()
+        # self.readTwitchValues()
         t = "NEWSBOT_RSS"
         self.rss_values.clear()
         self.rss_values = self.readValues(
-            site=f"{t}_LINK",
-            hooks=f"{t}_HOOK",
-            icon=f"{t}_ICON",
-            name=f"{t}_NAME"
+            site=f"{t}_LINK", hooks=f"{t}_HOOK", icon=f"{t}_ICON", name=f"{t}_NAME"
         )
-        #self.readRssValues()
+        # self.readRssValues()
 
     def readFfxivValues(self) -> None:
         self.ffxiv_all = self.readBoolEnv("NEWSBOT_FFXIV_ALL")
@@ -147,11 +153,12 @@ class Env():
         self.ffxiv_maintenance = self.readBoolEnv("NEWSBOT_FFXIV_MAINTENANCE")
         self.ffxiv_updates = self.readBoolEnv("NEWSBOT_FFXIV_UPDATES")
         self.ffxiv_status = self.readBoolEnv("NEWSBOT_FFXIV_STATUS")
-
         self.ffxiv_hooks = self.extractHooks("NEWSBOT_FFXIV_HOOK")
         self.ffxiv_icon = self.getCustomIcon("NEWSBOT_FFXIV_ICON")
 
-    def readValues(self, site: str, hooks: str, icon: str, name: str = '', type: str = '') -> List[EnvDetails]:
+    def readValues(
+        self, site: str, hooks: str, icon: str, name: str = "", type: str = ""
+    ) -> List[EnvDetails]:
         counter = 0
         items: List[EnvDetails] = list()
         while counter <= 10:
@@ -159,22 +166,18 @@ class Env():
             h = self.extractHooks(f"{hooks}_{counter}")
             i = self.getCustomIcon(f"{icon}_{counter}")
             if s != None or len(h) >= 1:
-                e = EnvDetails(
-                    site=s,
-                    hooks=h,
-                    icon=i
-                )
+                e = EnvDetails(site=s, hooks=h, icon=i)
                 e.enabled = True
 
                 # check if we need to pull the name.
                 # Not all sources use a name
-                if name != '':
+                if name != "":
                     n = os.getenv(f"{name}_{counter}")
-                    e.name=n
+                    e.name = n
 
                 # Check if we have a source that collects either user or tag objects
-                if type != '':
-                    e.name = f'{type} {s}'
+                if type != "":
+                    e.name = f"{type} {s}"
 
                 items.append(e)
             counter = counter + 1
@@ -227,9 +230,9 @@ class Env():
         base = "NEWSBOT_INSTAGRAM"
         while counter <= 10:
             # User Posts
-            types: List['str'] = ('USER', 'TAG')
+            types: List["str"] = ("USER", "TAG")
             for t in types:
-                tbase = f"{base}_{t}"
+                #tbase = f"{base}_{t}"
                 site = os.getenv(f"{base}_USER_NAME_{counter}")
                 hooks = self.extractHooks(f"{base}_USER_HOOK_{counter}")
                 icon = self.getCustomIcon(f"{base}_USER_ICON_{counter}")
@@ -242,19 +245,6 @@ class Env():
                     details.icon = icon
                     self.instagram_values.append(details)
 
-            # Tags Posts
-            #tag = os.getenv(f"{base}_TAG_NAME_{counter}")
-            #hooks = self.extractHooks(f"{base}_TAG_HOOK_{counter}")
-            #icon = os.getenv(f"{base}_TAG_ICON_{counter}")
-            #if tag != None or len(hooks) >= 1:
-            #    details = EnvDetails()
-            #    details.enabled = True
-            #    details.site = tag
-            #    details.hooks = hooks
-            #    details.name = f"tag {tag}"
-            #    details.icon = icon
-            #    self.instagram_values.append(details)
-
             counter = counter + 1
 
     def readTwitterValues(self) -> None:
@@ -263,7 +253,7 @@ class Env():
         base = "NEWSBOT_TWITTER"
         while counter <= 10:
             # User Posts
-            types: List['str'] = ('USER', 'TAG')
+            types: List["str"] = ("USER", "TAG")
             for t in types:
                 tbase = f"{base}_{t}"
                 site = os.getenv(f"{tbase}_NAME_{counter}")
@@ -278,17 +268,6 @@ class Env():
                     details.name = f"{t.lower()} {site}"
                     details.icon = icon
                     self.twitter_values.append(details)
-
-            # Tags Posts
-            #tag = os.getenv(f"{base}_TAG_NAME_{counter}")
-            #hooks = self.extractHooks(f"{base}_TAG_HOOK_{counter}")
-            #if tag != None or len(hooks) >= 1:
-            #    details = EnvDetails()
-            #    details.enabled = True
-            #    details.site = tag
-            #    details.hooks = hooks
-            #    details.name = f"tag {tag}"
-            #    self.twitter_values.append(details)
 
             counter = counter + 1
 
@@ -320,7 +299,7 @@ class Env():
             link = os.getenv(f"NEWSBOT_RSS_LINK_{counter}")
             hooks = self.extractHooks(f"NEWSBOT_RSS_HOOK_{counter}")
             icon = self.getCustomIcon(f"NEWSBOT_RSS_ICON_{counter}")
-            if link != None or len(hooks) >=1:
+            if link != None or len(hooks) >= 1:
                 details = EnvDetails()
                 details.enabled = True
                 details.site = link

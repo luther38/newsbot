@@ -3,6 +3,7 @@ from typing import List
 
 class RSSRoot:
     def __init__(self) -> None:
+        raise NotImplementedError()
         self.title: str = ""
         self.link: str = ""
         self.articles: List[RSSArticle] = list()
@@ -10,6 +11,7 @@ class RSSRoot:
 
 class RSSArticle:
     def __init__(self) -> None:
+        raise NotImplementedError()
         self.siteName: str = ""
         self.tags: str = ""
         self.title: str = ""
@@ -27,6 +29,7 @@ class RSSArticle:
 
 class RssArticleImages:
     def __init__(self) -> None:
+        raise NotImplementedError()
         self.raw: str = ""
         self.src: str = ""
         self.title: str = ""
@@ -37,6 +40,7 @@ class RssArticleImages:
 
 class RssArticleLinks:
     def __init__(self) -> None:
+        raise NotImplementedError()
         self.raw: str = ""
         self.href: str = ""
         self.text: str = ""
@@ -45,6 +49,7 @@ class RssArticleLinks:
 
 class Env:
     def __init__(self) -> None:
+        raise NotImplementedError()
         self.interval_seconds: int = 60 * 30
         self.discord_delay_seconds: int = 60
         self.pogo_hooks: List[str] = list()
@@ -52,13 +57,15 @@ class Env:
 
 
 class EnvDetails:
-    def __init__(self, 
-        site: str = '',
-        name: str = '',
+    def __init__(
+        self,
+        site: str = "",
+        name: str = "",
         hooks: List[str] = list(),
-        options: str = '',
-        icon: str = ''
-        ) -> None:
+        options: str = "",
+        icon: str = "",
+    ) -> None:
+        raise NotImplementedError()
         self.enabled: bool = False
         self.site: str = site
         self.name: str = name

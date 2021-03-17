@@ -15,7 +15,7 @@ class Logger():
         logger = Logger(__class__)
         Logger(__class__).debug("hello world")
         """
-        self.callerClass: str = callerClass
+        self.callerClass: str = str(callerClass)
         _logger.add("./mounts/logs/newsbot.log", rotation="5 MB")
         pass
 
