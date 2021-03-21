@@ -204,11 +204,11 @@ At this time Discord webhooks do not support playing video links inside Discord.
 
 | Type    | Notes |
 | ---     | --- |
-| Note    |  Instagram has been disabled for this release. Due to changes on the UI Selenium is unable to pull up user/tag pages directly now |
-| Added   | [Generic RSS Reader](https://github.com/jtom38/newsbot/issues/45) | |
+| Note    |  Instagram has been disabled for this release. Due to changes on the Instagram UI, Selenium is unable to pull up user/tag pages directly now |
+| Added   | [Generic RSS Reader](https://github.com/jtom38/newsbot/issues/45) |
 | Added   | [Dynamic Site Icon Pull](https://github.com/jtom38/newsbot/issues/46)
+| Added   | [Add support for Steam News](https://github.com/jtom38/newsbot/issues/23)
 | Updated | [Logs can be stored in the DB](https://github.com/jtom38/newsbot/issues/42)
-| Closed  | [Add support for Steam News]()
 | Updated | Cleaned up how Newsbot reads all the env values.
 | Updated | Optimized the Twitter source to check if the url has been seen already and skips it if it has.
 | Updated | Did some cleanup on the sources and moved code reuse to its own class.
@@ -218,23 +218,23 @@ At this time Discord webhooks do not support playing video links inside Discord.
 
 | Type | Notes |
 | ---    | --- |
-| Added  | [Add Cache Layer](https://github.com/jtom38/newsbot/issues/40)
-| Added  | [Add Twitch Clip Support](https://github.com/jtom38/newsbot/issues/39)
-| Added  | [Add Twitch VoD Support](https://github.com/jtom38/newsbot/issues/38)
-| Added  | [Reddit Album Support](https://github.com/jtom38/newsbot/issues/36)
-| Fixed  | [Discord Webhooks looping with multiple webhooks](https://github.com/jtom38/newsbot/issues/37)
+| Update  | [Add Cache Layer](https://github.com/jtom38/newsbot/issues/40)
+| Update  | [Add Twitch Clip Support](https://github.com/jtom38/newsbot/issues/39)
+| Update  | [Add Twitch VoD Support](https://github.com/jtom38/newsbot/issues/38)
+| Update  | [Reddit Album Support](https://github.com/jtom38/newsbot/issues/36)
+| Update  | [Discord Webhooks looping with multiple webhooks](https://github.com/jtom38/newsbot/issues/37)
 | Update | Reddit and YouTube sources will use the cache to store some values to avoid extra calls that are not required.
 
 ### 0.5.1
 
 | Type | Notes |
 | ---    | --- |
-| Update | Corrected a problem with the Reddit source that would crash the thread when it pulled Author information from a subreddit that did not have a custom CSS.  
+| Fix | Corrected a problem with the Reddit source that would crash the thread when it pulled Author information from a subreddit that did not have a custom CSS.  
 
 ### 0.5.0
 
 | Type | Notes |
-| ---    | --- |
-| Added  | Twitter Support was added.  To enable Twitter you will need to provide it with the Twitter Developer API keys |
-| Update | Discord Template was updated. |
-| Update | Database changes to enable storing the posters information. |
+| ---- | ----- |
+| Add  | Twitter Support was added.  To enable Twitter you will need to provide it with the Twitter Developer API keys |
+| Change | Discord Template was updated. |
+| Change | Database changes to enable storing the posters information. |
