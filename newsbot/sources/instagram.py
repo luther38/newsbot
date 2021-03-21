@@ -7,6 +7,7 @@ from requests import get, Response
 from bs4 import BeautifulSoup
 from re import findall
 from selenium.webdriver import Chrome, ChromeOptions
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class InstagramReader(ISources, BSources, BChrome):
@@ -35,12 +36,14 @@ class InstagramReader(ISources, BSources, BChrome):
             self.siteName = f"Instagram {nameSplit[2]}"
             self.logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
             
-            self.uri = f"{self.baseUri}directory/hashtags/"
+            #self.uri = f"{self.baseUri}directory/hashtags/"
+            self.uri = f"https://www.instagram.com/directory/profiles/0-0/"
             self.driverGoTo(self.uri)
 
             # Figure out if we are looking for a user or tag
             if igType == "user":
                 #self.uri = f"{self.baseUri}{nameSplit[2]}"
+                WebDriverWait(driver=self.driver, timeout=5)
                 self.driver.save_screenshot('ig_hashtag.png')
                 res = self.driver.find_element_by_xpath('/html/body/div[1]/section/nav/div[2]/div/div/div[2]/div/div/span[2]')
                 links = self.getUserArticleLinks()
