@@ -7,7 +7,7 @@ from os import remove
 
 class Test_DB:
     def test_newDb(self):
-        loc = "./mounts/database/newsbot.db"
+        loc = "./mounts/database/unittest_newsbot.db"
         remove(loc)
         db = DB(Base)
         new: Path = Path(loc)

@@ -1,0 +1,74 @@
+pipeline {
+    agent {
+        docker {
+            image 'jtom38/ansible:2.10.3'
+            args '-u 0:0'
+        }
+    }
+    triggers {
+        cron('H 4 * * 7')
+    }
+    environment {
+        NEWSBOT_VER='0.6.0'
+        
+        GIT_BRANCH='dev'
+        GIT_URL='https://github.com/jtom38/ansible.git'
+        ANSIBLE_VAULT_FILE='./.ansible_vault'
+        
+        // This will allow us to not pass
+        ANSIBLE_HOST_KEY_CHECKING='False'
+
+        DISCORD_HOOK=credentials('discord-mm-hook')
+        DISCORD_JOB_NAME='newsbot-deploy-image'
+        DISCORD_FOOTER='Jenkins Automation'
+    }
+    stages {
+        stage('Checkout-Code') {
+            steps {
+                sh ''' #!/bin/bash               
+                git clone ${GIT_URL} gitAnsible || echo "skip checkout"
+                cd ./gitAnsible
+                git checkout ${GIT_BRANCH}
+                git pull
+                '''
+            }
+        }
+        stage('Set-Secret') {
+            steps {
+                withCredentials([file(credentialsId: 'ansible-vault-file', variable: 'FILE')]) {
+                    sh '''#!/bin/bash
+                    echo "Set Vault File"
+                    cp $FILE ./gitAnsible/.ansible_vault
+                    '''
+                }
+            }
+        }
+        stage('Get-Galaxy-Requirements'){
+            steps {
+                sh '''#!/bin/bash
+                cd ./gitAnsible
+                ansible-galaxy install -r requirements.yml
+                '''
+            }
+        }
+        stage('Run-Newsbot-Deploy') {
+            steps {
+                sh '''#!/bin/bash
+                cd ./gitAnsible
+                ansible-playbook ./playbook/docker/newsbot/deploy.yml -i ./inventory
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh 'rm -f ./gitAnsible/.ansible_vault'
+            discordSend description: "Job Status is "+currentBuild.currentResult+"!", footer: env.DISCORD_FOOTER, link: env.BUILD_URL, result: currentBuild.currentResult, title: env.DISCORD_JOB_NAME, webhookURL: env.DISCORD_HOOK
+        }
+        /*
+        success {}
+        failure {}
+        */
+    }
+}

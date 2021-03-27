@@ -59,32 +59,39 @@ class Test_EnvPogo:
 
 class Test_EnvPSO2:
     def test_enabledVoid(self):
+        environ["NEWSBOT_PSO2_ENABLED"] = ""
         e = Env()
-        if e.pso2_enabled == False:
+        e.readEnv()
+        if len(e.pso2_values) == 0:
             assert True
 
     def test_enabledBadValue(self):
         environ["NEWSBOT_PSO2_ENABLED"] = "maybe"
         e = Env()
-        if e.pogo_enabled == False:
+        e.readEnv()
+        if len(e.pso2_values) == 0:
             assert True
 
     def test_EnabledTrue(self):
         environ["NEWSBOT_PSO2_ENABLED"] = "true"
         e = Env()
-        if e.pogo_enabled == True:
+        e.readEnv()
+        if len(e.pso2_values) == 1:
             assert True
 
     def test_EnabledFalse(self):
         environ["NEWSBOT_PSO2_ENABLED"] = "false"
         e = Env()
-        if e.pogo_enabled == False:
+        e.readEnv()
+        if len(e.pso2_values) == 0:
             assert True
 
     def test_webhookMissing(self):
+        environ["NEWSBOT_PSO2_ENABLED"] = "false"
+        environ["NEWSBOT_PSO2_HOOKS"] = ""
         e = Env()
-
-        if len(e.pso2_hooks) == 0:
+        e.readEnv()
+        if len(e.pso2_vaules) == 0:
             assert True
 
     def test_webhookEmpty(self):
