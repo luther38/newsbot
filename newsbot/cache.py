@@ -1,4 +1,4 @@
-from newsbot.tables import Settings
+from newsbot.sql import Settings
 
 class Cache():
     def __init__(self, key: str, value: str = "") -> None:

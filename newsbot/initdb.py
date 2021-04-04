@@ -2,7 +2,7 @@ from os import system
 from newsbot import Env
 from typing import List
 from newsbot.collections import EnvDetails
-from newsbot.tables import Sources, DiscordWebHooks, Icons, Settings
+from newsbot.sql import Sources, DiscordWebHooks, Icons, Settings
 from os import getenv
 
 

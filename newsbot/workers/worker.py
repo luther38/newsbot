@@ -1,6 +1,6 @@
 from newsbot import env, database, logger
 from newsbot.logger import Logger
-from newsbot.tables import Articles, DiscordQueue
+from newsbot.sql import Articles, DiscordQueue
 from newsbot.sources.common import ISources
 from time import sleep
 

@@ -2,11 +2,9 @@ from typing import List
 from newsbot import env
 from newsbot.logger import Logger
 from newsbot.sources.common import BChrome, ISources, BSources ,UnableToFindContent, UnableToParseContent
-from newsbot.tables import Articles, Sources, DiscordWebHooks
+from newsbot.sql import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache
-from requests import get, Response
 from bs4 import BeautifulSoup
-from selenium.webdriver import Chrome, ChromeOptions
 from time import sleep
 
 class YoutubeReader(ISources, BSources, BChrome):

@@ -4,7 +4,7 @@ from newsbot import env
 from newsbot.logger import Logger
 from newsbot.api.twitch import *
 from newsbot.sources.common import ISources, BSources ,UnableToFindContent, UnableToParseContent
-from newsbot.tables import Articles, Sources, DiscordWebHooks
+from newsbot.sql import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache
 from requests import get, Response
 from bs4 import BeautifulSoup

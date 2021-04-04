@@ -17,7 +17,7 @@ from sqlalchemy.sql.expression import false
 from sqlalchemy.sql.selectable import FromClause
 from requests import Response
 from bs4 import BeautifulSoup
-from newsbot.tables import Sources, DiscordWebHooks
+from newsbot.sql import Sources, DiscordWebHooks
 from newsbot.logger import Logger
 
 class BSources():
@@ -145,7 +145,7 @@ class BChrome():
 from typing import List
 from requests import get, Response
 from bs4 import BeautifulSoup
-from newsbot.tables import Articles
+from newsbot.sql import Articles
 
 class ISources:
     def __init__(self, rootUrl: str = "") -> None:

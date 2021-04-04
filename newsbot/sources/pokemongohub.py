@@ -2,11 +2,9 @@ from typing import List
 from newsbot import env
 from newsbot.logger import Logger
 from newsbot.sources.common import BSources, ISources, UnableToFindContent, UnableToParseContent
-from newsbot.tables import Articles, Sources, DiscordWebHooks
-import re
+from newsbot.sql import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
-
 
 class PogohubReader(ISources, BSources):
     def __init__(self) -> None:
@@ -14,8 +12,8 @@ class PogohubReader(ISources, BSources):
         self.uri = "https://pokemongohub.net/rss"
         self.siteName: str = "Pokemon Go Hub"
         self.authorName: str = "Pokemon Go Hub"
-        self.links = list()
-        self.hooks = list()
+        self.links: List[Sources] = list()
+        self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
         self.checkEnv(self.siteName)

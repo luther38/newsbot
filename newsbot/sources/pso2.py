@@ -1,7 +1,7 @@
 from newsbot import env
 from newsbot.logger import Logger
 from newsbot.sources.common import ISources, BSources ,UnableToFindContent
-from newsbot.tables import Sources, DiscordWebHooks, Articles
+from newsbot.sql import Sources, DiscordWebHooks, Articles
 from bs4 import BeautifulSoup
 from typing import List
 import re
@@ -14,8 +14,8 @@ class PSO2Reader(ISources, BSources):
         self.uri: str = "https://pso2.com/news"
         self.siteName: str = "Phantasy Star Online 2"
         self.authorName: str = f"{self.siteName} Offical Site"
-        self.links = list()
-        self.hooks = list()
+        self.links: List[Sources] = list()
+        self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
         self.checkEnv(self.siteName)

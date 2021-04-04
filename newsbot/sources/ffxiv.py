@@ -1,11 +1,6 @@
 from typing import List
-#import bs4
-from requests import get, Response
-from bs4 import BeautifulSoup
-#import re
-#from newsbot import env
 from newsbot.logger import Logger
-from newsbot.tables import Articles, Sources, DiscordWebHooks
+from newsbot.sql import Articles
 from newsbot.sources.common import ISources, BSources, UnableToParseContent, UnableToFindContent
 
 class FFXIVReader(ISources, BSources):

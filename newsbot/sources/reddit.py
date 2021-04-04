@@ -2,7 +2,7 @@ from typing import List
 from json import loads
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.tables import Sources, DiscordWebHooks, Articles
+from newsbot.sql import Sources, DiscordWebHooks, Articles
 from newsbot.cache import Cache
 from newsbot.sources.common import BChrome, ISources, BSources
 from time import sleep
