@@ -1,0 +1,31 @@
+{% extends 'base.html'%}
+
+{% block title %}
+New Discord Webhook - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>{{ sourceName.upper() }} WEBHOOKS</h1>
+
+    <button type="button"><a href="{{ url_for('config.discordList')}}">BACK</a></button>
+
+    <form method="POST">
+        <label for="nameInput">Name:</label>
+        <input type="text" id="nameInput" name='name'>
+
+        <label for="linkInput">URL:</label>
+        <input type="text" id="linkInput" name='link'>
+
+        <label for="discordInput">Discord Web Hook:</label>
+        <select name="discordwebhook" id="discordInput">
+            {% for i in discord %}
+                <option value="{{ i['name'] }}">{{i['name']}}</option>
+            {% endfor %}
+        </select>
+        
+        <input type="submit" value="Submit">
+    </form>
+    <p>All fields are required.</p>
+</nav>
+{% endblock %}

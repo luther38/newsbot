@@ -1,0 +1,38 @@
+{% extends 'base.html'%}
+
+{% block title %}
+Config Wizzard - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>DISCORD WEBHOOKS</h1>
+
+    <button type="button"><a href="{{ url_for('config.index')}}">BACK</a></button>
+    <button type="button"><a href="{{ url_for('config.discordNew')}}">NEW</a></button>
+    </br>
+    <table>
+        <tr>
+            <th>Server</th>
+            <th>Channel</th>
+            <th>Enabled</th>
+            <th>Webhook</th>
+            <th>Actions</th>
+        </tr>
+        {% for i in items %}
+        <tr>
+            <td>{{i['server']}}</td>
+            <td>{{i['channel']}}</td>
+            <td>{{i['enabled']}}</td>
+            <td>{{i['url']}}</td>
+            <td>
+                <button>
+                    <a href="{{ url_for('config.discordEdit', id=i['id']) }}">EDIT</a>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+</nav>
+{% endblock %}

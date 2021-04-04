@@ -1,0 +1,41 @@
+{% extends 'base.html'%}
+
+{% block title %}
+{{sourceName.upper()}} Config - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>{{sourceName.upper()}} CONFIGURATION</h1>
+
+    <p>Here is the current list that Newsbot is monitoring!</p>
+
+    {% if 'youtube' in sourceName.lower()
+        or 'reddit' in sourceName.lower()
+        or 'twitter' in sourceName.lower()
+        or 'instagram' in sourceName.lower()
+        or 'twitch' in sourceName.lower()
+        or 'rss' in sourceName.lower()
+    %}
+    <button type="button"><a href="{{ url_for('config.sourceMultiNew', source=sourceName)}}">ADD</a></button>
+    {% else %}
+    <button type="button"><a href="{{ url_for('config.sourceEdit', source=sourceName)}}">UPDATE</a></button>
+    {% endif %}
+    <button type="button"><a href="{{ url_for('config.index')}}">BACK</a></button>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Actions</th>
+        </th>
+        {% for i in items %}
+        <tr>
+            <td>{{i['name']}}</td>
+            <td>{{i['url']}}</td>
+            <td>placeholder</td>
+        </tr>
+        {% endfor %}
+    </table>    
+</nav>
+{% endblock %}
