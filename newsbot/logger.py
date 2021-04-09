@@ -1,7 +1,7 @@
 
 #from loguru import logger
 from loguru import logger as _logger
-from newsbot.sql import Logs
+from newsbot.sql.tables import Logs
 from datetime import datetime
 
 class Logger():

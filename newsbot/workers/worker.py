@@ -1,6 +1,7 @@
-from newsbot import env, database, logger
+#from newsbot import database
+from newsbot.env import Env
 from newsbot.logger import Logger
-from newsbot.sql import Articles, DiscordQueue
+from newsbot.sql.tables import Articles, DiscordQueue
 from newsbot.sources.common import ISources
 from time import sleep
 
@@ -14,6 +15,7 @@ class Worker():
         self.logger = Logger(__class__)
         self.source: ISources = source
         self.enabled: bool = False
+        self.env = Env()
         pass
 
     def check(self) -> bool:
@@ -49,7 +51,7 @@ class Worker():
                             self.discordQueueMessage(i, res)
 
                 self.logger.debug(f"{self.source.siteName} Worker is going to sleep.")
-                sleep(env.threadSleepTimer)
+                sleep(self.env.threadSleepTimer)
 
 
     def discordQueueMessage(self, i: Articles, added: bool) -> None:
