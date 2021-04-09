@@ -20,34 +20,92 @@ class EnvDetails:
         self.options: str = options
         self.icon: str = icon
 
+class EnvDiscordDetails():
+    def __init__(self, name: str = '', server: str = '', channel: str = '', url: str = '') -> None:
+        self.name: str = name
+        self.server: str = server
+        self.channel: str = channel
+        self.url: str = url
+        pass
+
+class EnvDiscord():
+    def __init__(self) -> None:
+        self.links: List[EnvDiscordDetails] = list()
+        pass
+
+    def read(self) -> List[EnvDiscordDetails]:
+        env = Path(".env")
+        load_dotenv(dotenv_path=env)
+        i = 0
+        while i <= 9:
+            edd = EnvDiscordDetails(
+                name=os.getenv(f"NEWSBOT_DISCORD_{i}_NAME")
+                ,server=os.getenv(f"NEWSBOT_DISCORD_{i}_SERVER")
+                ,channel=os.getenv(f"NEWSBOT_DISCORD_{i}_CHANNEL")
+                ,url=os.getenv(f"NEWSBOT_DISCORD_{i}_URL")
+            )
+            i = i +1
+            if edd.url != None:
+                self.links.append(edd)
+
+        return self.links
+
+class EnvRssDetails():
+    def __init__(self, name: str = "", url: str = "", discordLinkName: str = '') -> None:
+        self.name: str = name
+        self.url: str = url
+        self.discordLinkName: str = discordLinkName
+        pass
+
+class EnvRss():
+    def __init__(self) -> None:
+        load_dotenv(dotenv_path=Path(".env"))
+        self.links: List[EnvRssDetails] = list()
+        pass
+
+    def read(self) -> List[EnvRssDetails]:
+        i = 0
+        while i <= 9:
+            erd = EnvRssDetails(
+                name=os.getenv(f"NEWSBOT_RSS_{i}_NAME")
+                ,url=os.getenv(f"NEWSBOT_RSS_{i}_URL")
+                ,discordLinkName=os.getenv(f"NEWSBOT_RSS_{i}_LINK_DISCORD")
+            )
+            i = i + 1
+            if erd.name != None:
+                self.links.append(erd)
+        return self.links
+
 class Env:
     def __init__(self) -> None:
         self.interval_seconds: int = 30 * 60
         self.discord_delay_seconds: int = 15
         self.threadSleepTimer: int = 60 * 30
 
-        self.pogo_values: List[EnvDetails] = list()
-        self.pogo_enabled: bool = False
-        self.pogo_hooks: List[str] = list()
+        #self.pogo_values: List[EnvDetails] = list()
+        #self.pogo_enabled: bool = False
+        #self.pogo_hooks: List[str] = list()
 
-        self.pso2_values: List[EnvDetails] = list()
+        #self.pso2_values: List[EnvDetails] = list()
         # self.newsbot_pso2_enabled: bool = False
         # self.pso2_hooks: List[str] = list()
 
-        self.ffxiv_values: List[EnvDetails] = list()
-        self.ffxiv_all: bool = False
-        self.ffxiv_hooks: List[str] = list()
+        #self.ffxiv_values: List[EnvDetails] = list()
+        #self.ffxiv_all: bool = False
+        #self.ffxiv_hooks: List[str] = list()
 
-        self.reddit_values: List[EnvDetails] = list()
-        self.youtube_values: List[EnvDetails] = list()
-        self.instagram_values: List[EnvDetails] = list()
+        #self.reddit_values: List[EnvDetails] = list()
+        #self.youtube_values: List[EnvDetails] = list()
+        #self.instagram_values: List[EnvDetails] = list()
         # self.instagram_user_values: List[EnvDetails] = list()
         # self.instagram_tag_values: List[EnvDetails] = list()
-        self.twitter_values: List[EnvDetails] = list()
-        self.twitch_values: List[EnvDetails] = list()
-        self.rss_values: List[EnvDetails] = list()
+        #self.twitter_values: List[EnvDetails] = list()
+        #self.twitch_values: List[EnvDetails] = list()
+        self.rss_values: List[EnvRssDetails] = EnvRss().read()
+        self.discord_values: List[EnvDiscordDetails] = EnvDiscord().read()
 
         # self.readEnv()
+        print('l')
         pass
 
     def readEnv(self):
