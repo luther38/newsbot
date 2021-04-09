@@ -11,10 +11,9 @@ from sqlalchemy import (
 import uuid
 from typing import List
 #from newsbot import Base, database
-from newsbot.db import Base
-from newsbot import database
+from newsbot.sql import Base, database
 from newsbot.sql.exceptions import FailedToAddToDatabase
-from newsbot.sql import ITables
+from newsbot.sql.tables import ITables
 
 class Icons(Base):
     __tablename__ = "icons"

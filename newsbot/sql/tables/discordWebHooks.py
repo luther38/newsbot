@@ -10,11 +10,9 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
-#from newsbot import Base, database
-from newsbot.db import Base
-from newsbot import database
-from newsbot.sql.exceptions import FailedToAddToDatabase
-from newsbot.sql import ITables
+from newsbot.sql import Base, database
+from newsbot.sql.tables import ITables
+#from newsbot.sql.exceptions import FailedToAddToDatabase
 
 
 class DiscordWebHooks(Base, ITables):
@@ -29,11 +27,14 @@ class DiscordWebHooks(Base, ITables):
 
     def __init__(self, name:str="", key:str="", server:str = "", channel:str = "", url: str = "") -> None:
         self.id = str(uuid.uuid4())
-        self.name = name
-        self.key = key
-        self.url = url
         self.server = server
         self.channel = channel
+        if name == "":
+            self.name = self.__generateName__()
+        else:
+            self.name = name
+        self.key = key
+        self.url = url
         self.enabled = True
 
     def add(self) -> None:
@@ -56,14 +57,25 @@ class DiscordWebHooks(Base, ITables):
 
     def update(self) -> bool:
         s = database.newSession()
-        self.clearSingle()
-        DiscordWebHooks(
-            name=self.name
-            ,key=self.key
-            ,server=self.server
-            ,channel=self.channel
-            ,url=self.url
-        ).add()
+        key = ""
+        try:
+            exists = DiscordWebHooks(name=self.name).findByName()
+            if exists != None:
+                key = exists.id 
+                exists.clearSingle()
+
+            d = DiscordWebHooks(
+                name=self.name ,key=self.key ,server=self.server
+                ,channel=self.channel ,url=self.url
+            )
+            if key != "":
+                d.id = key
+
+            d.add()
+        except Exception as e:
+            print(e)
+            pass
+
 
     def clearTable(self) -> None:
         s = database.newSession()
@@ -107,6 +119,23 @@ class DiscordWebHooks(Base, ITables):
             s.close()
             return hooks[0]
 
+    def findByName(self) -> object:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(DiscordWebHooks).filter(
+                DiscordWebHooks.name.contains(self.name)
+            ):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+
     def findAllByName(self) -> List:
         s = database.newSession()
         hooks = list()
@@ -146,3 +175,6 @@ class DiscordWebHooks(Base, ITables):
             s.close()
 
         return len(l)
+
+    def __generateName__(self) -> str:
+        return f"{self.server} - {self.channel}"

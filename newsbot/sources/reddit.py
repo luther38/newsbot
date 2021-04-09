@@ -1,15 +1,10 @@
 from typing import List
 from json import loads
-from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sql import Sources, DiscordWebHooks, Articles
+from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache
 from newsbot.sources.common import BChrome, ISources, BSources
 from time import sleep
-from requests import get, Response
-from bs4 import BeautifulSoup
-from selenium.webdriver import Chrome, ChromeOptions
-
 
 class RedditReader(ISources, BSources, BChrome):
     def __init__(self) -> None:

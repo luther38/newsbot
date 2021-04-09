@@ -1,7 +1,7 @@
 from newsbot import env
 from newsbot.logger import Logger
 from newsbot.sources.common import ISources, BSources ,UnableToFindContent
-from newsbot.sql import Sources, DiscordWebHooks, Articles
+from newsbot.sql.tables import Sources, DiscordWebHooks, Articles
 from bs4 import BeautifulSoup
 from typing import List
 import re

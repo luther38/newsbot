@@ -2,10 +2,7 @@ from typing import List
 from newsbot import env
 from newsbot.logger import Logger
 from newsbot.sources.common import BChrome, ISources, BSources, UnableToFindContent, UnableToParseContent
-from newsbot.sql import Articles, Sources, DiscordWebHooks
-from requests import get, Response
-from bs4 import BeautifulSoup
-from selenium.webdriver import Chrome, ChromeOptions
+from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
 from tweepy import AppAuthHandler, API, Cursor
 from os import getenv
 from time import sleep

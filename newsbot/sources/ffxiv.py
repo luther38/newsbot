@@ -1,6 +1,6 @@
 from typing import List
 from newsbot.logger import Logger
-from newsbot.sql import Articles
+from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.sources.common import ISources, BSources, UnableToParseContent, UnableToFindContent
 
 class FFXIVReader(ISources, BSources):

@@ -8,7 +8,7 @@ from newsbot.common.requestContent import (
     RequestArticleContent,
     RequestSiteContent,
 )
-from newsbot.sql import Articles, Sources, DiscordWebHooks, Icons
+from newsbot.sql.tables import Articles, Sources, DiscordWebHooks, Icons
 from newsbot.cache import Cache
 from requests import get, Response
 import re

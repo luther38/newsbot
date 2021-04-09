@@ -4,7 +4,7 @@ import re
 from time import sleep
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sql import DiscordQueue, DiscordWebHooks, Icons
+from newsbot.sql.tables import DiscordQueue, DiscordWebHooks, Icons
 from newsbot.outputs.ioutputs import IOutputs
 from newsbot.common.convertHtml import ConvertHtml
 from discord_webhook import DiscordWebhook, DiscordEmbed

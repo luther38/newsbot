@@ -10,9 +10,8 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
-from newsbot.db import Base
-from newsbot import database
-from newsbot.sql import ITables
+from newsbot.sql import Base, database
+from newsbot.sql.tables import ITables
 from newsbot.sql.exceptions import FailedToAddToDatabase
 
 class Settings(Base, ITables):

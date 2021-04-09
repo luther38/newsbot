@@ -10,11 +10,9 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
-from newsbot.db import Base
-from newsbot import database
-from newsbot.sql import Articles, ITables
+from newsbot.sql import database, Base
+from newsbot.sql.tables import Articles, ITables
 from newsbot.sql.exceptions import FailedToAddToDatabase
-
 
 class DiscordQueue(Base, ITables):
     __tablename__ = "discordQueue"
