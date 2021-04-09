@@ -1,15 +1,24 @@
+from newsbot.env import EnvDiscordDetails, EnvRssDetails
 from os import system
-from newsbot import Env
+from newsbot.env import Env
 from typing import List
 from newsbot.collections import EnvDetails
-from newsbot.sql import Sources, DiscordWebHooks, Icons, Settings
+from newsbot.sql.tables import (
+    Sources
+    ,DiscordWebHooks
+    ,Icons
+    ,Settings
+    ,SourceLinks
+    ,DiscordWebHooks
+    ,SourceLinks
+)
 from os import getenv
 
 
 class InitDb:
     def __init__(self) -> None:
         self.e = Env()
-        self.e.readEnv()
+        #self.e.readEnv()
         pass
 
     def runMigrations(self) -> None:
@@ -160,9 +169,34 @@ class InitDb:
             key="twitch vod enabled", value=getenv("NEWSBOT_TWITCH_MONITOR_VOD")
         ).add()
 
+    def updateDiscordValues(self, values: List[EnvDiscordDetails]) -> None:
+        for v in values:
+            d = DiscordWebHooks(
+                name=v.name, server=v.server, 
+                channel=v.channel, url=v.url
+            )
+            d.update()
+
+    def updateRss(self, rssValues: List[EnvRssDetails]) -> None:
+        for i in rssValues:
+            Sources(name=i.name, source="RSS", url=i.url).update()
+            s = Sources(name=i.name).findAllByName()
+            l = DiscordWebHooks(name=i.discordLinkName).findByName()
+            SourceLinks(name=f"{i.name} > {l[0].name}", sourceID=s[0].id, discordID=l[0].id ).update()
+
+        print('l')
+
+
     def runDatabaseTasks(self) -> None:
         # Inject new values based off env values
         # if the user did not request a source, we will ignore it.
+        self.updateDiscordValues(self.e.discord_values)
+        self.updateRss(self.e.rss_values)
+        
+
+        self.checkSite(siteName="RSS", siteValues=self.e.rss_values)
+
+
         self.checkSite(siteName="Pokemon Go Hub", siteValues=self.e.pogo_values)
         self.checkSite(siteName="Phantasy Star Online 2", siteValues=self.e.pso2_values)
         self.checkFinalFantasyXIV()
@@ -171,6 +205,5 @@ class InitDb:
         self.checkSite(siteName="Instagram", siteValues=self.e.instagram_values)
         self.checkSite(siteName="Twitter", siteValues=self.e.twitter_values)
         self.checkSite(siteName="Twitch", siteValues=self.e.twitch_values)
-        self.checkSite(siteName="RSS", siteValues=self.e.rss_values)
         self.addStaticIcons()
         self.rebuildCache()

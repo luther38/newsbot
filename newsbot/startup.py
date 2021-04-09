@@ -26,7 +26,7 @@ class Startup:
         db = InitDb()
         db.runMigrations()
         Logger(__class__).info("NewsBot has started.")
-        db.clearOldRecords()
+        #db.clearOldRecords()
         db.runDatabaseTasks()
 #
         ## Turn on outputs first

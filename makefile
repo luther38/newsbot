@@ -16,8 +16,9 @@ rmdatabase:
 
 docker-build: ## Build docker image
 	docker build -t newsbot . \
-		--build-arg CHROME_VERSION=89.0.4389.90-1 \
-		--build-arg DRIVER_VERSION=89.0.4389.23
+		--build-arg CHROME_VERSION=89.0.4389.114-1 \
+		--build-arg DRIVER_VERSION=89.0.4389.23 \
+		--no-cache
 
 docker-run: ## Runs the application
 	docker-compose up
