@@ -212,7 +212,6 @@ At this time Discord webhooks do not support playing video links inside Discord.
 | Updated | Cleaned up how Newsbot reads all the env values.
 | Updated | Optimized the Twitter source to check if the url has been seen already and skips it if it has.
 | Updated | Did some cleanup on the sources and moved code reuse to its own class.
-| Updated | The Dockerfile now has logic to force a build a fail to make sure that selenium should always work.
 
 ### 0.6.0
 
