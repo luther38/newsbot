@@ -10,12 +10,11 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
-from newsbot import Base, database, logger
-
+from newsbot import Base, database
+#from newsbot.logger import Logger
 
 class FailedToAddToDatabase(Exception):
     pass
-
 
 class Articles(Base):
     __tablename__ = "articles"
@@ -85,24 +84,26 @@ class Articles(Base):
     def add(self) -> None:
         s = database.newSession()
 
-        a = Articles()
-        a.siteName = self.siteName
-        a.tags = self.tags
-        a.title = self.title
-        a.url = self.url
-        a.pubDate = self.pubDate
-        a.thumbnail = self.thumbnail
-        a.video = self.video
-        a.videoHeight = self.videoHeight
-        a.videoWidth = self.videoWidth
-        a.authorName = self.authorName
-        a.authorImage = self.authorImage
+        a = Articles(
+            siteName=self.siteName,
+            tags=self.tags,
+            title=self.title,
+            url=self.url,
+            pubDate=self.pubDate,
+            video=self.video,
+            videoWidth=self.videoWidth,
+            videoHeight=self.videoHeight,
+            thumbnail=self.thumbnail,
+            description=self.description,
+            authorImage=self.authorImage,
+            authorName=self.authorName
+        )
 
         try:
             s.add(a)
             s.commit()
         except FailedToAddToDatabase as e:
-            logger.critical(f"Failed to add {self.title} to the database! {e}")
+            print(f"Failed to add {self.title} to the database! {e}")
         finally:
             s.close()
 
@@ -144,12 +145,11 @@ class Sources(Base):
         h.url = self.url
         h.enabled = self.enabled
         try:
-            s.add(h)
+            s.add(self)
             s.commit()
-            # logger.debug(f"'{self.name}' was added to the Discord queue")
+            # print(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
-
-            logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
+            print(f"Failed to add {self.name} to DiscordWebHook table! {e}")
         finally:
             s.close()
 
@@ -160,7 +160,7 @@ class Sources(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.critical(f"{e}")
+            print(f"{e}")
         finally:
             s.close()
 
@@ -176,7 +176,7 @@ class Sources(Base):
                 s.commit()
                 result = True
         except Exception as e:
-            logger.critical(e)
+            print(e)
         finally:
             s.close()
             return result
@@ -227,11 +227,11 @@ class DiscordWebHooks(Base):
         h.name = self.name
         h.enabled = self.enabled
         try:
-            s.add(h)
+            s.add(self)
             s.commit()
-            # logger.debug(f"'{self.name}' was added to the Discord queue")
+            # print(f"'{self.name}' was added to the Discord queue")
         except FailedToAddToDatabase as e:
-            logger.critical(f"Failed to add {self.name} to DiscordWebHook table! {e}")
+            print(f"Failed to add {self.name} to DiscordWebHook table! {e}")
         finally:
             s.close()
 
@@ -242,7 +242,7 @@ class DiscordWebHooks(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.critical(f"{e}")
+            print(f"{e}")
         finally:
             s.close()
 
@@ -258,7 +258,7 @@ class DiscordWebHooks(Base):
                 s.commit()
                 result = True
         except Exception as e:
-            logger.critical(e)
+            print(e)
         finally:
             s.close()
             return result
@@ -336,35 +336,18 @@ class DiscordQueue(Base):
 
         return queue
 
-    def add(self) -> None:
+    def add(self) -> bool:
         s = database.newSession()
-
-        dq = DiscordQueue()
-        dq.siteName = self.siteName
-        dq.title = self.title
-        dq.link = self.link
-        dq.tags = self.tags
-        dq.thumbnail = self.thumbnail
-        dq.description = self.description
-        dq.video = self.video
-        dq.videoHeight = self.videoHeight
-        dq.videoWidth = self.videoWidth
-        dq.authorName = self.authorName
-        dq.authorImage = self.authorImage
-
+        res: bool = True
         try:
-            s.add(dq)
+            s.add(self)
             s.commit()
-            if self.title != "":
-                logger.debug(f"'{self.title}' was added to the Discord queue")
-            elif self.description != "":
-                logger.debug(f"'{self.description}' was added to the Discord queue") 
-            else:
-                pass
         except FailedToAddToDatabase as e:
-            logger.critical(f"Failed to add {self.title} to DiscorQueue table! {e}")
+            print(f"Failed to add {self.title} to DiscorQueue table! {e}")
+            res = False
         finally:
             s.close()
+            return res
 
     def remove(self) -> None:
         s = database.newSession()
@@ -373,7 +356,7 @@ class DiscordQueue(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.critical(f"{e}")
+            print(f"{e}")
         finally:
             s.close()
 
@@ -412,17 +395,25 @@ class Icons(Base):
     def add(self) -> None:
         s = database.newSession()
 
-        i = Icons()
-        i.filename = self.filename
-        i.site = self.site
-
         try:
-            s.add(i)
+            s.add(self)
             s.commit()
         except FailedToAddToDatabase as e:
-            logger.critical(f"Failed to add {self.site} to Icons table! {e}")
+            print(f"Failed to add {self.site} to Icons table! {e}")
         finally:
             s.close()
+
+    def update(self) -> None:
+        #s = database.newSession()
+        
+        res = self.findAllByName()
+        if len(res) == 0:
+            self.add()
+        elif res[0].site != self.site or res[0].filename != self.filename:
+            self.remove()
+            self.add()
+        else:
+            pass
 
     def remove(self) -> None:
         s = database.newSession()
@@ -431,7 +422,7 @@ class Icons(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.critical(f"{e}")
+            print(f"{e}")
         finally:
             s.close()
 
@@ -442,7 +433,7 @@ class Icons(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.critical(f"{e}")
+            print(f"{e}")
         finally:
             s.close()
 
@@ -503,7 +494,7 @@ class Settings(Base):
             s.add(self)
             s.commit()
         except FailedToAddToDatabase as e:
-            logger.critical(f"Failed to add {self.key} to 'settings'. {e}")
+            print(f"Failed to add {self.key} to 'settings'. {e}")
         finally:
             s.close()
 
@@ -519,7 +510,7 @@ class Settings(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.error(f"Failed to remove {self.key} from Settings table. {e}")
+            Logger().error(f"Failed to remove {self.key} from Settings table. {e}")
         finally:
             s.close()
     
@@ -535,7 +526,7 @@ class Settings(Base):
                 s.delete(d)
             s.commit()
         except Exception as e:
-            logger.critical(f"{e}")
+            print(f"{e}")
         finally:
             s.close()
 
@@ -574,7 +565,6 @@ class Settings(Base):
         
         return d
         
-
     def __len__(self) -> int:
         """
         Returns the number of rows based off the Key value provided.
@@ -592,3 +582,30 @@ class Settings(Base):
             s.close()
 
         return len(l)
+
+class Logs(Base):
+    __tablename__ = 'logs'
+    id = Column('id', String, primary_key=True)
+    date = Column('date', String)
+    time = Column('time', String)
+    type = Column('type', String)
+    caller = Column('caller', String)
+    message = Column('message', String)
+
+    def __init__(self, date: str, time: str, type: str, caller: str, message: str):
+        self.id = str(uuid.uuid4())
+        self.date = date
+        self.time = time
+        self.type = type
+        self.caller = caller
+        self.message = message
+
+    def add(self) -> None:
+        s = database.newSession()
+        try:
+            s.add(self)
+            s.commit()
+        except FailedToAddToDatabase as e:
+            print(f"Failed to add '{self.message}' to 'Logs'. {e}")
+        finally:
+            s.close()

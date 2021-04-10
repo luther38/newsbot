@@ -1,15 +1,14 @@
-
 from newsbot.tables import Settings
 
 class Cache():
-    def __init__(self, key: str, value: str = '') -> None:
+    def __init__(self, key: str, value: str = "") -> None:
         self.sql: iCache = SqlCache()
         self.key = key
         self.value = value
 
     def find(self) -> str:
         return self.sql.find(self.key)
-    
+
     def add(self) -> str:
         self.sql.add(self.key, self.value)
         return self.value
@@ -20,7 +19,7 @@ class Cache():
 class iCache():
     def __init__(self):
         pass
-    
+
     def find(self, key: str) -> str:
         raise NotImplementedError
 
@@ -36,6 +35,7 @@ class SqlCache(iCache):
     Do not use this class directly.  
     Always use Cache class and it will find the data as needed.
     """
+
     def __init__(self):
         pass
 

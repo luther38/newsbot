@@ -1,15 +1,18 @@
 from typing import List
-from newsbot import logger, env
+from enum import Enum
 import re
 from time import sleep
+from newsbot import env
+from newsbot.logger import Logger
 from newsbot.tables import DiscordQueue, DiscordWebHooks, Icons
 from newsbot.outputs.ioutputs import IOutputs
+from newsbot.common.convertHtml import ConvertHtml
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
 
-
 class Discord(IOutputs):
     def __init__(self) -> None:
+        self.logger = Logger(__class__)
         self.table = DiscordQueue()
         self.tempMessage: DiscordWebhook = DiscordWebhook("placeholder")
         pass
@@ -21,9 +24,9 @@ class Discord(IOutputs):
                 queue = self.table.getQueue()
 
                 for i in queue:
-                    
+
                     resp = self.sendMessage(i)
-                
+
                     # Only remove the object from the queue if we sent it out correctly.
                     safeToRemove: bool = True
                     for r in resp:
@@ -35,7 +38,9 @@ class Discord(IOutputs):
 
                     sleep(env.discord_delay_seconds)
             except Exception as e:
-                logger.error(f"Failed to post a message. {i.title}. Status_code: {resp.status_code}. msg: {resp.text}. error {e}")
+                self.logger.error(
+                    f"Failed to post a message. {i.title}. Status_code: {resp.status_code}. msg: {resp.text}. error {e}"
+                )
 
             sleep(env.discord_delay_seconds)
 
@@ -48,28 +53,28 @@ class Discord(IOutputs):
 
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
-        #hook.content = article.link
+        # hook.content = article.link
 
         title = article.title
         if len(title) >= 128:
             title = f"{title[0:128]}..."
 
         # Make a new Embed object
-        embed: DiscordEmbed = DiscordEmbed(title=title)#, url=article.link)
+        embed: DiscordEmbed = DiscordEmbed(title=title)  # , url=article.link)
 
         try:
             authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
-            embed.set_author(
-                name=article.authorName,
-                url=None,
-                icon_url=authorIcon)
+            embed.set_author(name=article.authorName, url=None, icon_url=authorIcon)
         except:
             pass
 
         # Discord Embed Description can only contain 2048 characters
+        ch = ConvertHtml()
         if article.description != "":
             description: str = str(article.description)
             description = self.convertFromHtml(description)
+            description = ch.replaceImages(description, '')
+            #description = self.replaceImages(description)
             descriptionCount = len(description)
             if descriptionCount >= 2048:
                 description = description[0:2040]
@@ -91,7 +96,9 @@ class Discord(IOutputs):
                 else:
                     embed.set_image(url=article.thumbnail)
         except Exception as e:
-            logger.warning(f"Failed to attach a thumbnail. \r\n {e}\r\n thumbnails: {article.thumbnail}")
+            self.logger.warning(
+                f"Failed to attach a thumbnail. \r\n {e}\r\n thumbnails: {article.thumbnail}"
+            )
 
         # add the link to the embed
         embed.add_embed_field(name="Link:", value=article.link)
@@ -99,9 +106,7 @@ class Discord(IOutputs):
         # Build our footer message
         footer = self.buildFooter(article.siteName)
         footerIcon = self.getFooterIcon(article.siteName)
-        embed.set_footer(
-            icon_url=footerIcon,
-            text=footer)
+        embed.set_footer(icon_url=footerIcon, text=footer)
 
         embed.set_color(color=self.getEmbedColor(article.siteName))
 
@@ -110,14 +115,14 @@ class Discord(IOutputs):
 
     def sendMessage(self, article: DiscordQueue) -> List[Response]:
         if article.title != "":
-            logger.debug(f"Discord - Sending article '{article.title}'")
+            self.logger.info(f"Discord - Sending article '{article.title}'")
         else:
-            logger.debug(f"Discord - Sending article '{article.description}'")
+            self.logger.info(f"Discord - Sending article '{article.description}'")
         self.buildMessage(article)
         try:
             res = self.tempMessage.execute()
         except Exception as e:
-            logger.critical(
+            self.logger.critical(
                 f"Failed to send to Discord.  Check to ensure the webhook is correct. Error: {e}"
             )
 
@@ -140,7 +145,7 @@ class Discord(IOutputs):
                 hooks.append(i.key)
             return hooks
         except Exception as e:
-            logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
+            self.logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
 
     def convertFromHtml(self, msg: str) -> str:
         msg = msg.replace("<h2>", "**")
@@ -156,6 +161,14 @@ class Discord(IOutputs):
         msg = msg.replace("&#8220;", '"')
         msg = msg.replace("&#8221;", '"')
         msg = msg.replace("&#8230;", "...")
+        msg = msg.replace("<b>", "**")
+        msg = msg.replace("</b>", "**")
+        msg = msg.replace("<br>", "\r\n")
+        msg = msg.replace("<br/>", "\r\n")
+        msg = msg.replace("\xe2\x96\xa0", "*")
+        msg = msg.replace("\xa0", "\r\n")
+        msg = msg.replace("<p>", "")
+        msg = msg.replace("</p>", "\r\n")
 
         msg = self.replaceLinks(msg)
         return msg
@@ -165,26 +178,43 @@ class Discord(IOutputs):
         Find the HTML links and replace them with something discord supports.
         """
         # links = re.findall("(?<=<a )(.*)(?=</a>)", msg)
+        msg = msg.replace("'", '"')
         links = re.findall("<a(.*?)a>", msg)
         for l in links:
             hrefs = re.findall('href="(.*?)"', l)
             texts = re.findall(">(.*?)</", l)
-            discordLink = f"[{texts[0]}]({hrefs[0]})"
-            msg = msg.replace(f"<a{l}a>", discordLink)
+            if len(hrefs) >= 1 and len(texts) >= 1:
+                discordLink = f"[{texts[0]}]({hrefs[0]})"
+                msg = msg.replace(f"<a{l}a>", discordLink)
+        return msg
+
+    def replaceImages(self, msg: str) -> str:
+        imgs = re.findall("<img (.*?)>", msg)
+        for i in imgs:
+            # Removing the images for now.
+            # src = re.findall('src=(.*?)">', i)
+            replace = f"<img {i}>"
+            msg = msg.replace(replace, "")
         return msg
 
     def getAuthorIcon(self, authorIcon: str, siteName: str) -> str:
         if authorIcon != "":
             return authorIcon
         else:
-            if siteName == "Final Fantasy XIV" or \
-               siteName == "Phantasy Star Online 2" or \
-               siteName == "Pokemon Go Hub":
-               res = Icons(site=f"Default {siteName}").findAllByName()
-               return res[0].filename
+            if (
+                siteName == "Final Fantasy XIV"
+                or siteName == "Phantasy Star Online 2"
+                or siteName == "Pokemon Go Hub"
+            ):
+                res = Icons(site=f"Default {siteName}").findAllByName()
+                return res[0].filename
             else:
-                s: List[str] = siteName.split(' ')
-                res = Icons(site=f"Default {s[0]}").findAllByName()
+                s: List[str] = siteName.split(" ")
+                if s[0] == "RSS":
+                    # res = Icons(site=f"Default {s[1]}").findAllByName()
+                    res = Icons(site=siteName).findAllByName()
+                else:
+                    res = Icons(site=f"Default {s[0]}").findAllByName()
                 return res[0].filename
 
     def buildFooter(self, siteName: str) -> str:
@@ -196,32 +226,46 @@ class Discord(IOutputs):
         elif "Youtube" in siteName:
             s = siteName.split(" ")
             footer = f"{s[1]} - {end}"
-        elif "Instagram" in siteName or \
-            "Twitter" in siteName:
+        elif "Instagram" in siteName or "Twitter" in siteName:
             s = siteName.split(" ")
             if s[1] == "tag":
                 footer = f"#{s[2]} - {end}"
             elif s[1] == "user":
                 footer = f"{s[2]} - {end}"
-        
+        elif "RSS" in siteName:
+            s = siteName.split(" ")
+            footer = f"{s[1]} - {end}"
         else:
             footer = end
 
         return footer
 
     def getFooterIcon(self, siteName: str) -> str:
-        if siteName == "Phatnasy Star Online 2" or \
-            siteName == "Pokemon Go Hub" or \
-            siteName == "Final Fantasy XIV":
+        if (
+            siteName == "Phatnasy Star Online 2"
+            or siteName == "Pokemon Go Hub"
+            or siteName == "Final Fantasy XIV"
+        ):
             res = Icons(site=f"Default {siteName}").findAllByName()
             return res[0].filename
         else:
-            s: List[str] = siteName.split(' ')
+            s: List[str] = siteName.split(" ")
+            values = (f"Default {s[1]}", f"Default {s[0]}", siteName)
+            for v in values:
+                r = Icons(site=v).findAllByName()
+                if len(r) == 1:
+                    res = r
+            # if s[0].lower() == 'rss':
+            #    res = Icons(site=f"Default {s[1]}").findAllByName()
+            # else:
+            #    res = Icons(site=f"Default {s[0]}").findAllByName()
 
-            res = Icons(site=f"Default {s[0]}").findAllByName()
-            if res[0].filename != "":
-                return res[0].filename
-            else:
+            try:
+                if res[0].filename != "":
+                    return res[0].filename
+                else:
+                    return ""
+            except:
                 return ""
 
     def getEmbedColor(self, siteName: str) -> int:
@@ -235,12 +279,12 @@ class Discord(IOutputs):
         elif "Twitter" in siteName:
             return 1937134
         elif "Final Fantasy XIV" in siteName:
-            return	11809847
+            return 11809847
         elif "Pokemon Go Hub" in siteName:
-            return 	2081673
+            return 2081673
         elif "Phantasy Star Online 2" in siteName:
-            return 	5557497
+            return 5557497
         elif "Twitch" in siteName:
-            return 	9718783
+            return 9718783
         else:
-             return 0
+            return 0

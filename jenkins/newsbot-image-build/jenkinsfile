@@ -1,0 +1,77 @@
+pipeline {
+    agent any
+    
+    environment {
+        GIT_URL='https://github.com/jtom38/newsbot.git'
+        GIT_BRANCH='master'
+        DOCKER_IMAGE='jtom38/newsbot'
+        DOCKER_TAG='0.6.0'
+        GITHUB_SITE='docker.pkg.github.com'
+        DISCORD_HOOK=credentials('discord-mm-hook')
+        DISCORD_JOB_NAME='newsbot-image-build'
+    }
+    triggers {
+        cron('H 1 * * 7')
+    }    
+    stages {
+        stage('Pull-Source') {
+            steps {
+                sh '''#!/bin/bash
+                git clone ${GIT_URL} workspace
+                cd ./workspace
+                git checkout ${GIT_BRANCH}
+                '''
+            }
+        }
+        stage('Build-Image') {
+            steps {
+                sh '''#!/bin/bash
+                cd ./workspace
+                docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                '''
+            }
+        }
+        /*
+        stage('Tag-Image-Latest') {
+            steps {
+                sh '''#!/bin/bash
+                docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                '''
+            }
+        }
+        stage('Push-Image-060-Hub'){
+            steps{
+                withCredentials([string(credentialsId: 'docker-password-secret', variable: 'DOCKERPASS')]) {
+                    sh '''#!/bin/bash
+                    echo ${DOCKERPASS} | docker login -u jtom38 --password-stdin
+                    docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker logout
+                    '''
+                }
+            }
+        }
+        */
+        stage('Push-Image-GH'){
+            steps {
+                withCredentials([string(credentialsId: 'github-password-secret', variable: 'DOCKERPASS')]) {
+                    sh '''#!/bin/bash
+                    echo ${DOCKERPASS} | docker login ${GITHUB_SITE} -u jtom38 --password-stdin
+                    docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${GITHUB_SITE}/jtom38/newsbot/newsbot:${DOCKER_TAG}
+                    docker push ${GITHUB_SITE}/jtom38/newsbot/newsbot:${DOCKER_TAG}
+                    docker logout ghcr.io
+                    docker rmi ${GITHUB_SITE}/jtom38/newsbot/newsbot:${DOCKER_TAG}
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            discordSend description: "Job Status is "+currentBuild.currentResult+"!", footer: "Footer Text", link: env.BUILD_URL, result: currentBuild.currentResult, title: env.DISCORD_JOB_NAME, webhookURL: env.DISCORD_HOOK
+        }
+        /*
+        success {}
+        failure {}
+        */
+    }
+}

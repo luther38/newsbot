@@ -1,4 +1,4 @@
-# newsbot
+# Newsbot
 Automated and personalized news delivery for your community.
 
 ## What does it do
@@ -12,6 +12,10 @@ Currently, it reads collects news for the following sites.
 * [YouTube](https://youtube.com)
 * [Instagram](https://instagram.com)
 * [Twitter](https://twitter.com)
+* [Twitch](https://twitch.tv)
+* RSS Feeds
+* Atom Feeds
+* [Json Feeds](https://jsonfeed.org/)
 
 The results that are collected are then sent to the following platforms.
 
@@ -111,7 +115,8 @@ For the configuration of this source, see the Example Template.
 ### Twitch
 
 In order to use the Twitch source you will need to sign up for a [Twitch Developer Account](https://dev.twitch.tv/login).
-1. Aquire a developer account
+
+1. Sign up for a developer account
 2. Register a new Application.
 3. OAuth Redirect URL: `https://localhost`
 4. Category: Other
@@ -180,6 +185,9 @@ NEWSBOT_TWITCH_MONITOR_VOD=True
 NEWSBOT_TWITCH_USER_NAME_0=nintendo
 NEWSBOT_TWITCH_HOOK_0=https://discordapp.com/api/webhooks/...
 
+NEWSBOT_RSS_NAME_1=omgubuntu
+NEWSBOT_RSS_LINK_1=https://www.omgubuntu.co.uk
+NEWSBOT_RSS_HOOK_1=https://discordapp.com/api/webhooks/...
 ```
 
 ## Known Issues
@@ -192,22 +200,40 @@ At this time Discord webhooks do not support playing video links inside Discord.
 
 ## Change Log
 
+### 0.7.0
+
+| Type    | Notes |
+| ---     | --- |
+| Note    |  Instagram has been disabled for this release. Due to changes on the Instagram UI, Selenium is unable to pull up user/tag pages directly now |
+| Added   | [Generic RSS Reader](https://github.com/jtom38/newsbot/issues/45) |
+| Added   | [Dynamic Site Icon Pull](https://github.com/jtom38/newsbot/issues/46)
+| Added   | [Add support for Steam News](https://github.com/jtom38/newsbot/issues/23)
+| Updated | [Logs can be stored in the DB](https://github.com/jtom38/newsbot/issues/42)
+| Updated | Cleaned up how Newsbot reads all the env values.
+| Updated | Optimized the Twitter source to check if the url has been seen already and skips it if it has.
+| Updated | Did some cleanup on the sources and moved code reuse to its own class.
+
 ### 0.6.0
 
-* Added - [Add Cache Layer](https://github.com/jtom38/newsbot/issues/40)
-* Added - [Add Twitch Clip Support](https://github.com/jtom38/newsbot/issues/39)
-* Added - [Add Twitch VoD Support](https://github.com/jtom38/newsbot/issues/38)
-* Added - [Reddit Album Support](https://github.com/jtom38/newsbot/issues/36)
-* Fixed - [Discord Webhooks looping with multiple webhooks](https://github.com/jtom38/newsbot/issues/37)
-* Update - Reddit and YouTube sources will use the cache to store some values to avoid extra calls that are not required.
+| Type | Notes |
+| ---    | --- |
+| Update  | [Add Cache Layer](https://github.com/jtom38/newsbot/issues/40)
+| Update  | [Add Twitch Clip Support](https://github.com/jtom38/newsbot/issues/39)
+| Update  | [Add Twitch VoD Support](https://github.com/jtom38/newsbot/issues/38)
+| Update  | [Reddit Album Support](https://github.com/jtom38/newsbot/issues/36)
+| Update  | [Discord Webhooks looping with multiple webhooks](https://github.com/jtom38/newsbot/issues/37)
+| Update | Reddit and YouTube sources will use the cache to store some values to avoid extra calls that are not required.
 
 ### 0.5.1
 
-* Corrected a problem with the Reddit source that would crash the thread when it pulled Author information from a subreddit that did not have a custom CSS.  
+| Type | Notes |
+| ---    | --- |
+| Fix | Corrected a problem with the Reddit source that would crash the thread when it pulled Author information from a subreddit that did not have a custom CSS.  
 
 ### 0.5.0
 
-* Twitter Support was added.
-  * To enable Twitter you will need to provide it with the Twitter Developer API keys.
-* Discord Template was updated
-* Database changes to enable storing the posters information
+| Type | Notes |
+| ---- | ----- |
+| Add  | Twitter Support was added.  To enable Twitter you will need to provide it with the Twitter Developer API keys |
+| Change | Discord Template was updated. |
+| Change | Database changes to enable storing the posters information. |
