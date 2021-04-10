@@ -21,15 +21,7 @@ class PogohubReader(ISources, BSources):
         self.checkEnv(self.siteName)
         pass
 
-#    def checkEnv(self) -> None:
-#        # Check if site was requested.
-#        self.outputDiscord = self.isDiscordEnabled(self.siteName)
-#        if self.outputDiscord == True:
-#            self.hooks = self.getDiscordList(self.siteName)
-#
-#        self.sourceEnabled = self.isSourceEnabled(self.siteName)
-#        if self.sourceEnabled == True:
-#            self.links = self.getSourceList(self.siteName)
+
 
     def getArticles(self) -> List[Articles]:
         for site in self.links:
@@ -67,19 +59,6 @@ class PogohubReader(ISources, BSources):
                 )
 
         return allArticles
-
-#    def getContent(self) -> Response:
-#        try:
-#            headers = self.getHeaders()
-#            return get(self.uri, headers=headers)
-#        except Exception as e:
-#            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-#
-#    def getParser(self, siteContent: Response) -> BeautifulSoup:
-#        try:
-#            return BeautifulSoup(siteContent.content, features="html.parser")
-#        except Exception as e:
-#            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def processItem(self, item: object) -> Articles:
         a = Articles(
@@ -121,7 +100,8 @@ class PogohubReader(ISources, BSources):
 
     def getArticleThumbnail(self, link: str) -> str:
         try:
-            r = get(link)
+            self.uri = link
+            r = self.getContent()
             bs: BeautifulSoup = BeautifulSoup(r.content, features="html.parser")
             res = bs.find_all("img", class_="entry-thumb")
             return res[0].attrs["src"]
