@@ -1,10 +1,12 @@
-from typing import List
+from typing import List, Set
+
+import tweepy
 from newsbot import env
 from newsbot.logger import Logger
 from newsbot.sources.common import BChrome, ISources, BSources, UnableToFindContent, UnableToParseContent
-from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
+from newsbot.sql.tables import Articles, Sources, DiscordWebHooks, Settings
 from tweepy import AppAuthHandler, API, Cursor
-from os import getenv
+from os import getenv, initgroups
 from time import sleep
 
 
@@ -25,12 +27,13 @@ class TwitterReader(ISources, BSources, BChrome):
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
         self.driver = self.driverStart()
+
         # Authenicate with Twitter
         appAuth = AppAuthHandler(
             consumer_key=getenv("NEWSBOT_TWITTER_API_KEY"),
             consumer_secret=getenv("NEWSBOT_TWITTER_API_KEY_SECRET"),
         )
-
+    
         try:
             # auth to twitter
             api = API(appAuth)
@@ -41,20 +44,19 @@ class TwitterReader(ISources, BSources, BChrome):
         for site in self.links:
             self.currentSite = site
             site: Sources = site
-            siteSplit = site.name.split(" ")
-            self.siteName = f"Twitter {siteSplit[2]}"
-            siteType = siteSplit[1]
+            self.siteName = f"Twitter {site.name}"
+            #siteType = site.type
             self.logger.debug(
-                f"Twitter - {siteSplit[1]} - {siteSplit[2]} - Checking for updates."
+                f"Twitter - {site.type} - {site.name} - Checking for updates."
             )
 
             # Figure out if we are looking for a user or tag
-            if siteType == "user":
-                for i in self.getTweets(api, siteSplit[2]):
+            if site.type == "user":
+                for i in self.getTweets(api, site.name):
                     allArticles.append(i)
 
-            elif siteType == "tag":
-                for i in self.getTweets(api=api, hashtag=siteSplit[2]):
+            elif site.type == "tag":
+                for i in self.getTweets(api=api, hashtag=site.name):
                     allArticles.append(i)
 
         self.driverClose()
@@ -83,14 +85,44 @@ class TwitterReader(ISources, BSources, BChrome):
             if tweet.in_reply_to_screen_name != None:
                 continue
 
-            a = Articles(siteName=self.currentSite.name)
-            a.description = tweet.text
+            lang = Settings(key='twitter.prefered.lang').findSingleByKey()
+            if lang.value == "None":
+                pass
+            elif tweet.lang == lang.value:
+                pass
+            elif tweet.lang != lang.value:
+                continue
 
-            a.authorName = f"{tweet.author.name} @{tweet.author.screen_name}"
+            # Checking if this is a retweet
+            isRetweet = self.__isRetweet__(tweet)
+            if isRetweet == True:
+                continue
+
+
+            a = Articles(
+                siteName=self.currentSite.name
+                ,sourceName=username
+                ,sourceType="Twitter")
+
+            try:
+                a.description = tweet.text
+            except Exception as e:
+                self.logger.error(f"Attempted to pull tweet description, but failed. Error: {e}")
+
+            try:
+                authorName = tweet.author.name
+            except Exception as e:
+                self.logger.error(f"Failed to find the tweet author. Error: {e}")
+
+            try:
+                authorScreenName = tweet.author.screen_name
+            except Exception as e:
+                self.logger.error(f"Failed to find the tweet author screen name. Error: {e}")
+            a.authorName = f"{authorName} @{authorScreenName}"
             a.authorImage = tweet.author.profile_image_url
 
             # Find url for the post
-            a.url = f"https://twitter.com/{tweet.author.screen_name}/status/{tweet.id}"
+            a.url = f"https://twitter.com/{authorScreenName}/status/{tweet.id}"
             # a.url = self.getTweetUrl(tweet)
 
             if a.exists() == False:
@@ -121,33 +153,7 @@ class TwitterReader(ISources, BSources, BChrome):
                     pass
 
                 if a.thumbnail == "":
-                    try:
-                        # The API does not seem to expose all images attached to the tweet.. why idk.
-                        # We are going to try with Chrome to find the image.
-                        # It will try a couple times to try and find the image given the results are so hit and miss.
-                        album: str = ""
-                        self.driverGoTo(a.url)
-                        source = self.getDriverContent()
-                        soup = self.getParser(seleniumContent=source)
-                        images = soup.find_all(name="img")  # attrs={"alt": "Image"})
-                        for img in images:
-                            try:
-                                # is the image in a card
-                                if "card_img" in img.attrs["src"]:
-                                    a.thumbnail = img.attrs["src"]
-                                    break
-
-                                if img.attrs["alt"] == "Image":
-                                    album += f"{img.attrs['src']} "
-                                    # a.thumbnail = img.attrs['src']
-                                    # break
-                            except Exception as e:
-                                pass
-
-                        # take all the images found, and flatten the list to a str for storage
-                        a.thumbnail = album
-                    except Exception as e:
-                        pass
+                    a.thumbnail = self.getImages(a.url)
 
                 l.append(a)
 
@@ -183,7 +189,46 @@ class TwitterReader(ISources, BSources, BChrome):
                 pass
         return url
 
-
-
     def getImages(self, url: str) -> List[str]:
+        try:
+            # The API does not seem to expose all images attached to the tweet.. why idk.
+            # We are going to try with Chrome to find the image.
+            # It will try a couple times to try and find the image given the results are so hit and miss.
+            album: str = ""
+            self.driverGoTo(url)
+            source = self.driverGetContent()
+            soup = self.getParser(seleniumContent=source)
+            images = soup.find_all(name="img")  # attrs={"alt": "Image"})
+            for img in images:
+                try:
+                    # is the image in a card
+                    if "card_img" in img.attrs["src"]:
+                        return img.attrs["src"]
+
+                    if img.attrs["alt"] == "Image":
+                        album += f"{img.attrs['src']} "
+                        # a.thumbnail = img.attrs['src']
+                        # break
+                except Exception as e:
+                    pass
+
+            return album
+        except Exception as e:
+            pass
         pass
+
+    def __isRetweet__(self, tweet) -> bool:
+        """
+        Returns 
+        True if we need to skip
+        False if we move forward
+        """
+        ignoreRetweet = Settings(key='twitter.ignore.retweet').findSingleByKey()
+        if ignoreRetweet.value == '1':
+            text: str = tweet.text
+            if text.startswith("RT ") == True:
+                return True
+            else:
+                return False
+        else:
+            return False
