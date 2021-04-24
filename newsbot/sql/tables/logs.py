@@ -14,14 +14,15 @@ from newsbot.sql import Base, database
 from newsbot.sql.tables import iTables
 from newsbot.sql.exceptions import FailedToAddToDatabase
 
+
 class Logs(Base):
-    __tablename__ = 'logs'
-    id = Column('id', String, primary_key=True)
-    date = Column('date', String)
-    time = Column('time', String)
-    type = Column('type', String)
-    caller = Column('caller', String)
-    message = Column('message', String)
+    __tablename__ = "logs"
+    id = Column("id", String, primary_key=True)
+    date = Column("date", String)
+    time = Column("time", String)
+    type = Column("type", String)
+    caller = Column("caller", String)
+    message = Column("message", String)
 
     def __init__(self, date: str, time: str, type: str, caller: str, message: str):
         self.id = str(uuid.uuid4())

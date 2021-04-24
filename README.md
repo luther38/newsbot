@@ -200,6 +200,15 @@ At this time Discord webhooks do not support playing video links inside Discord.
 
 ## Change Log
 
+### 0.8.0
+
+| Type      | Notes |
+| ---       | --- |
+| Update    | Removed the need to duplicate the Discord Web Hook links.  You can now define a Discord object and refrence it by name. |
+| Update    | You can now define `NEWSBOT_TWITTER_PERFERED_LANG` in the env and filter out tweets that are not the defined language. This is a global Twitter flag. |
+| Update    | You can now ignore retweets with `NEWSBOT_TWITTER_IGNORE_RETWEET`.  Set it to 'True' if you want to ignore them.  This is a global Twitter flag. |
+
+
 ### 0.7.0
 
 | Type    | Notes |

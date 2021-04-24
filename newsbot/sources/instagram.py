@@ -1,7 +1,13 @@
 from typing import List
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.common import BChrome, BSources, ISources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import (
+    BChrome,
+    BSources,
+    ISources,
+    UnableToFindContent,
+    UnableToParseContent,
+)
 from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
@@ -35,17 +41,19 @@ class InstagramReader(ISources, BSources, BChrome):
             igType = nameSplit[1]
             self.siteName = f"Instagram {nameSplit[2]}"
             self.logger.debug(f"Instagram - {nameSplit[2]} - Checking for updates.")
-            
-            #self.uri = f"{self.baseUri}directory/hashtags/"
+
+            # self.uri = f"{self.baseUri}directory/hashtags/"
             self.uri = f"https://www.instagram.com/directory/profiles/0-0/"
             self.driverGoTo(self.uri)
 
             # Figure out if we are looking for a user or tag
             if igType == "user":
-                #self.uri = f"{self.baseUri}{nameSplit[2]}"
+                # self.uri = f"{self.baseUri}{nameSplit[2]}"
                 WebDriverWait(driver=self.driver, timeout=5)
-                self.driver.save_screenshot('ig_hashtag.png')
-                res = self.driver.find_element_by_xpath('/html/body/div[1]/section/nav/div[2]/div/div/div[2]/div/div/span[2]')
+                self.driver.save_screenshot("ig_hashtag.png")
+                res = self.driver.find_element_by_xpath(
+                    "/html/body/div[1]/section/nav/div[2]/div/div/div[2]/div/div/span[2]"
+                )
                 links = self.getUserArticleLinks()
             elif igType == "tag":
                 self.uri = f"{self.baseUri}explore/tags/{nameSplit[2]}/"
@@ -78,7 +86,7 @@ class InstagramReader(ISources, BSources, BChrome):
         """
         links = list()
         try:
-            #source = self.getContent()
+            # source = self.getContent()
             soup: BeautifulSoup = self.getParser(requestsContent=self.getContent())
             res = soup.find_all(name="article")
             for i in res[0].contents[0].contents[0].contents:
@@ -100,7 +108,7 @@ class InstagramReader(ISources, BSources, BChrome):
         links = list()
 
         try:
-            #source: str = self.getContent()
+            # source: str = self.getContent()
             soup: BeautifulSoup = self.getParser(requestsContent=self.getContent())
             res = soup.find_all(name="article")
 
@@ -114,7 +122,9 @@ class InstagramReader(ISources, BSources, BChrome):
             # links = self.getArticleLinks(res[0].contents[2].contents[0].contents, links)
 
         except Exception as e:
-            self.logger.error(f"Driver ran into a problem pulling links from a tag. {e}")
+            self.logger.error(
+                f"Driver ran into a problem pulling links from a tag. {e}"
+            )
 
         return links
 
@@ -134,7 +144,7 @@ class InstagramReader(ISources, BSources, BChrome):
         a = Articles(url=link, siteName=self.currentLink.name, tags="instagram, posts")
 
         self.driverGoTo(link)
-        #source = self.getContent()
+        # source = self.getContent()
         soup = self.getParser(requestsContent=self.getContent())
 
         nameSplit = self.currentLink.name.split(" ")
@@ -218,18 +228,18 @@ class InstagramReader(ISources, BSources, BChrome):
             # we are just going to take the first one that shows up in the list.
             return i.attrs["src"]
 
-#    def __driverGet__(self, uri: str) -> None:
-#        try:
-#            self.driver.get(uri)
-#            self.driver.implicitly_wait(5)
-#        except Exception as e:
-#            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
-#
-#    def __close__(self) -> None:
-#        try:
-#            self.driver.close()
-#        except Exception as e:
-#            self.logger.error(f"Driver failed to close. Error: {e}")
+    #    def __driverGet__(self, uri: str) -> None:
+    #        try:
+    #            self.driver.get(uri)
+    #            self.driver.implicitly_wait(5)
+    #        except Exception as e:
+    #            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
+    #
+    #    def __close__(self) -> None:
+    #        try:
+    #            self.driver.close()
+    #        except Exception as e:
+    #            self.logger.error(f"Driver failed to close. Error: {e}")
 
     def getTags(self, text: str) -> str:
         t = ""

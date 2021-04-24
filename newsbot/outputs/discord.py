@@ -2,19 +2,27 @@ from typing import List
 from enum import Enum
 import re
 from time import sleep
-from newsbot import env
+from newsbot.env import Env
 from newsbot.logger import Logger
-from newsbot.sql.tables import DiscordQueue, DiscordWebHooks, Icons
+from newsbot.sql.tables import (
+    DiscordQueue,
+    DiscordWebHooks,
+    Icons,
+    SourceLinks,
+    articles,
+)
 from newsbot.outputs.ioutputs import IOutputs
 from newsbot.common.convertHtml import ConvertHtml
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
+
 
 class Discord(IOutputs):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.table = DiscordQueue()
         self.tempMessage: DiscordWebhook = DiscordWebhook("placeholder")
+        self.env = Env()
         pass
 
     def enableThread(self) -> None:
@@ -36,20 +44,22 @@ class Discord(IOutputs):
                     if safeToRemove == True:
                         i.remove()
 
-                    sleep(env.discord_delay_seconds)
+                    sleep(self.env.discord_delay_seconds)
             except Exception as e:
                 self.logger.error(
                     f"Failed to post a message. {i.title}. Status_code: {resp.status_code}. msg: {resp.text}. error {e}"
                 )
 
-            sleep(env.discord_delay_seconds)
+            sleep(self.env.discord_delay_seconds)
 
     def buildMessage(self, article: DiscordQueue) -> None:
         # reset the stored message
         self.tempMessage = DiscordWebhook("placeholder")
 
         # Extract the webhooks that relate to this site
-        webhooks: List[str] = self.getHooks(article.siteName)
+        webhooks: List[str] = self.getHooks(
+            source=article.sourceType, name=article.sourceName
+        )
 
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
@@ -73,8 +83,8 @@ class Discord(IOutputs):
         if article.description != "":
             description: str = str(article.description)
             description = self.convertFromHtml(description)
-            description = ch.replaceImages(description, '')
-            #description = self.replaceImages(description)
+            description = ch.replaceImages(description, "")
+            # description = self.replaceImages(description)
             descriptionCount = len(description)
             if descriptionCount >= 2048:
                 description = description[0:2040]
@@ -105,10 +115,12 @@ class Discord(IOutputs):
 
         # Build our footer message
         footer = self.buildFooter(article.siteName)
-        footerIcon = self.getFooterIcon(article.siteName)
+        footerIcon = self.getFooterIcon(
+            siteName=article.siteName, sourceType=article.sourceType
+        )
         embed.set_footer(icon_url=footerIcon, text=footer)
 
-        embed.set_color(color=self.getEmbedColor(article.siteName))
+        embed.set_color(color=self.getEmbedColor(article.sourceType))
 
         hook.add_embed(embed)
         self.tempMessage = hook
@@ -126,7 +138,9 @@ class Discord(IOutputs):
                 f"Failed to send to Discord.  Check to ensure the webhook is correct. Error: {e}"
             )
 
-        hooks: int = len(self.getHooks(article.siteName))
+        hooks: int = len(
+            self.getHooks(source=article.sourceType, name=article.sourceName)
+        )
 
         # Chcekcing to see if we returned a single responce or multiple.
         if hooks == 1:
@@ -137,15 +151,25 @@ class Discord(IOutputs):
 
         return responces
 
-    def getHooks(self, newsSource: str) -> List[str]:
+    def getHooks(self, source: str, name: str) -> List[str]:
         hooks = list()
         try:
-            dwh = DiscordWebHooks(name=newsSource).findAllByName()
-            for i in dwh:
-                hooks.append(i.key)
+            if source == "Pokemon Go Hub" or source == "Phantasy Star Online 2":
+                dbHooks: SourceLinks = SourceLinks(name=f"{source}").findAllByName()
+            else:
+                dbHooks: SourceLinks = SourceLinks(
+                    name=f"{source}_{name}"
+                ).findAllByName()
+
+            for hook in dbHooks:
+                dwh = DiscordWebHooks()
+                dwh.id = hook.discordID
+                item: DiscordWebHooks = dwh.findById()
+                if item.url != "":
+                    hooks.append(item.url)
             return hooks
         except Exception as e:
-            self.logger.critical(f"Unable to find DiscordWebhook for {newsSource.siteName}")
+            self.logger.critical(f"Unable to find DiscordWebhook for {source} {name}")
 
     def convertFromHtml(self, msg: str) -> str:
         msg = msg.replace("<h2>", "**")
@@ -240,7 +264,7 @@ class Discord(IOutputs):
 
         return footer
 
-    def getFooterIcon(self, siteName: str) -> str:
+    def getFooterIcon(self, siteName: str, sourceType: str) -> str:
         if (
             siteName == "Phatnasy Star Online 2"
             or siteName == "Pokemon Go Hub"
@@ -250,15 +274,23 @@ class Discord(IOutputs):
             return res[0].filename
         else:
             s: List[str] = siteName.split(" ")
-            values = (f"Default {s[1]}", f"Default {s[0]}", siteName)
-            for v in values:
-                r = Icons(site=v).findAllByName()
+            try:
+                values = (f"Default {siteName}", f"Default {sourceType}", siteName)
+                for v in values:
+                    r = Icons(site=v).findAllByName()
+                    if len(r) == 1:
+                        res = r
+            except:
+                pass
+
+            try:
+                r = Icons(site=siteName).findAllByName()
                 if len(r) == 1:
                     res = r
-            # if s[0].lower() == 'rss':
-            #    res = Icons(site=f"Default {s[1]}").findAllByName()
-            # else:
-            #    res = Icons(site=f"Default {s[0]}").findAllByName()
+            except Exception as e:
+                self.logger.warning(
+                    f"Failed to find an icon for {siteName}. Error: {e}"
+                )
 
             try:
                 if res[0].filename != "":
@@ -272,7 +304,7 @@ class Discord(IOutputs):
         # Decimal values can be collected from https://www.spycolor.com
         if "Reddit" in siteName:
             return 16395272
-        elif "YouTube" in siteName:
+        elif "Youtube" in siteName:
             return 16449542
         elif "Instagram" in siteName:
             return 13303930

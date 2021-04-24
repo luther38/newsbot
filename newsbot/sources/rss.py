@@ -1,7 +1,12 @@
 from typing import List, Dict
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.common import BSources, ISources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import (
+    BSources,
+    ISources,
+    UnableToFindContent,
+    UnableToParseContent,
+)
 from newsbot.sources.rssHelper import *
 from newsbot.common.requestContent import (
     RequestContent,
@@ -29,7 +34,7 @@ class RssReader(ISources, BSources):
         self.outputDiscord: bool = False
         self.checkEnv(self.siteName)
         pass
-   
+
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
         for l in self.links:
@@ -39,8 +44,8 @@ class RssReader(ISources, BSources):
             if l.enabled == False:
                 continue
 
-            self.logger.debug(f"{l.name} - Checking for updates")
-            self.feedName = l.name.split(" ")[1]
+            self.logger.debug(f"{l.source} - {l.name} - Checking for updates")
+            self.feedName = l.name
 
             # Cache the root site
             self.uri = l.url
@@ -156,6 +161,8 @@ class AtomParser(IParser):
             rc.getPageDetails()
             thumbnail = rc.findArticleThumbnail()
 
+            a.sourceType = "RSS"
+            a.sourceName = self.siteName
             a.siteName = self.siteName
             a.tags = f"RSS, {self.siteName}"
             a.title = item.find(name="title").text.replace("\n", "").strip()
@@ -211,6 +218,8 @@ class RssParser:
 
             a = Articles(
                 siteName=title,
+                sourceType="RSS",
+                sourceName=title,
                 title=item.find(name="title").text,
                 description=self.findItemDescription(item, description),
                 tags=self.findItemTags(item),
@@ -293,6 +302,8 @@ class JsonParser:
             rc.getPageDetails()
             a = Articles(
                 siteName=self.siteName,
+                sourceType="RSS",
+                sourceName=self.siteName,
                 tags=f"RSS, {self.siteName}",
                 title=item["title"],
                 url=item["url"],

@@ -14,15 +14,18 @@ from newsbot.sql import Base, database
 from newsbot.sql.tables import ITables
 from newsbot.sql.exceptions import FailedToAddToDatabase
 
+
 class Settings(Base, ITables):
-    __tablename__ = 'settings'
-    id = Column('id', String, primary_key=True)
+    __tablename__ = "settings"
+    id = Column("id", String, primary_key=True)
     key = Column("key", String)
     value = Column("value", String)
     options = Column("options", String)
     notes = Column("notes", String)
 
-    def __init__(self, key: str = "", value: str = "", options: str = "", notes: str = ''):
+    def __init__(
+        self, key: str = "", value: str = "", options: str = "", notes: str = ""
+    ):
         self.id = str(uuid.uuid4())
         self.key = key
         self.value = value
@@ -59,7 +62,7 @@ class Settings(Base, ITables):
             Logger().error(f"Failed to remove {self.key} from Settings table. {e}")
         finally:
             s.close()
-    
+
     def clearTable(self) -> None:
         """
         Removes all the objects found in the Settings Table.
@@ -108,9 +111,9 @@ class Settings(Base, ITables):
             pass
         finally:
             s.close()
-        
+
         return d
-        
+
     def __len__(self) -> int:
         """
         Returns the number of rows based off the Key value provided.

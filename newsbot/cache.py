@@ -1,6 +1,7 @@
 from newsbot.sql.tables import Settings
 
-class Cache():
+
+class Cache:
     def __init__(self, key: str, value: str = "") -> None:
         self.sql: iCache = SqlCache()
         self.key = key
@@ -16,7 +17,8 @@ class Cache():
     def remove(self) -> None:
         self.sql.remove(self.key)
 
-class iCache():
+
+class iCache:
     def __init__(self):
         pass
 
@@ -28,6 +30,7 @@ class iCache():
 
     def remove(self, key: str) -> None:
         raise NotImplementedError
+
 
 class SqlCache(iCache):
     """

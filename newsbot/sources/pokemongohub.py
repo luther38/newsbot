@@ -1,10 +1,17 @@
 from typing import List
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.common import BSources, ISources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import (
+    BSources,
+    ISources,
+    UnableToFindContent,
+    UnableToParseContent,
+)
 from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
 from requests import get, Response
 from bs4 import BeautifulSoup
+import re
+
 
 class PogohubReader(ISources, BSources):
     def __init__(self) -> None:
@@ -19,12 +26,10 @@ class PogohubReader(ISources, BSources):
         self.checkEnv(self.siteName)
         pass
 
-
-
     def getArticles(self) -> List[Articles]:
         for site in self.links:
             self.logger.debug(f"{site.name} - Checking for updates.")
-            self.uri = site.url
+            # self.uri = site.url
 
             siteContent: Response = self.getContent()
             if siteContent.status_code != 200:
@@ -63,6 +68,8 @@ class PogohubReader(ISources, BSources):
             siteName=self.siteName,
             authorName=self.authorName,
             tags="pokemon go hub, pokemon, go, hub, news",
+            sourceName="Pokemon Go Hub",
+            sourceType="Pokemon Go Hub",
         )
 
         for i in item.contents:

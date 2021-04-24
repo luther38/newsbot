@@ -3,7 +3,13 @@ from typing import List, Set
 import tweepy
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.common import BChrome, ISources, BSources, UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import (
+    BChrome,
+    ISources,
+    BSources,
+    UnableToFindContent,
+    UnableToParseContent,
+)
 from newsbot.sql.tables import Articles, Sources, DiscordWebHooks, Settings
 from tweepy import AppAuthHandler, API, Cursor
 from os import getenv, initgroups
@@ -33,7 +39,7 @@ class TwitterReader(ISources, BSources, BChrome):
             consumer_key=getenv("NEWSBOT_TWITTER_API_KEY"),
             consumer_secret=getenv("NEWSBOT_TWITTER_API_KEY_SECRET"),
         )
-    
+
         try:
             # auth to twitter
             api = API(appAuth)
@@ -45,7 +51,7 @@ class TwitterReader(ISources, BSources, BChrome):
             self.currentSite = site
             site: Sources = site
             self.siteName = f"Twitter {site.name}"
-            #siteType = site.type
+            # siteType = site.type
             self.logger.debug(
                 f"Twitter - {site.type} - {site.name} - Checking for updates."
             )
@@ -64,7 +70,7 @@ class TwitterReader(ISources, BSources, BChrome):
 
     def getTweets(
         self, api: API, username: str = "", hashtag: str = ""
-        ) -> List[Articles]:
+    ) -> List[Articles]:
 
         l = list()
         tweets = list()
@@ -85,7 +91,7 @@ class TwitterReader(ISources, BSources, BChrome):
             if tweet.in_reply_to_screen_name != None:
                 continue
 
-            lang = Settings(key='twitter.prefered.lang').findSingleByKey()
+            lang = Settings(key="twitter.prefered.lang").findSingleByKey()
             if lang.value == "None":
                 pass
             elif tweet.lang == lang.value:
@@ -98,16 +104,18 @@ class TwitterReader(ISources, BSources, BChrome):
             if isRetweet == True:
                 continue
 
-
             a = Articles(
-                siteName=self.currentSite.name
-                ,sourceName=username
-                ,sourceType="Twitter")
+                siteName=self.currentSite.name,
+                sourceName=username,
+                sourceType="Twitter",
+            )
 
             try:
                 a.description = tweet.text
             except Exception as e:
-                self.logger.error(f"Attempted to pull tweet description, but failed. Error: {e}")
+                self.logger.error(
+                    f"Attempted to pull tweet description, but failed. Error: {e}"
+                )
 
             try:
                 authorName = tweet.author.name
@@ -117,7 +125,9 @@ class TwitterReader(ISources, BSources, BChrome):
             try:
                 authorScreenName = tweet.author.screen_name
             except Exception as e:
-                self.logger.error(f"Failed to find the tweet author screen name. Error: {e}")
+                self.logger.error(
+                    f"Failed to find the tweet author screen name. Error: {e}"
+                )
             a.authorName = f"{authorName} @{authorScreenName}"
             a.authorImage = tweet.author.profile_image_url
 
@@ -132,7 +142,9 @@ class TwitterReader(ISources, BSources, BChrome):
                         tags += f"{t['text']}, "
                     a.tags = tags
                 except Exception as e:
-                    self.logger.error(f"Failed to find 'hashtags' on the tweet. \r\nError: {e}")
+                    self.logger.error(
+                        f"Failed to find 'hashtags' on the tweet. \r\nError: {e}"
+                    )
 
                 try:
                     a.pubDate = str(tweet.created_at)
@@ -223,8 +235,8 @@ class TwitterReader(ISources, BSources, BChrome):
         True if we need to skip
         False if we move forward
         """
-        ignoreRetweet = Settings(key='twitter.ignore.retweet').findSingleByKey()
-        if ignoreRetweet.value == '1':
+        ignoreRetweet = Settings(key="twitter.ignore.retweet").findSingleByKey()
+        if ignoreRetweet.value == "1":
             text: str = tweet.text
             if text.startswith("RT ") == True:
                 return True

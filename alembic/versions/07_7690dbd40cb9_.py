@@ -24,7 +24,7 @@ def upgrade():
         sa.Column("time", sa.String),
         sa.Column("type", sa.String),
         sa.Column("caller", sa.String),
-        sa.Column("message", sa.String)
+        sa.Column("message", sa.String),
     )
     pass
 

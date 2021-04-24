@@ -13,12 +13,14 @@ from typing import List
 from newsbot.db import Base
 from newsbot.db import DB as database
 
-#from newsbot.logger import Logger
+# from newsbot.logger import Logger
+
 
 class FailedToAddToDatabase(Exception):
     pass
 
-#class Articles(Base):
+
+# class Articles(Base):
 #    __tablename__ = "articles"
 #    id = Column(String, primary_key=True)
 #    siteName = Column(String)
@@ -127,7 +129,7 @@ class FailedToAddToDatabase(Exception):
 #        return len(l)
 
 
-#class Sources(Base):
+# class Sources(Base):
 #    __tablename__ = "sources"
 #    id = Column(String, primary_key=True)
 #    name = Column(String)
@@ -154,7 +156,7 @@ class FailedToAddToDatabase(Exception):
 #            print(f"Failed to add {self.name} to DiscordWebHook table! {e}")
 #        finally:
 #            s.close()
-#``
+# ``
 #    def clearTable(self) -> None:``
 #        s = database.newSession()
 #        try:
@@ -209,7 +211,7 @@ class FailedToAddToDatabase(Exception):
 #        return len(l)
 
 
-#class DiscordWebHooks(Base):
+# class DiscordWebHooks(Base):
 #    __tablename__ = "discordwebhooks"
 #    id = Column(String, primary_key=True)
 #    name = Column(String)
@@ -328,7 +330,7 @@ class FailedToAddToDatabase(Exception):
 #        return len(l)
 #
 
-#class DiscordQueue(Base):
+# class DiscordQueue(Base):
 #    __tablename__ = "discordQueue"
 #    id = Column(String, primary_key=True)
 #    siteName = Column(String)
@@ -415,7 +417,7 @@ class FailedToAddToDatabase(Exception):
 #        return len(l)
 
 
-#class Icons(Base):
+# class Icons(Base):
 #    __tablename__ = "icons"
 #    id = Column(String, primary_key=True)
 #    filename = Column(String)
@@ -442,7 +444,7 @@ class FailedToAddToDatabase(Exception):
 #
 #    def update(self) -> None:
 #        #s = database.newSession()
-#        
+#
 #        res = self.findAllByName()
 #        if len(res) == 0:
 #            self.add()
@@ -505,7 +507,7 @@ class FailedToAddToDatabase(Exception):
 #        return len(l)
 
 
-#class Settings(Base):
+# class Settings(Base):
 #    __tablename__ = 'settings'
 #    id = Column('id', String, primary_key=True)
 #    key = Column("key", String)
@@ -550,7 +552,7 @@ class FailedToAddToDatabase(Exception):
 #            Logger().error(f"Failed to remove {self.key} from Settings table. {e}")
 #        finally:
 #            s.close()
-#    
+#
 #    def clearTable(self) -> None:
 #        """
 #        Removes all the objects found in the Settings Table.
@@ -570,7 +572,7 @@ class FailedToAddToDatabase(Exception):
 #    def findAllByKey(self) -> List:
 #        """
 #        Searches the database for objects that contain the Key value.
-#        
+#
 #        Returns: List[Settings]
 #        """
 #        s = database.newSession()
@@ -587,7 +589,7 @@ class FailedToAddToDatabase(Exception):
 #    def findSingleByKey(self) -> None:
 #        """
 #        Searches the database for objects that contain the Key value.
-#        
+#
 #        Returns: Settings
 #        """
 #        s = database.newSession()
@@ -599,9 +601,9 @@ class FailedToAddToDatabase(Exception):
 #            pass
 #        finally:
 #            s.close()
-#        
+#
 #        return d
-#        
+#
 #    def __len__(self) -> int:
 #        """
 #        Returns the number of rows based off the Key value provided.
@@ -620,7 +622,7 @@ class FailedToAddToDatabase(Exception):
 #
 #        return len(l)
 #
-#class Logs(Base):
+# class Logs(Base):
 #    __tablename__ = 'logs'
 #    id = Column('id', String, primary_key=True)
 #    date = Column('date', String)

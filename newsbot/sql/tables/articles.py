@@ -14,10 +14,13 @@ from newsbot.sql import database, Base
 from newsbot.sql.exceptions import FailedToAddToDatabase
 from newsbot.sql.tables import ITables
 
+
 class Articles(Base, ITables):
     __tablename__ = "articles"
     id = Column(String, primary_key=True)
     siteName = Column(String)
+    sourceName = Column(String)
+    sourceType = Column(String)
     tags = Column(String)
     title = Column(String)
     url = Column(String)
@@ -33,6 +36,8 @@ class Articles(Base, ITables):
     def __init__(
         self,
         siteName: str = "",
+        sourceType: str = "",
+        sourceName: str = "",
         tags: str = "",
         title: str = "",
         url: str = "",
@@ -43,10 +48,12 @@ class Articles(Base, ITables):
         thumbnail: str = "",
         description: str = "",
         authorName: str = "",
-        authorImage: str = ""
+        authorImage: str = "",
     ) -> None:
         self.id = str(uuid.uuid4())
         self.siteName = siteName
+        self.sourceName = sourceName
+        self.sourceType = sourceType
         self.tags = tags
         self.title = title
         self.url = url
@@ -94,7 +101,9 @@ class Articles(Base, ITables):
             thumbnail=self.thumbnail,
             description=self.description,
             authorImage=self.authorImage,
-            authorName=self.authorName
+            authorName=self.authorName,
+            sourceName=self.sourceName,
+            sourceType=self.sourceType,
         )
 
         try:

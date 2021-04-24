@@ -10,9 +10,9 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
+from sqlalchemy.orm.session import Session
 from newsbot.sql import Base, database
 from newsbot.sql.tables import ITables
-#from newsbot.sql.exceptions import FailedToAddToDatabase
 
 
 class DiscordWebHooks(Base, ITables):
@@ -25,7 +25,14 @@ class DiscordWebHooks(Base, ITables):
     channel = Column(String)
     enabled = Column(Boolean)
 
-    def __init__(self, name:str="", key:str="", server:str = "", channel:str = "", url: str = "") -> None:
+    def __init__(
+        self,
+        name: str = "",
+        key: str = "",
+        server: str = "",
+        channel: str = "",
+        url: str = "",
+    ) -> None:
         self.id = str(uuid.uuid4())
         self.server = server
         self.channel = channel
@@ -38,7 +45,7 @@ class DiscordWebHooks(Base, ITables):
         self.enabled = True
 
     def add(self) -> None:
-        s = database.newSession()
+        s: Session = database.newSession()
         h = DiscordWebHooks()
         h.key = self.key
         h.url = self.url
@@ -56,17 +63,24 @@ class DiscordWebHooks(Base, ITables):
             s.close()
 
     def update(self) -> bool:
-        s = database.newSession()
+        # s: Session = database.newSession()
         key = ""
         try:
-            exists = DiscordWebHooks(name=self.name).findByName()
-            if exists != None:
-                key = exists.id 
-                exists.clearSingle()
+            nameExists = DiscordWebHooks(name=self.name).findByName()
+            urlExists = DiscordWebHooks(url=self.url).findByUrl()
+            if nameExists != None:
+                key = nameExists.id
+                urlExists.clearSingle()
+            elif urlExists != None:
+                key = urlExists.id
+                urlExists.clearSingle()
 
             d = DiscordWebHooks(
-                name=self.name ,key=self.key ,server=self.server
-                ,channel=self.channel ,url=self.url
+                name=self.name,
+                key=self.key,
+                server=self.server,
+                channel=self.channel,
+                url=self.url,
             )
             if key != "":
                 d.id = key
@@ -76,9 +90,8 @@ class DiscordWebHooks(Base, ITables):
             print(e)
             pass
 
-
     def clearTable(self) -> None:
-        s = database.newSession()
+        s: Session = database.newSession()
         try:
             for d in s.query(DiscordWebHooks):
                 s.delete(d)
@@ -92,12 +105,13 @@ class DiscordWebHooks(Base, ITables):
         """
         This will remove a single entry from the table by its ID value.
         """
-        s = database.newSession()
+        s: Session = database.newSession()
         result: bool = False
         try:
             for i in s.query(DiscordWebHooks).filter(DiscordWebHooks.id == self.id):
                 s.delete(i)
                 s.commit()
+
                 result = True
         except Exception as e:
             print(e)
@@ -106,25 +120,26 @@ class DiscordWebHooks(Base, ITables):
             return result
 
     def findById(self) -> object:
-        s = database.newSession()
+        s: Session = database.newSession()
         hooks = list()
         try:
-            for res in s.query(DiscordWebHooks).filter(
-                DiscordWebHooks.id.contains(self.id)
-            ):
+            for res in s.query(DiscordWebHooks).filter(DiscordWebHooks.id == self.id):
                 hooks.append(res)
         except Exception as e:
             pass
         finally:
             s.close()
-            return hooks[0]
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
 
     def findByName(self) -> object:
-        s = database.newSession()
+        s: Session = database.newSession()
         hooks = list()
         try:
             for res in s.query(DiscordWebHooks).filter(
-                DiscordWebHooks.name.contains(self.name)
+                DiscordWebHooks.name == self.name
             ):
                 hooks.append(res)
         except Exception as e:
@@ -136,8 +151,40 @@ class DiscordWebHooks(Base, ITables):
             else:
                 return hooks[0]
 
+    def findByServer(self) -> object:
+        s: Session = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(DiscordWebHooks).filter(
+                DiscordWebHooks.server == self.server
+            ):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+
+    def findByUrl(self) -> object:
+        s: Session = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(DiscordWebHooks).filter(DiscordWebHooks.url == self.url):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+
     def findAllByName(self) -> List:
-        s = database.newSession()
+        s: Session = database.newSession()
         hooks = list()
         try:
             for res in s.query(DiscordWebHooks).filter(
@@ -151,8 +198,7 @@ class DiscordWebHooks(Base, ITables):
             return hooks
 
     def findAll(self) -> List:
-        s= database.newSession()
-        #s = database.newSession()
+        s: Session = database.newSession()
         hooks = list()
         try:
             for res in s.query(DiscordWebHooks):
@@ -164,7 +210,7 @@ class DiscordWebHooks(Base, ITables):
             return hooks
 
     def __len__(self) -> int:
-        s = database.newSession()
+        s: Session = database.newSession()
         l = list()
         try:
             for res in s.query(DiscordWebHooks):

@@ -6,6 +6,7 @@ from newsbot.cache import Cache
 from newsbot.sources.common import BChrome, ISources, BSources
 from time import sleep
 
+
 class RedditReader(ISources, BSources, BChrome):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
@@ -18,19 +19,9 @@ class RedditReader(ISources, BSources, BChrome):
 
         self.checkEnv(self.siteName)
 
-#    def checkEnv(self) -> None:
-#        # Check if site was requested.
-#        self.outputDiscord = self.isDiscordEnabled(self.siteName)
-#        if self.outputDiscord == True:
-#            self.hooks = self.getDiscordList(self.siteName)
-#
-#        self.sourceEnabled = self.isSourceEnabled(self.siteName)
-#        if self.sourceEnabled == True:
-#            self.links = self.getSourceList(self.siteName)
-
     def getArticles(self) -> List[Articles]:
         # TODO Flag NSFW
-        #allowNSFW = True
+        # allowNSFW = True
 
         self.driver = self.driverStart()
 
@@ -39,7 +30,7 @@ class RedditReader(ISources, BSources, BChrome):
         for source in self.links:
             authorImage = ""
             authorName = ""
-            subreddit = source.name.replace("Reddit ", "")
+            subreddit = source.name
 
             self.logger.debug(f"Collecting posts for '/r/{subreddit}'...")
 
@@ -50,7 +41,7 @@ class RedditReader(ISources, BSources, BChrome):
                 # Collect values that we do not get from the RSS
                 self.uri = f"https://reddit.com/r/{subreddit}"
                 self.driverGoTo(self.uri)
-                #source = self.driverGetContent()
+                # source = self.driverGetContent()
                 soup = self.getParser(seleniumContent=self.driverGetContent())
 
                 subImages = soup.find_all(
@@ -79,7 +70,8 @@ class RedditReader(ISources, BSources, BChrome):
             posts = self.getPosts(subreddit)
             for p in posts:
                 if (
-                    Articles(url=f"https://reddit.com{p['data']['permalink']}").exists() == False
+                    Articles(url=f"https://reddit.com{p['data']['permalink']}").exists()
+                    == False
                 ):
                     allArticles.append(
                         self.getPostDetails(
@@ -91,23 +83,6 @@ class RedditReader(ISources, BSources, BChrome):
 
         self.driverClose()
         return allArticles
-
-#    def getContent(self) -> str:
-#        try:
-#            headers = self.getHeaders()
-#            res = get(self.uri, headers=headers)
-#            return res.text
-#        except Exception as e:
-#            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-#
-#    def getDriverContent(self) -> str:
-#        return self.driver.page_source
-#
-#    def getParser(self, siteContent: str) -> BeautifulSoup:
-#        try:
-#            return BeautifulSoup(siteContent, features="html.parser")
-#        except Exception as e:
-#            self.logger.critical(f"failed to parse data returned from requests. {e}")
 
     def getVideoThumbnail(self, preview) -> str:
         try:
@@ -132,7 +107,7 @@ class RedditReader(ISources, BSources, BChrome):
 
     def getPostDetails(
         self, obj: dict, subreddit: str, authorName: str, authorImage: str
-        ) -> Articles:
+    ) -> Articles:
         try:
 
             a = Articles()
@@ -142,6 +117,8 @@ class RedditReader(ISources, BSources, BChrome):
             a.authorName = authorName
             a.title = f"{obj['title']}"
             a.tags = obj["subreddit"]
+            a.sourceType = "Reddit"
+            a.sourceName = subreddit
 
             # figure out what url we are going to display
             if obj["is_video"] == True:
@@ -173,28 +150,6 @@ class RedditReader(ISources, BSources, BChrome):
 
             return a
         except Exception as e:
-            self.logger.error(f"Failed to extract Reddit post.  Too many connections? {e}")
-
-    # Selenium Code
-#    def getWebDriver(self) -> Chrome:
-#        options = ChromeOptions()
-#        options.add_argument("--disable-extensions")
-#        options.add_argument("--headless")
-#        options.add_argument("--no-sandbox")
-#        options.add_argument("--disable-dev-shm-usage")
-#        try:
-#            driver = Chrome(options=options)
-#            return driver
-#        except Exception as e:
-#            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
-#
-#    def __driverGet__(self, uri: str) -> None:
-#        try:
-#            self.driver.get(uri)
-#            # self.driver.implicitly_wait(30)
-#            sleep(5)
-#        except Exception as e:
-#            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
-#
-#    def __driverQuit__(self):
-#        self.driver.quit()
+            self.logger.error(
+                f"Failed to extract Reddit post.  Too many connections? {e}"
+            )

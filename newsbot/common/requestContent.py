@@ -248,8 +248,26 @@ class RequestSiteContent(RequestContent):
         if siteUrl.endswith("/") == True:
             siteUrl = siteUrl.strip("/")
 
-        bestSize: int = -1
         href = ""
+        appleIcon = self.__findAppleIcons__(siteUrl=siteUrl)
+        if appleIcon != "":
+            href = appleIcon
+
+        if href == "" and appleIcon == "":
+            genericIcon = self.__findGenericIcons__(siteUrl=siteUrl)
+            if genericIcon != "":
+                href = genericIcon
+
+        if "http" in href or "https" in href:
+            return href
+        elif href == "":
+            return href
+        else:
+            return f"{siteUrl}{href}"
+
+    def __findAppleIcons__(self, siteUrl: str) -> str:
+        bestSize: int = -1
+        href: str = ""
         icons = self.findMany(name="link", attrKey="rel", attrValue="apple-touch-icon")
         if len(icons) >= 2:
             try:
@@ -261,7 +279,7 @@ class RequestSiteContent(RequestContent):
                             bestSize = size
                     except:
                         self.logger.warning(
-                            f"'{siteUrl}' did not have sizes present on the site icon."
+                            f"'{siteUrl}' did not have sizes present on the site icon.  Not the standard use of the apple-touch-icon."
                         )
                         pass
 
@@ -277,12 +295,28 @@ class RequestSiteContent(RequestContent):
         else:
             href = ""
 
-        if "http" in href or "https" in href:
-            return href
-        elif href == "":
-            return href
-        else:
-            return f"{siteUrl}{href}"
+        return href
+
+    def __findGenericIcons__(self, siteUrl: str) -> str:
+        # This logic was built from www.omgubuntu.co.uk's logic with how they have icons structured.
+        largest: dict = {"size": 0, "url": ""}
+        try:
+            icons = self.findMany(name="link", attrKey="type", attrValue="image/png")
+        except:
+            self.logger.warning("Failed to find generic site icon links.")
+            return ""
+
+        try:
+            for icon in icons:
+                t = int(icon.attrs["sizes"].split("x")[0])
+                if t >= largest["size"]:
+                    largest["size"] = t
+                    largest["url"] = icon.attrs["href"]
+        except:
+            self.logger.warning("Failed to parse the generic site icon size.")
+            return ""
+
+        return largest["url"]
 
 
 class RequestArticleContent(RequestContent):

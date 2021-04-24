@@ -9,16 +9,18 @@ from alembic.op import add_column, drop_column
 from sqlalchemy import Column, String
 
 # revision identifiers, used by Alembic.
-revision = '86fa6bab6bc0'
-down_revision = '7690dbd40cb9'
+revision = "86fa6bab6bc0"
+down_revision = "7690dbd40cb9"
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     add_column("discordwebhooks", Column("server", String()))
-    add_column("discordwebhooks", Column('channel', String()))
-    add_column("discordwebhooks", Column('url', String()))
+    add_column("discordwebhooks", Column("channel", String()))
+    add_column("discordwebhooks", Column("url", String()))
     pass
+
 
 def downgrade():
     drop_column("discordwebhooks", "server")

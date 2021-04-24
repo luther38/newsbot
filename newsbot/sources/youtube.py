@@ -1,15 +1,22 @@
 from typing import List
 from newsbot import env
 from newsbot.logger import Logger
-from newsbot.sources.common import BChrome, ISources, BSources ,UnableToFindContent, UnableToParseContent
+from newsbot.sources.common import (
+    BChrome,
+    ISources,
+    BSources,
+    UnableToFindContent,
+    UnableToParseContent,
+)
 from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.cache import Cache
 from bs4 import BeautifulSoup
 from time import sleep
 
+
 class YoutubeReader(ISources, BSources, BChrome):
     def __init__(self):
-        self.logger= Logger(__class__)
+        self.logger = Logger(__class__)
         self.uri: str = "https://youtube.com"
         self.siteName: str = "Youtube"
         self.feedBase: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
@@ -30,21 +37,21 @@ class YoutubeReader(ISources, BSources, BChrome):
         allArticles: List[Articles] = list()
 
         for site in self.links:
-            s = site.name.split(" ")
+
             self.authorName = ""
             self.authorImage = ""
-            self.logger.debug(f"{site.name} - Checking for updates")
+            self.logger.debug(f"{site.source} - {site.name} - Checking for updates")
 
             # pull the source code from the main youtube page
-            channelID = Cache(key=f"youtube {s[1]} channelID").find()
+            channelID = Cache(key=f"{site.source} {site.name} channelID").find()
             if channelID == "":
                 self.uri = f"{site.url}"
                 self.driverGoTo(self.uri)
-                #self.driver.save_screenshot("youtube_step1.png")
+                # self.driver.save_screenshot("youtube_step1.png")
                 siteContent: str = self.driverGetContent()
                 page: BeautifulSoup = self.getParser(seleniumContent=siteContent)
                 channelID: str = self.getChannelId(page)
-                Cache(key=f"youtube {s[1]} channelID", value=channelID).add()
+                Cache(key=f"youtube {site.name} channelID", value=channelID).add()
 
                 # Not finding the values I want with just request.  Time for Chrome.
                 # We are collecting info that is not present in the RSS feed.
@@ -53,11 +60,12 @@ class YoutubeReader(ISources, BSources, BChrome):
                     authorImage = page.find_all(name="img", attrs={"id": "img"})
                     self.authorImage = authorImage[0].attrs["src"]
                     Cache(
-                        key=f"youtube {s[1]} authorImage", value=self.authorImage
+                        key=f"{site.source} {site.name} authorImage",
+                        value=self.authorImage,
                     ).add()
                 except Exception as e:
                     self.logger.error(
-                        f"Failed to find the authorImage for {s[1]}.  CSS might have changed. {e}"
+                        f"Failed to find the authorImage for {site.name}.  CSS might have changed. {e}"
                     )
                 authorImage.clear()
 
@@ -67,15 +75,17 @@ class YoutubeReader(ISources, BSources, BChrome):
                         attrs={"class": "style-scope ytd-channel-name", "id": "text"},
                     )
                     self.authorName = authorName[0].text
-                    Cache(key=f"youtube {s[1]} authorName", value=self.authorName).add()
+                    Cache(
+                        key=f"youtube {site.name} authorName", value=self.authorName
+                    ).add()
                 except Exception as e:
                     self.logger.error(
-                        f"Failed to find the authorName for {s[1]}.  CSS might have changed. {e}"
+                        f"Failed to find the authorName for {site.name}.  CSS might have changed. {e}"
                     )
                 authorName.clear()
             else:
-                self.authorName = Cache(key=f"youtube {s[1]} authorName").find()
-                self.authorImage = Cache(key=f"youtube {s[1]} authorImage").find()
+                self.authorName = Cache(key=f"youtube {site.name} authorName").find()
+                self.authorImage = Cache(key=f"youtube {site.name} authorImage").find()
 
             # Generatet he hidden RSS feed uri
             self.uri = f"{self.feedBase}{channelID}"
@@ -94,6 +104,8 @@ class YoutubeReader(ISources, BSources, BChrome):
                     a.thumbnail = item.contents[17].contents[5].attrs["url"]
                     a.authorImage = self.authorImage
                     a.authorName = self.authorName
+                    a.sourceType = site.source
+                    a.sourceName = site.name
 
                     allArticles.append(a)
 

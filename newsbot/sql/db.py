@@ -6,6 +6,7 @@ import os
 
 Base = declarative_base()
 
+
 class DB:
     def __init__(self, Base):
         name = self.__getDbName__()
@@ -28,5 +29,6 @@ class DB:
             return "newsbot.db"
         else:
             return name
+
 
 database = DB(Base)

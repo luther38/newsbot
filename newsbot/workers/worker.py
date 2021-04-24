@@ -1,4 +1,4 @@
-#from newsbot import database
+# from newsbot import database
 from newsbot.env import Env
 from newsbot.logger import Logger
 from newsbot.sql.tables import Articles, DiscordQueue
@@ -6,7 +6,7 @@ from newsbot.sources.common import ISources
 from time import sleep
 
 
-class Worker():
+class Worker:
     """
     This is a generic worker that will contain the source it will monitor.
     """
@@ -23,7 +23,9 @@ class Worker():
             self.enabled = True
         else:
             self.enabled = False
-            self.logger.info(f"{self.source.siteName} was not enabled.  Thread will exit.")
+            self.logger.info(
+                f"{self.source.siteName} was not enabled.  Thread will exit."
+            )
 
     def init(self) -> None:
         """
@@ -53,15 +55,14 @@ class Worker():
                 self.logger.debug(f"{self.source.siteName} Worker is going to sleep.")
                 sleep(self.env.threadSleepTimer)
 
-
     def discordQueueMessage(self, i: Articles, added: bool) -> None:
-        msg: str = ''
-        if i.title != '':
+        msg: str = ""
+        if i.title != "":
             msg = i.title
         else:
             msg = i.description
 
         if added == True:
-            self.logger.info(f"{msg} was added to the Discord queue.")
+            self.logger.info(f'"{msg}" was added to the Discord queue.')
         else:
-            self.logger.error(f"{msg} was not added to add to the Discord queue.")
+            self.logger.error(f'"{msg}" was not added to add to the Discord queue.')

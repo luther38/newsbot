@@ -1,7 +1,13 @@
 from typing import List
 from newsbot.logger import Logger
 from newsbot.sql.tables import Articles, Sources, DiscordWebHooks
-from newsbot.sources.common import ISources, BSources, UnableToParseContent, UnableToFindContent
+from newsbot.sources.common import (
+    ISources,
+    BSources,
+    UnableToParseContent,
+    UnableToFindContent,
+)
+
 
 class FFXIVReader(ISources, BSources):
     def __init__(self) -> None:
@@ -23,7 +29,7 @@ class FFXIVReader(ISources, BSources):
             self.logger.debug(f"{site.name} - Checking for updates.")
             self.uri = site.url
 
-            #siteContent: Response = self.getContent()
+            # siteContent: Response = self.getContent()
             page = self.getParser(requestsContent=self.getContent())
 
             if "Topics" in site.name:
@@ -63,7 +69,7 @@ class FFXIVReader(ISources, BSources):
                         a.url = f"{self.baseUri}{news.attrs['href']}"
                         # a.tags = "Notices"
                         self.uri = a.link
-                        #subPage = self.getContent()
+                        # subPage = self.getContent()
                         details = self.getParser(requestsContent=self.getContent())
                         for d in details.find_all(
                             "div", {"class", "news__detail__wrapper"}
@@ -89,7 +95,7 @@ class FFXIVReader(ISources, BSources):
                         a.url = f"{self.baseUri}{news.attrs['href']}"
                         # a.tags = site["tag"]
                         self.uri = a.link
-                        #subPage = self.getContent()
+                        # subPage = self.getContent()
                         details = self.getParser(requestsContent=self.getContent())
                         for d in details.find_all(
                             "div", {"class", "news__detail__wrapper"}
@@ -117,7 +123,7 @@ class FFXIVReader(ISources, BSources):
                         a.url = f"{self.baseUri}{news.attrs['href']}"
                         self.uri = a.link
 
-                        #subPage = self.getContent()
+                        # subPage = self.getContent()
                         details = self.getParser(requestsContent=self.getContent())
 
                         for d in details.find_all(
@@ -147,7 +153,7 @@ class FFXIVReader(ISources, BSources):
                         a.tags = site["tag"]
                         self.uri = a.link
 
-                        #subPage = self.getContent()
+                        # subPage = self.getContent()
                         details = self.getParser(requestsContent=self.getContent())
 
                         for d in details.find_all(
@@ -162,6 +168,7 @@ class FFXIVReader(ISources, BSources):
                     pass
 
         return allArticles
+
 
 #    def checkEnv(self) -> None:
 #        # Check if site was requested.

@@ -10,8 +10,8 @@ from sqlalchemy import Column, String, Boolean
 
 
 # revision identifiers, used by Alembic.
-revision = 'c77ad08fa772'
-down_revision = '1e72dcb284c9'
+revision = "c77ad08fa772"
+down_revision = "1e72dcb284c9"
 branch_labels = None
 depends_on = None
 
@@ -22,16 +22,21 @@ def upgrade():
     drop_table("sources")
 
     create_table(
-        "sources"
-        ,Column("id", String, primary_key=True)
-        ,Column("name", String)
-        ,Column("source", String)
-        ,Column("type", String)
-        ,Column("value", String)
-        ,Column('enabled', Boolean)
-        ,Column('url', String)
-        ,Column('tags', String)
+        "sources",
+        Column("id", String, primary_key=True),
+        Column("name", String),
+        Column("source", String),
+        Column("type", String),
+        Column("value", String),
+        Column("enabled", Boolean),
+        Column("url", String),
+        Column("tags", String),
     )
+
+    add_column("Articles", Column("sourceType", String()))
+    add_column("Articles", Column("sourceName", String()))
+    add_column("discordQueue", Column("sourceType", String()))
+    add_column("discordQueue", Column("sourceName", String()))
     pass
 
 
@@ -39,12 +44,17 @@ def downgrade():
     # Drop the new table
     drop_table("sources")
 
-    #Generate the old 
+    # Generate the old
     create_table(
         "sources",
         Column("id", String, primary_key=True),
         Column("name", String),
         Column("url", String),
-        Column("enabled", Boolean)
+        Column("enabled", Boolean),
     )
+
+    drop_column("Articles", "sourceType")
+    drop_column("Articles", "sourceName")
+    drop_column("discordQueue", "sourceType")
+    drop_column("discordQueue", "sourceName")
     pass

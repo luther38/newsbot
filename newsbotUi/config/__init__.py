@@ -4,23 +4,21 @@ from wtforms import form
 from newsbot.sql import DiscordWebHooks, Sources
 from newsbotUi.config.forms import DiscordWebhookAddForm
 
-config = Blueprint(
-    name='config'
-    ,import_name=__name__
-    ,template_folder='templates'
-)
+config = Blueprint(name="config", import_name=__name__, template_folder="templates")
 
-@config.route('/')
+
+@config.route("/")
 def index() -> None:
     return render_template("config/index.html")
 
 
-@config.route('/discord/list')
+@config.route("/discord/list")
 def discordList() -> None:
     res = DiscordWebHooks().findAll()
-    return render_template('config/discord/list.html', items=res)
+    return render_template("config/discord/list.html", items=res)
 
-@config.route('/discord/new', methods=['GET','POST'])
+
+@config.route("/discord/new", methods=["GET", "POST"])
 def discordNew() -> None:
     form = DiscordWebhookAddForm(request.form)
     if request.method == "POST":
@@ -28,17 +26,18 @@ def discordNew() -> None:
         print(f"Channel = {request.form['channel']}")
         print(f"URI = {request.form['url']}")
 
-        name=f"{request.form['server']} - {request.form['channel']}"
+        name = f"{request.form['server']} - {request.form['channel']}"
         DiscordWebHooks(
-            name = name
-            ,server=request.form['server']
-            ,channel=request.form['channel']
-            ,url=request.form['url']
+            name=name,
+            server=request.form["server"],
+            channel=request.form["channel"],
+            url=request.form["url"],
         ).add()
-    
-    return render_template('config/discord/new.html', form=form)
 
-@config.route('/discord/edit/<string:id>', methods=['GET','POST'])
+    return render_template("config/discord/new.html", form=form)
+
+
+@config.route("/discord/edit/<string:id>", methods=["GET", "POST"])
 def discordEdit(id: str) -> None:
     hook = DiscordWebHooks()
     hook.id = id
@@ -46,19 +45,21 @@ def discordEdit(id: str) -> None:
 
     wasUpdated: bool = False
 
-    if request.method == 'POST':
-        res.server = request.form['server']
-        res.channel = request.form['channel']
-        res.url = request.form['url']
+    if request.method == "POST":
+        res.server = request.form["server"]
+        res.channel = request.form["channel"]
+        res.url = request.form["url"]
         res.name = f"{request.form['server']} - {request.form['channel']}"
         res.update()
         wasUpdated = True
 
-    return render_template('config/discord/edit.html', res=res, updated=wasUpdated)
+    return render_template("config/discord/edit.html", res=res, updated=wasUpdated)
 
-@config.route('/discord/delete/')
+
+@config.route("/discord/delete/")
 def discordDelete() -> None:
-    return render_template('config/discord/delete.html')
+    return render_template("config/discord/delete.html")
+
 
 def convertSourceName(source: str) -> str:
     if "ffxiv" in source:
@@ -68,32 +69,38 @@ def convertSourceName(source: str) -> str:
     else:
         return source
 
+
 def convertRouteName(source: str) -> str:
     if "final fantasy xiv":
         return "ffxiv"
     else:
         return source
 
-@config.route('/source/<string:source>/list')
-def sourceList(source:str) -> None:
+
+@config.route("/source/<string:source>/list")
+def sourceList(source: str) -> None:
     source = convertSourceName(source)
     r = Sources(source).findAllByName()
-    return render_template('config/sources/list.html', items=r, sourceName=source)
+    return render_template("config/sources/list.html", items=r, sourceName=source)
 
-@config.route('/source/<string:source>/new', methods=['GET', 'POST'])
-def sourceMultiNew(source:str) -> None:
+
+@config.route("/source/<string:source>/new", methods=["GET", "POST"])
+def sourceMultiNew(source: str) -> None:
     source = convertSourceName(source)
     discord = DiscordWebHooks().findAll()
     if request.method == "POST":
         Sources()
-    return render_template('/config/sources/new.html', discord=discord, sourceName=source)
+    return render_template(
+        "/config/sources/new.html", discord=discord, sourceName=source
+    )
 
-@config.route('/source/<string:source>/edit')
-def sourceEdit(source:str) -> None:
+
+@config.route("/source/<string:source>/edit")
+def sourceEdit(source: str) -> None:
     source = convertSourceName(source)
-    return render_template('/config/sources/edit.html', sourceName=source)
+    return render_template("/config/sources/edit.html", sourceName=source)
 
-@config.route('/wizzard')
+
+@config.route("/wizzard")
 def wizzard() -> None:
-    return render_template('config/wizzard.html')
-
+    return render_template("config/wizzard.html")

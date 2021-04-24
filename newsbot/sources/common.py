@@ -12,67 +12,63 @@ class UnableToParseContent(Exception):
     Could be malformed site, or just not what was expected.
     """
 
+
 from typing import List
-from sqlalchemy.sql.expression import false
+from sqlalchemy.sql.expression import false, true
 from sqlalchemy.sql.selectable import FromClause
 from requests import Response
 from bs4 import BeautifulSoup
-from newsbot.sql.tables import Sources, DiscordWebHooks
+from newsbot.sql.tables import Sources, DiscordWebHooks, SourceLinks
 from newsbot.logger import Logger
 
-class BSources():
+
+class BSources:
     """
     This class contains some common code found in the sources.  Do not use this on its own!
     """
+
     def __init__(self) -> None:
-        self.uri:str = ""
+        self.uri: str = ""
         self.logger = Logger(__class__)
-        
+
         self.outputDiscord: bool = False
-        self.hooks = List[DiscordWebHooks] = list()
-        
+        self.hooks: List[DiscordWebHooks] = list()
+
         self.sourceEnabled: bool = False
         self.links: List[Sources] = list()
         pass
 
     def checkEnv(self, siteName: str) -> None:
         # Check if site was requested.
-        self.outputDiscord = self.isDiscordEnabled(siteName)
-        if self.outputDiscord == True:
-            self.hooks = self.getDiscordList(siteName)
+        outputDiscord = self.isDiscordEnabled(siteName)
+        if len(outputDiscord) >= 1:
+            self.outputDiscord = True
+            self.hooks = outputDiscord
 
-        self.sourceEnabled = self.isSourceEnabled(siteName)
-        if self.sourceEnabled == True:
-            self.links = self.getSourceList(siteName)
+        sources = self.getSourceList(siteName)
+        if len(sources) >= 1:
+            self.sourceEnabled = True
+            self.links = sources
 
     def getSourceList(self, siteName: str) -> List[Sources]:
         l = list()
-        res = Sources(name=siteName).findAllByName()
+        res = Sources(source=siteName).findAllBySource()
         for i in res:
             l.append(i)
         return l
 
-    def isSourceEnabled(self, siteName: str) -> bool:
-        res = Sources(name=siteName).findAllByName()
-        if len(res) >= 1:
-            return True
-        else:
-            return False
-
-    def getDiscordList(self, siteName: str) -> List[DiscordWebHooks]:
-        h = list()
-        dwh = DiscordWebHooks(name=siteName).findAllByName()
-        if len(dwh) >= 1:
-            for i in dwh:
-                h.append(i)
+    def isDiscordEnabled(self, siteName: str) -> List[DiscordWebHooks]:
+        h: List[DiscordWebHooks] = list()
+        s = Sources(source=siteName).findAllBySource()
+        for i in s:
+            sl: SourceLinks = SourceLinks(sourceID=i.id).findBySourceID()
+            if sl.discordID != "" or sl.discordID != None:
+                d = DiscordWebHooks()
+                d.id = sl.discordID
+                discordRef: DiscordWebHooks = d.findById()
+                if discordRef.enabled == True:
+                    h.append(discordRef)
         return h
-
-    def isDiscordEnabled(self, siteName: str) -> bool:
-        dwh = DiscordWebHooks(name=siteName).findAllByName()
-        if len(dwh) >= 1:
-            return True 
-        else:
-            return False
 
     def getContent(self) -> Response:
         try:
@@ -81,7 +77,9 @@ class BSources():
         except Exception as e:
             self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
-    def getParser(self, requestsContent: Response = "", seleniumContent: str = "") -> BeautifulSoup:
+    def getParser(
+        self, requestsContent: Response = "", seleniumContent: str = ""
+    ) -> BeautifulSoup:
         try:
             if seleniumContent != "":
                 return BeautifulSoup(seleniumContent, features="html.parser")
@@ -96,11 +94,13 @@ class BSources():
 
 from selenium.webdriver import Chrome, ChromeOptions
 
-class BChrome():
+
+class BChrome:
     """
     This class helps to interact with Chrome/Selenium.
     It was made to be used as a Base class for the sources who need Chrome.
     """
+
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri: str = ""
@@ -125,7 +125,7 @@ class BChrome():
         except Exception as e:
             self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
-    #def __driverGet__(self, uri: str ) -> None:
+    # def __driverGet__(self, uri: str ) -> None:
     #    self.driverGoTo(uri=uri)
 
     def driverGoTo(self, uri: str) -> None:
@@ -146,8 +146,10 @@ from typing import List
 from requests import get, Response
 from bs4 import BeautifulSoup
 from newsbot.sql.tables import Articles
+from abc import ABC
 
-class ISources:
+
+class ISources(ABC):
     def __init__(self, rootUrl: str = "") -> None:
         # This defines the URI that will be requested by requests.
         # This can be static, or filled in by each loop of links.
@@ -166,10 +168,7 @@ class ISources:
     def checkConfig(self) -> str:
         raise NotImplementedError
 
-    def getDriverContent(self) -> str:
-        raise NotImplementedError
-
-    #def getParser(self, souce: str) -> BeautifulSoup:
+    # def getParser(self, souce: str) -> BeautifulSoup:
     #    raise NotImplementedError
 
     def getArticles(self) -> List[Articles]:
@@ -177,4 +176,3 @@ class ISources:
         This is the primary loop that checks the source to extract all the articles.
         """
         raise NotImplementedError
-

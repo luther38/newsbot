@@ -10,10 +10,12 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
-#from newsbot import Base, database
+
+# from newsbot import Base, database
 from newsbot.sql import Base, database
 from newsbot.sql.exceptions import FailedToAddToDatabase
 from newsbot.sql.tables import ITables
+
 
 class Icons(Base):
     __tablename__ = "icons"
@@ -21,10 +23,7 @@ class Icons(Base):
     filename = Column(String)
     site = Column(String)
 
-    def __init__(self,
-        fileName: str = "",
-        site: str = ""
-        ) -> None:
+    def __init__(self, fileName: str = "", site: str = "") -> None:
         self.id = str(uuid.uuid4())
         self.filename = fileName
         self.site = site
@@ -41,8 +40,8 @@ class Icons(Base):
             s.close()
 
     def update(self) -> None:
-        #s = database.newSession()
-        
+        # s = database.newSession()
+
         res = self.findAllByName()
         if len(res) == 0:
             self.add()

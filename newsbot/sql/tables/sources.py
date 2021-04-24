@@ -15,8 +15,9 @@ from newsbot.sql import Base, database
 from newsbot.sql.tables import ITables
 from newsbot.sql.exceptions import *
 
+
 class Sources(Base, ITables):
-    #database = DB(Base)
+    # database = DB(Base)
     __tablename__ = "sources"
     id: str = Column(String, primary_key=True)
     name: str = Column(String)
@@ -27,11 +28,16 @@ class Sources(Base, ITables):
     url: str = Column(String)
     tags: str = Column(String)
 
-    def __init__(self, 
-        name: str = "", source: str = "",type: str = ""
-        ,value: str = "", enabled: bool = True, url: str = ""
-        ,tags: str = ""
-        ) -> None:
+    def __init__(
+        self,
+        name: str = "",
+        source: str = "",
+        type: str = "",
+        value: str = "",
+        enabled: bool = True,
+        url: str = "",
+        tags: str = "",
+    ) -> None:
         self.id: str = str(uuid.uuid4())
         self.name: str = name
         self.source: str = source
@@ -43,10 +49,10 @@ class Sources(Base, ITables):
 
     def add(self) -> None:
         s = database.newSession()
-        #h = Sources()
-        #h.name = self.name
-        #h.url = self.url
-        #h.enabled = self.enabled
+        # h = Sources()
+        # h.name = self.name
+        # h.url = self.url
+        # h.enabled = self.enabled
         try:
             s.add(self)
             s.commit()
@@ -62,10 +68,16 @@ class Sources(Base, ITables):
         try:
             exists = Sources(name=self.name).findByName()
             if exists != None:
-                key = exists.id 
+                key = exists.id
                 exists.clearSingle()
 
-            d = Sources(name=self.name, source=self.source, url=self.url )
+            d = Sources(
+                name=self.name,
+                source=self.source,
+                url=self.url,
+                type=self.type,
+                tags=self.tags,
+            )
             if key != "":
                 d.id = key
 
@@ -106,9 +118,7 @@ class Sources(Base, ITables):
         s = database.newSession()
         hooks = list()
         try:
-            for res in s.query(Sources).filter(
-                Sources.name.contains(self.name)
-            ):
+            for res in s.query(Sources).filter(Sources.name.contains(self.name)):
                 hooks.append(res)
         except Exception as e:
             pass
@@ -131,6 +141,18 @@ class Sources(Base, ITables):
             s.close()
             return hooks
 
+    def findAllBySource(self) -> List:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources).filter(Sources.source.contains(self.source)):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
+
     def __len__(self) -> int:
         s = database.newSession()
         l = list()
@@ -143,4 +165,3 @@ class Sources(Base, ITables):
             s.close()
 
         return len(l)
-

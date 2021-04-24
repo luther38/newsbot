@@ -14,6 +14,7 @@ from newsbot.sql import database, Base
 from newsbot.sql.tables import Articles, ITables
 from newsbot.sql.exceptions import FailedToAddToDatabase
 
+
 class DiscordQueue(Base, ITables):
     __tablename__ = "discordQueue"
     id = Column(String, primary_key=True)
@@ -28,6 +29,8 @@ class DiscordQueue(Base, ITables):
     videoWidth = Column(Integer)
     authorName = Column(String)
     authorImage = Column(String)
+    sourceName = Column(String)
+    sourceType = Column(String)
 
     def __init__(self) -> None:
         self.id = str(uuid.uuid4())
@@ -44,6 +47,8 @@ class DiscordQueue(Base, ITables):
         self.videoWidth = Article.videoWidth
         self.authorName = Article.authorName
         self.authorImage = Article.authorImage
+        self.sourceName = Article.sourceName
+        self.sourceType = Article.sourceType
 
     def getQueue(self) -> List:
         s = database.newSession()
