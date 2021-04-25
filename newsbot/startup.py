@@ -23,23 +23,24 @@ class Startup:
         pass
 
     def startProgram(self) -> None:
+        logger = Logger(__class__)
         db = InitDb()
+        logger.info("Newsbot is starting up...")
         db.runMigrations()
-        Logger(__class__).info("NewsBot has started.")
-        # db.clearOldRecords()
         db.runDatabaseTasks()
-        #
+        logger.info("Newsbot start up has finished.")
+        
         ## Turn on outputs first
+        logger.info("Turning on output monitors.")
         Thread(target=Discord().enableThread, name="Discord").start()
-        #
-        # Thread(target=Worker(FFXIVReader()).init, name="Final Fantasy XIV").start()
+
+        logger.info("Turning on source monitors.")
+        Thread(target=Worker(FFXIVReader()).init, name="Final Fantasy XIV").start()
         # Thread(target=Worker(PogohubReader()).init, name="Pokemon Go Hub").start()
-        Thread(target=Worker(PSO2Reader()).init, name="PSO2").start()
+        # Thread(target=Worker(PSO2Reader()).init, name="PSO2").start()
         # Thread(target=Worker(RedditReader()).init, name="Reddit").start()
         # Thread(target=Worker(YoutubeReader()).init, name="Youtube").start()
-
-
-#       # Thread(target=Worker(InstagramReader()).init, name="Instagram").start()
-# Thread(target=Worker(TwitterReader()).init, name="Twitter").start()
-# Thread(target=Worker(TwitchReader()).init, name="Twitch").start()
-# Thread(target=Worker(RssReader()).init, name="RSS").start()
+        # Thread(target=Worker(InstagramReader()).init, name="Instagram").start()
+        # Thread(target=Worker(TwitterReader()).init, name="Twitter").start()
+        # Thread(target=Worker(TwitchReader()).init, name="Twitch").start()
+        # Thread(target=Worker(RssReader()).init, name="RSS").start()

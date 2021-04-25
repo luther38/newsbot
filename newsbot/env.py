@@ -4,23 +4,6 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 
-class EnvDetails:
-    def __init__(
-        self,
-        site: str = "",
-        name: str = "",
-        hooks: List[str] = list(),
-        options: str = "",
-        icon: str = "",
-    ) -> None:
-        self.enabled: bool = False
-        self.site: str = site
-        self.name: str = name
-        self.hooks: List[str] = hooks
-        self.options: str = options
-        self.icon: str = icon
-
-
 class EnvDiscordDetails:
     def __init__(
         self, name: str = "", server: str = "", channel: str = "", url: str = ""
@@ -52,12 +35,10 @@ class EnvYoutubeDetails:
         self.url: url = url
         self.discordLinkName: List[str] = discordLinkName
 
-
 class EnvRedditDetails:
     def __init__(self, subreddit: str = "", discordLinkName: List[str] = "") -> None:
         self.subreddit: str = subreddit
         self.discordLinkName: List[str] = discordLinkName
-
 
 class EnvTwitchConfig:
     def __init__(
@@ -75,13 +56,11 @@ class EnvTwitchConfig:
         self.monitorVod: bool = monitorVod
         pass
 
-
 class EnvTwitchDetails:
     def __init__(self, user: str = "", discordLinkName: List[str] = "") -> None:
         self.user: str = user
         self.discordLinkName: List[str] = discordLinkName
         pass
-
 
 class EnvTwitterConfig:
     """
@@ -101,8 +80,16 @@ class EnvTwitterConfig:
         self.ignoreRetweet: bool = ignoreRetweet
         pass
 
-
 class EnvTwitterDetails:
+    def __init__(
+        self, name: str = "", type: str = "", discordLinkName: List[str] = ""
+    ) -> None:
+        self.name: str = name
+        self.type: str = type
+        self.discordLinkName: List[str] = discordLinkName
+        pass
+
+class EnvInstagramDetails:
     def __init__(
         self, name: str = "", type: str = "", discordLinkName: List[str] = ""
     ) -> None:
@@ -229,9 +216,9 @@ class EnvReader:
         item = EnvTwitchConfig(
             clientId=os.getenv("NEWSBOT_TWITCH_CLIENT_ID"),
             clientSecret=os.getenv("NEWSBOT_TWITCH_CLIENT_SECRET"),
-            monitorClips=bool(os.getenv("NEWSBOT_TWITCH_MONITOR_CLIPS")),
-            monitorLiveStreams=bool(os.getenv("NEWSBOT_TWITCH_MONITOR_LIVE_STREAMS")),
-            monitorVod=bool(os.getenv("NEWSBOT_TWITCH_MONITOR_VOD")),
+            monitorClips=self.__parseBool__("NEWSBOT_TWITCH_MONITOR_CLIPS"),
+            monitorLiveStreams=self.__parseBool__("NEWSBOT_TWITCH_MONITOR_LIVE_STREAMS"),
+            monitorVod=self.__parseBool__("NEWSBOT_TWITCH_MONITOR_VOD"),
         )
         return item
 
@@ -271,13 +258,29 @@ class EnvReader:
             apiKey=os.getenv(f"NEWSBOT_TWITTER_API_KEY"),
             apiKeySecret=os.getenv(f"NEWSBOT_TWITTER_API_KEY_SECRET"),
             preferedLang=os.getenv(f"NEWSBOT_TWITTER_PERFERED_LANG"),
-            ignoreRetweet=bool(os.getenv(f"NEWSBOT_TWITTER_IGNORE_RETWEET"))
+            ignoreRetweet=self.__parseBool__(f"NEWSBOT_TWITTER_IGNORE_RETWEET")
         )
         return item
 
+    def readInstagram(self) -> List[EnvInstagramDetails]:
+        links: List[EnvInstagramDetails] = list()
+        i = 0
+        while i <= 9:
+            item = EnvInstagramDetails(
+                name=os.getenv(f"NEWSBOT_INSTAGRAM_{i}_NAME"),
+                type=os.getenv(f"NEWSBOT_INSTAGRAM_{i}_TYPE"),
+                discordLinkName=self.__splitDiscordLinks__(
+                    os.getenv(f"NEWSBOT_INSTAGRAM_{i}_LINK_DISCORD")
+                ),
+            )
+            i = i + 1
+            if item.name != None:
+                links.append(item)
+        return links
+
     def readPogo(self) -> EnvPokemonGoDetails:
         item = EnvPokemonGoDetails(
-            enabled=bool(os.getenv(f"NEWSBOT_POGO_ENABLED")),
+            enabled=self.__parseBool__(f"NEWSBOT_POGO_ENABLED"),
             discordLinkName=self.__splitDiscordLinks__(
                 os.getenv(f"NEWSBOT_POGO_LINK_DISCORD")
             ),
@@ -286,7 +289,7 @@ class EnvReader:
 
     def readPhantasyStarOnline2(self) -> EnvPhantasyStarOnline2Details:
         return EnvPhantasyStarOnline2Details(
-            enabled=bool(os.getenv(f"NEWSBOT_PSO2_ENABLED")),
+            enabled=self.__parseBool__(f"NEWSBOT_PSO2_ENABLED"),
             discordLinkName=self.__splitDiscordLinks__(
                 os.getenv(f"NEWSBOT_PSO2_LINK_DISCORD")
             ),
@@ -294,15 +297,25 @@ class EnvReader:
 
     def readFinalFantasyXIV(self) -> EnvFinalFantasyXIVDetails:
         return EnvFinalFantasyXIVDetails(
-            allEnabled=bool(os.getenv(f"NEWSBOT_FFXIV_ALL")),
-            topicsEnabled=bool(os.getenv(f"NEWSBOT_FFXIV_TOPICS")),
-            noticesEnabled=bool(os.getenv(f"NEWSBOT_FFXIV_NOTICES")),
-            maintenanceEnabled=bool(os.getenv(f"NEWSBOT_FFXIV_MAINTENANCE")),
-            statusEnabled=bool(os.getenv(f"NEWSBOT_FFXIV_STATUS")),
+            allEnabled=self.__parseBool__("NEWSBOT_FFXIV_ALL"),
+            topicsEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_TOPICS"),
+            noticesEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_NOTICES"),
+            maintenanceEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_MAINTENANCE"),
+            statusEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_STATUS"),
             discordLinkName=self.__splitDiscordLinks__(
                 os.getenv(f"NEWSBOT_FFXIV_LINK_DISCORD")
             ),
         )
+
+    def __parseBool__(self, envFlag: str) -> bool:
+        value:str = os.getenv(envFlag).lower()
+        if value == 'false':
+            return False
+        elif value == 'true':
+            return True
+        else:
+            raise Exception(f"Unknown value type for '{envFlag}'.  Expected True or False.")
+
 
 class Env:
     def __init__(self) -> None:
@@ -311,12 +324,12 @@ class Env:
         self.threadSleepTimer: int = 60 * 30
 
         reader = EnvReader()
-        self.pogo_values: List[EnvDetails] = reader.readPogo()
-        self.pso2_values: List[EnvDetails] = reader.readPhantasyStarOnline2()
-        self.ffxiv_values: List[EnvDetails] = reader.readFinalFantasyXIV()
+        self.pogo_values: EnvPokemonGoDetails = reader.readPogo()
+        self.pso2_values: EnvPhantasyStarOnline2Details = reader.readPhantasyStarOnline2()
+        self.ffxiv_values: EnvFinalFantasyXIVDetails = reader.readFinalFantasyXIV()
         self.reddit_values: List[EnvRedditDetails] = reader.readReddit()
         self.youtube_values: List[EnvYoutubeDetails] = reader.readYoutube()
-        # self.instagram_values: List[EnvDetails] = list()
+        self.instagram_values: List[EnvInstagramDetails] = reader.readInstagram()
         self.twitter_values: List[EnvTwitterDetails] = reader.readTwitter()
         self.twitter_config: EnvTwitterConfig = reader.readTwitterConfig()
 
@@ -326,26 +339,3 @@ class Env:
         self.rss_values: List[EnvRssDetails] = reader.readRss()
 
         self.discord_values: List[EnvDiscordDetails] = reader.readDiscord()
-
-    def readInstagramValues(self) -> None:
-        counter = 0
-        self.instagram_values.clear()
-        base = "NEWSBOT_INSTAGRAM"
-        while counter <= 10:
-            # User Posts
-            types: List["str"] = ("USER", "TAG")
-            for t in types:
-                # tbase = f"{base}_{t}"
-                site = os.getenv(f"{base}_USER_NAME_{counter}")
-                hooks = self.extractHooks(f"{base}_USER_HOOK_{counter}")
-                icon = self.getCustomIcon(f"{base}_USER_ICON_{counter}")
-                if site != None or len(hooks) >= 1:
-                    details = EnvDetails()
-                    details.enabled = True
-                    details.site = site
-                    details.hooks = hooks
-                    details.name = f"{t.lower()} {site}"
-                    details.icon = icon
-                    self.instagram_values.append(details)
-
-            counter = counter + 1

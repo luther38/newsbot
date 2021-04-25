@@ -43,7 +43,7 @@ class Sources(Base, ITables):
         self.source: str = source
         self.type: str = type
         self.value: str = value
-        self.enabled: bool = True
+        self.enabled: bool = enabled
         self.url: str = url
         self.tags: str = tags
 
@@ -76,6 +76,7 @@ class Sources(Base, ITables):
                 source=self.source,
                 url=self.url,
                 type=self.type,
+                value=self.value,
                 tags=self.tags,
             )
             if key != "":

@@ -154,7 +154,9 @@ class Discord(IOutputs):
     def getHooks(self, source: str, name: str) -> List[str]:
         hooks = list()
         try:
-            if source == "Pokemon Go Hub" or source == "Phantasy Star Online 2":
+            if source == "Pokemon Go Hub" or \
+                source == "Phantasy Star Online 2" or \
+                source == "Final Fantasy XIV":
                 dbHooks: SourceLinks = SourceLinks(name=f"{source}").findAllByName()
             else:
                 dbHooks: SourceLinks = SourceLinks(

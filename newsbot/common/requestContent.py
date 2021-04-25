@@ -9,12 +9,8 @@ class SiteContent:
     This object contains information returned from BeautifulSoup.
     It acts as a buffer layer incase any changes to the API
     """
-
     attrs: dict = {}
     source: str = ""
-
-    def __init__(self) -> None:
-        pass
 
 
 class RequestContent:
@@ -30,7 +26,6 @@ class RequestContent:
     def __init__(self, url: str = "") -> None:
         self.url = url
         self.logger = Logger(__class__)
-        pass
 
     def setUrl(self, url: str) -> None:
         """

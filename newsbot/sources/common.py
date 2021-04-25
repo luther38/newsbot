@@ -2,16 +2,14 @@ class UnableToFindContent(Exception):
     """
     Used when failure to return results from a scrape request.
     """
-
     pass
-
 
 class UnableToParseContent(Exception):
     """
     This is used when a failure happens on parsing the content that came back from requests.
     Could be malformed site, or just not what was expected.
     """
-
+    pass
 
 from typing import List
 from sqlalchemy.sql.expression import false, true
@@ -20,7 +18,6 @@ from requests import Response
 from bs4 import BeautifulSoup
 from newsbot.sql.tables import Sources, DiscordWebHooks, SourceLinks
 from newsbot.logger import Logger
-
 
 class BSources:
     """

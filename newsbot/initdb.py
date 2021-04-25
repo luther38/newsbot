@@ -1,5 +1,7 @@
 from newsbot.env import (
     EnvDiscordDetails,
+    EnvFinalFantasyXIVDetails,
+    EnvInstagramDetails,
     EnvPhantasyStarOnline2Details,
     EnvPokemonGoDetails,
     EnvRedditDetails,
@@ -13,7 +15,6 @@ from newsbot.env import (
 from os import name, system
 from newsbot.env import Env
 from typing import List
-from newsbot.collections import EnvDetails
 from newsbot.sql.tables import (
     Sources,
     DiscordWebHooks,
@@ -24,7 +25,7 @@ from newsbot.sql.tables import (
     SourceLinks,
     settings,
 )
-from os import getenv
+from json import loads, dumps
 
 
 class InitDb:
@@ -40,83 +41,6 @@ class InitDb:
         # clear our the table cache from last startup
         Sources().clearTable()
         DiscordWebHooks().clearTable()
-
-    #    def checkPokemonGoHub(self):
-    #        if self.e.pogo_enabled == True:
-    #            # Pokemon Go Hub only has one source
-    #            Sources(name="Pokemon Go Hub", url="https://pokemongohub.net/rss").add()
-    #            if self.e.pogo_icon != "":
-    #                Icons(site=f"Custom Pokemon Go Hub", fileName=self.e.pogo_icon).update()
-    #            for i in self.e.pogo_hooks:
-    #                DiscordWebHooks(name="Pokemon Go Hub", key=i).add()
-
-    #    def checkPhantasyStarOnline2(self):
-    #        """
-    #        This has been replaced by self.checkSite()
-    #        """
-    #        if self.e.pso2_values[0] == True:
-    #            Sources(
-    #                name="Phantasy Star Online 2",
-    #                url="https://pso2.com/news"
-    #            ).add()
-    #            if self.e.pso2_icon != "":
-    #                Icons(
-    #                    site=f"Custom Phantasy Star Online 2",
-    #                    fileName=self.e.pso2_icon
-    #                ).update()
-    #            for i in self.e.pso2_hooks:
-    #                DiscordWebHooks(name="Phantasy Star Online 2", key=i).add()
-
-    def checkFinalFantasyXIV(self):
-
-        if self.e.ffxiv_all == True or self.e.ffxiv_topics == True:
-            Sources(
-                name="Final Fantasy XIV Topics",
-                url="https://na.finalfantasyxiv.com/lodestone/topics/",
-            ).add()
-
-        if self.e.ffxiv_all == True or self.e.ffxiv_notices == True:
-            Sources(
-                name="Final Fantasy XIV Notices",
-                url="https://na.finalfantasyxiv.com/lodestone/news/category/1",
-            ).add()
-
-        if self.e.ffxiv_all == True or self.e.ffxiv_maintenance == True:
-            Sources(
-                name="Final Fantasy XIV Maintenance",
-                url="https://na.finalfantasyxiv.com/lodestone/news/category/2",
-            ).add()
-
-        if self.e.ffxiv_all == True or self.e.ffxiv_updates == True:
-            Sources(
-                name="Final Fantasy XIV Updates",
-                url="https://na.finalfantasyxiv.com/lodestone/news/category/3",
-            ).add()
-
-        if self.e.ffxiv_all == True or self.e.ffxiv_status == True:
-            Sources(
-                name="Final Fantasy XIV Status",
-                url="https://na.finalfantasyxiv.com/lodestone/news/category/4",
-            ).add()
-
-        for i in self.e.ffxiv_hooks:
-            DiscordWebHooks(name="Final Fantasy XIV", key=i).add()
-        if self.e.ffxiv_icon != "":
-            Icons(site=f"Custom Final Fantasy XIV", fileName=self.e.ffxiv_icon).update()
-
-    def checkSite(self, siteName: str, siteValues: List[EnvDetails]):
-        for i in siteValues:
-            if siteName == i.name:
-                r1 = i.name
-            elif siteName == "Reddit":
-                r1 = f"{siteName} {i.site}"
-            else:
-                r1 = f"{siteName} {i.name}"
-            Sources(name=r1, url=i.site).add()
-            if i.icon != "":
-                Icons(site=f"Custom {r1}", fileName=i.icon).update()
-            for h in i.hooks:
-                DiscordWebHooks(name=r1, key=h).add()
 
     def addStaticIcons(self) -> None:
         # Icons().clearTable()
@@ -275,6 +199,27 @@ class InitDb:
                 )
                 sl.update()
 
+    def updateInstagram(self, values: List[EnvInstagramDetails]) -> None:
+        for i in values:
+            if i.type.lower() == "user":
+                uri = f"https://instagram.com/{i.name}/"
+            elif i.type.lower() == "tag":
+                uri = f"https://instagram.com/explore/tags/{i.name}"
+            else:
+                uri = "https://instagram.com"
+            Sources(
+                name=i.name, source="instagram", type=i.type.lower(), url=uri
+            ).update()
+            s: Sources = Sources(name=i.name).findByName()
+            for h in i.discordLinkName:
+                l = DiscordWebHooks(name=h).findByName()
+                sl = SourceLinks(
+                    name=f"{s.source}_{s.name}_>_{l.name}",
+                    sourceID=s.id,
+                    discordID=l.id,
+                )
+                sl.update()
+
     def updatePokemonGo(self, values: EnvPokemonGoDetails) -> None:
         try:
             Sources(
@@ -311,6 +256,36 @@ class InitDb:
         except Exception as e:
             print(f"Failed to enabled 'Phantasy Star Online 2' source. Error: {e}")
 
+    def updateFinalFantasyXIV(self, values: EnvFinalFantasyXIVDetails) -> None:
+        name: str = "Final Fantasy XIV"
+        url: str = "https://finalfantasyxiv.com"
+        try:
+            s = Sources(
+                name=name,
+                source=name,
+                enabled=values.allEnabled,
+                value= dumps([
+                    { 'key':'all','value':values.allEnabled },
+                    { 'key':'topics','value':values.topicsEnabled },
+                    { 'key':'notices','value':values.noticesEnabled },
+                    { 'key':'maintenance','value':values.maintenanceEnabled },
+                    { 'key':'updates','value':values.updateEnabled },
+                    { 'key':'status','value':values.statusEnabled }
+                ]),
+                url=url,
+            )
+            s.update()
+
+            s: Sources = Sources(name=name).findByName()
+            for h in values.discordLinkName:
+                l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
+                sl = SourceLinks(
+                    name=f"{s.source}_>_{l.name}", sourceID=s.id, discordID=l.id
+                )
+                sl.update()
+        except Exception as e:
+            print(f"Failed to enabled '{name}' source. Error: {e}")
+
     def runDatabaseTasks(self) -> None:
         # Inject new values based off env values
         self.updateDiscordValues(values=self.e.discord_values)
@@ -319,11 +294,11 @@ class InitDb:
         self.updateReddit(values=self.e.reddit_values)
         self.updateTwitch(values=self.e.twitch_values)
         self.updateTwitter(values=self.e.twitter_values)
+        self.updateInstagram(values=self.e.instagram_values)
         self.updatePokemonGo(values=self.e.pogo_values)
         self.updatePhantasyStarOnline2(values=self.e.pso2_values)
-
-        # self.checkFinalFantasyXIV()
-        # self.checkSite(siteName="Instagram", siteValues=self.e.instagram_values)
+        self.updateFinalFantasyXIV(values=self.e.ffxiv_values)
+        
         self.addStaticIcons()
         self.rebuildCache(
             twitchConfig=self.e.twitch_config, twitterConfig=self.e.twitter_config
