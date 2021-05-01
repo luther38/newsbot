@@ -117,7 +117,7 @@ class EnvPhantasyStarOnline2Details:
 class EnvFinalFantasyXIVDetails:
     def __init__(
         self,
-        allEnabled: bool = False,
+        #allEnabled: bool = False,
         topicsEnabled: bool = False,
         noticesEnabled: bool = False,
         maintenanceEnabled: bool = False,
@@ -125,7 +125,7 @@ class EnvFinalFantasyXIVDetails:
         statusEnabled: bool = False,
         discordLinkName: List[str] = list(),
     ) -> None:
-        self.allEnabled: bool = allEnabled
+        #self.allEnabled: bool = allEnabled
         self.topicsEnabled: bool = topicsEnabled
         self.noticesEnabled: bool = noticesEnabled
         self.maintenanceEnabled: bool = maintenanceEnabled
@@ -297,10 +297,11 @@ class EnvReader:
 
     def readFinalFantasyXIV(self) -> EnvFinalFantasyXIVDetails:
         return EnvFinalFantasyXIVDetails(
-            allEnabled=self.__parseBool__("NEWSBOT_FFXIV_ALL"),
+            #allEnabled=self.__parseBool__("NEWSBOT_FFXIV_ALL"),
             topicsEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_TOPICS"),
             noticesEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_NOTICES"),
             maintenanceEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_MAINTENANCE"),
+            updateEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_UPDATES"),
             statusEnabled=self.__parseBool__(f"NEWSBOT_FFXIV_STATUS"),
             discordLinkName=self.__splitDiscordLinks__(
                 os.getenv(f"NEWSBOT_FFXIV_LINK_DISCORD")

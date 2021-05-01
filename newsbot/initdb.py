@@ -15,6 +15,7 @@ from newsbot.env import (
 from os import name, system
 from newsbot.env import Env
 from typing import List
+from abc import ABC, abstractclassmethod
 from newsbot.sql.tables import (
     Sources,
     DiscordWebHooks,
@@ -25,14 +26,156 @@ from newsbot.sql.tables import (
     SourceLinks,
     settings,
 )
-from json import loads, dumps
+
+class FailedToIUpdateSource(Exception):
+    """
+    This is raised when the source is checked and the results are null.
+    """
+
+class IUpdateSource(ABC):
+    @abstractclassmethod
+    def update(self, values) -> None:
+        pass
+
+class UpdateSource(IUpdateSource):
+    def updateSourceLinks(self, source: Sources, hookNames: List[str]) -> None:
+        try:
+            for h in hookNames:
+                l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
+                sl = SourceLinks(
+                    name=f"{source.source}_{source.name}_>_{l.name}", sourceID=source.id, discordID=l.id
+                )
+                sl.update()
+        except Exception as e:
+            print(f"Failed to update SourceLinks for {source.source} {source.name}. Error: {e}")
+
+class IUpdateSourceURL(ABC):
+    @abstractclassmethod
+    def __getUrl__(self, type:str, name: str) -> str:
+        pass
+
+class UpdateRSSSource(UpdateSource):
+    sourceName: str = "rss"
+    def update(self, values: List[EnvRssDetails]) -> None:
+        for i in values:
+            Sources(name=i.name, source=self.sourceName, url=i.url).update()
+            s = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
+            self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
+
+class UpdateYoutubeSource(UpdateSource):
+    sourceName: str = "youtube"
+    def update(self, values: List[EnvYoutubeDetails]) -> None:
+        for i in values:
+            Sources(name=i.name, source=self.sourceName, url=i.url).update()
+            s: Sources = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
+            self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
+
+class UpdateRedditSource(UpdateSource):
+    sourceName: str = 'reddit'
+    def update(self, values: List[EnvRedditDetails]) -> None:
+        for i in values:
+            Sources(name=i.subreddit, source=self.sourceName, url=f"https://reddit.com/r/{i.subreddit}/").update()
+            s: Sources = Sources(name=i.subreddit, source=self.sourceName).findBySourceAndName()
+            self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
+
+class UpdateTwitchSource(UpdateSource):
+    sourceName: str = "twitch"
+    def update(self, values: List[EnvTwitchDetails]) -> None:
+        for i in values:
+            Sources(name=i.user, source=self.sourceName, url=f"https://twitch.tv/{i.user}/").update()
+            s: Sources = Sources(name=i.user, source=self.sourceName).findBySourceAndName()
+            self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
+
+class UpdateTwitterSource(UpdateSource, IUpdateSourceURL): 
+    sourceName: str = "twitter"
+    def update(self, values: List[EnvTwitterDetails]) -> None:
+        for i in values:
+            s = Sources(
+                name=i.name, 
+                source=self.sourceName, 
+                type=i.type.lower(), 
+                url=self.__getUrl__(
+                    type=i.type.lower(), 
+                    name=i.name
+                )
+            )
+            s.update()
+            s: Sources = Sources(name=i.name, source=self.sourceName, type=i.type.lower()).findBySourceNameType()
+            self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
+
+    def __getUrl__(self, type: str, name: str) -> str:
+        root: str = "https://twitter.com"
+        if   type == "user": return f"{root}/{name}/"
+        elif type == "tag":  return f"{root}/hashtag/{name}"
+        else:                return root
+
+class UpdateInstagramSource(UpdateSource, IUpdateSourceURL):
+    sourceName: str = "instagram"
+    def update(self, values: List[EnvInstagramDetails]) -> None:
+        for i in values:
+            uri: str = self.__getUrl__(type=i.type.lower(), name=i.name)
+            Sources(
+                name=i.name, source=self.sourceName, type=i.type.lower(), url=uri
+            ).update()
+            s: Sources = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
+            self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
+
+    def __getUrl__(self, type: str, name: str) -> str:
+        root: str = "https://instagram.com"
+        if type == "user":  return f"{root}/{name}/"
+        elif type == "tag": return f"{root}/explore/tags/{name}"
+        else:               return root
+
+class UpdatePokemonGoHubSource(UpdateSource):
+    sourceName: str = 'pokemongohub'
+    def update(self, values: EnvPokemonGoDetails) -> None:
+        try:
+            Sources(
+                name=self.sourceName,
+                source=self.sourceName,
+                enabled=values.enabled,
+                url="https://pokemongohub.net",
+            ).update()
+            s: Sources = Sources(name=self.sourceName).findByName()
+            self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
+        except Exception as e:
+            print(f"Failed to enable 'Pokemon Go Hub' source. Error: {e}")
+
+class UpdatePhantasyStarOnline2Source(UpdateSource):
+    sourceName: str = "phantasystaronline2"
+    def update(self, values: EnvPhantasyStarOnline2Details) -> None:
+        try:
+            Sources(
+                name=self.sourceName,
+                source=self.sourceName,
+                enabled=values.enabled,
+                url="https://pso2.com",
+            ).update()
+            s: Sources = Sources(name=self.sourceName).findByName()
+            self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
+        except Exception as e:
+            print(f"Failed to enabled 'Phantasy Star Online 2' source. Error: {e}")
+
+class UpdateFinalFantasyXIVSource(UpdateSource):
+    def __init__(self, topic: str, enabled: bool) -> None:
+        self.topic: str = topic
+        self.enabled: bool = enabled
+        self.sourceName: str = "finalfantasyxiv"
+        self.url: str = "https://finalfantasyxiv.com"
+
+    def update(self, values: EnvFinalFantasyXIVDetails) -> None:  
+        try:
+            s = Sources(name=self.topic, source=self.sourceName, enabled=self.enabled, url=self.url)
+            s.update()
+            s = Sources(name=self.topic, source=self.sourceName).findBySourceAndName()
+            self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
+        except Exception as e:
+            print(f"Failed to enabled '{self.topic}' in '{self.sourceName}' source. Error: {e}")
 
 
 class InitDb:
     def __init__(self) -> None:
         self.e = Env()
-        # self.e.readEnv()
-        pass
 
     def runMigrations(self) -> None:
         system("alembic upgrade head")
@@ -89,7 +232,7 @@ class InitDb:
 
     def rebuildCache(
         self, twitchConfig: EnvTwitchConfig, twitterConfig: EnvTwitterConfig
-    ) -> None:
+        ) -> None:
         Settings().clearTable()
         Settings(key="twitch clips enabled", value=twitchConfig.monitorClips).add()
         Settings(key="twitch vod enabled", value=twitchConfig.monitorVod).add()
@@ -109,195 +252,21 @@ class InitDb:
             )
             d.update()
 
-    def updateRss(self, values: List[EnvRssDetails]) -> None:
-        # loop over all the objects found in the env
-        for i in values:
-            # Run update the value based on its existing name
-            Sources(name=i.name, source="RSS", url=i.url).update()
-
-            # Get the Source object by name
-            s = Sources(name=i.name).findByName()
-
-            # Get the DiscordWebHook by Name
-            for h in i.discordLinkName:
-                l = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_{s.name}_>_{l.name}",
-                    sourceID=s.id,
-                    discordID=l.id,
-                )
-                sl.update()
-
-        # print('l')
-
-    def updateYoutube(self, values: List[EnvYoutubeDetails]) -> None:
-        # loop over all the objects found in the env
-        for i in values:
-            # Run update the value based on its existing name
-            Sources(name=i.name, source="Youtube", url=i.url).update()
-
-            # Get the Source object by name
-            s: Sources = Sources(name=i.name).findByName()
-
-            # Get the DiscordWebHook by Name
-            for h in i.discordLinkName:
-                l = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_{s.name}_>_{l.name}",
-                    sourceID=s.id,
-                    discordID=l.id,
-                )
-                sl.update()
-
-    def updateReddit(self, values: List[EnvRedditDetails]) -> None:
-        # loop over all the objects found in the env
-        for i in values:
-            uri = f"https://reddit.com/r/{i.subreddit}/"
-            Sources(name=i.subreddit, source="reddit", url=uri).update()
-            s: Sources = Sources(name=i.subreddit).findByName()
-            for h in i.discordLinkName:
-                l = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_{s.name}_>_{l.name}",
-                    sourceID=s.id,
-                    discordID=l.id,
-                )
-                sl.update()
-
-    def updateTwitch(self, values: List[EnvTwitchDetails]) -> None:
-        for i in values:
-            uri = f"https://twitch.tv/{i.user}/"
-            Sources(name=i.user, source="twitch", url=uri).update()
-            s: Sources = Sources(name=i.user).findByName()
-            for h in i.discordLinkName:
-                l = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_{s.name}_>_{l.name}",
-                    sourceID=s.id,
-                    discordID=l.id,
-                )
-                sl.update()
-
-    def updateTwitter(self, values: List[EnvTwitterDetails]) -> None:
-        for i in values:
-            if i.type.lower() == "user":
-                uri = f"https://twitter.com/{i.name}/"
-            elif i.type.lower() == "tag":
-                uri = f"https://twitter.com/hashtag/{i.name}"
-            else:
-                uri = "https://twitter.com"
-            Sources(
-                name=i.name, source="twitter", type=i.type.lower(), url=uri
-            ).update()
-            s: Sources = Sources(name=i.name).findByName()
-            for h in i.discordLinkName:
-                l = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_{s.name}_>_{l.name}",
-                    sourceID=s.id,
-                    discordID=l.id,
-                )
-                sl.update()
-
-    def updateInstagram(self, values: List[EnvInstagramDetails]) -> None:
-        for i in values:
-            if i.type.lower() == "user":
-                uri = f"https://instagram.com/{i.name}/"
-            elif i.type.lower() == "tag":
-                uri = f"https://instagram.com/explore/tags/{i.name}"
-            else:
-                uri = "https://instagram.com"
-            Sources(
-                name=i.name, source="instagram", type=i.type.lower(), url=uri
-            ).update()
-            s: Sources = Sources(name=i.name).findByName()
-            for h in i.discordLinkName:
-                l = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_{s.name}_>_{l.name}",
-                    sourceID=s.id,
-                    discordID=l.id,
-                )
-                sl.update()
-
-    def updatePokemonGo(self, values: EnvPokemonGoDetails) -> None:
-        try:
-            Sources(
-                name="Pokemon Go Hub",
-                source="Pokemon Go Hub",
-                enabled=values.enabled,
-                url="https://pokemongohub.net",
-            ).update()
-            s: Sources = Sources(name="Pokemon Go Hub").findByName()
-            for h in values.discordLinkName:
-                l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_>_{l.name}", sourceID=s.id, discordID=l.id
-                )
-                sl.update()
-        except Exception as e:
-            print(f"Failed to enable 'Pokemon Go Hub' source. Error: {e}")
-
-    def updatePhantasyStarOnline2(self, values: EnvPhantasyStarOnline2Details) -> None:
-        try:
-            Sources(
-                name="Phantasy Star Online 2",
-                source="Phantasy Star Online 2",
-                enabled=values.enabled,
-                url="https://pso2.com",
-            ).update()
-            s: Sources = Sources(name="Phantasy Star Online 2").findByName()
-            for h in values.discordLinkName:
-                l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_>_{l.name}", sourceID=s.id, discordID=l.id
-                )
-                sl.update()
-        except Exception as e:
-            print(f"Failed to enabled 'Phantasy Star Online 2' source. Error: {e}")
-
-    def updateFinalFantasyXIV(self, values: EnvFinalFantasyXIVDetails) -> None:
-        name: str = "Final Fantasy XIV"
-        url: str = "https://finalfantasyxiv.com"
-        try:
-            s = Sources(
-                name=name,
-                source=name,
-                enabled=values.allEnabled,
-                value= dumps([
-                    { 'key':'all','value':values.allEnabled },
-                    { 'key':'topics','value':values.topicsEnabled },
-                    { 'key':'notices','value':values.noticesEnabled },
-                    { 'key':'maintenance','value':values.maintenanceEnabled },
-                    { 'key':'updates','value':values.updateEnabled },
-                    { 'key':'status','value':values.statusEnabled }
-                ]),
-                url=url,
-            )
-            s.update()
-
-            s: Sources = Sources(name=name).findByName()
-            for h in values.discordLinkName:
-                l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
-                sl = SourceLinks(
-                    name=f"{s.source}_>_{l.name}", sourceID=s.id, discordID=l.id
-                )
-                sl.update()
-        except Exception as e:
-            print(f"Failed to enabled '{name}' source. Error: {e}")
-
     def runDatabaseTasks(self) -> None:
-        # Inject new values based off env values
         self.updateDiscordValues(values=self.e.discord_values)
-        self.updateRss(values=self.e.rss_values)
-        self.updateYoutube(values=self.e.youtube_values)
-        self.updateReddit(values=self.e.reddit_values)
-        self.updateTwitch(values=self.e.twitch_values)
-        self.updateTwitter(values=self.e.twitter_values)
-        self.updateInstagram(values=self.e.instagram_values)
-        self.updatePokemonGo(values=self.e.pogo_values)
-        self.updatePhantasyStarOnline2(values=self.e.pso2_values)
-        self.updateFinalFantasyXIV(values=self.e.ffxiv_values)
+        UpdateRSSSource().update(values=self.e.rss_values)
+        UpdateYoutubeSource().update(values=self.e.youtube_values)
+        UpdateRedditSource().update(values=self.e.reddit_values)
+        UpdateTwitchSource().update(values=self.e.twitch_values)
+        UpdateTwitterSource().update(values=self.e.twitter_values)
+        UpdateInstagramSource().update(values=self.e.instagram_values)
+        UpdatePokemonGoHubSource().update(values=self.e.pogo_values)
+        UpdatePhantasyStarOnline2Source().update(values=self.e.pso2_values)
+        UpdateFinalFantasyXIVSource("topics", self.e.ffxiv_values.topicsEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource("notices", self.e.ffxiv_values.noticesEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource("maintenance", self.e.ffxiv_values.maintenanceEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource("updates", self.e.ffxiv_values.updateEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource("status", self.e.ffxiv_values.statusEnabled).update(values=self.e.ffxiv_values)
         
         self.addStaticIcons()
         self.rebuildCache(
