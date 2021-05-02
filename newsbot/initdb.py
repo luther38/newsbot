@@ -58,7 +58,7 @@ class UpdateRSSSource(UpdateSource):
     sourceName: str = "rss"
     def update(self, values: List[EnvRssDetails]) -> None:
         for i in values:
-            Sources(name=i.name, source=self.sourceName, url=i.url).update()
+            Sources(name=i.name, source=self.sourceName, url=i.url, fromEnv=True).update()
             s = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
@@ -66,7 +66,7 @@ class UpdateYoutubeSource(UpdateSource):
     sourceName: str = "youtube"
     def update(self, values: List[EnvYoutubeDetails]) -> None:
         for i in values:
-            Sources(name=i.name, source=self.sourceName, url=i.url).update()
+            Sources(name=i.name, source=self.sourceName, url=i.url, fromEnv=True).update()
             s: Sources = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
@@ -74,7 +74,7 @@ class UpdateRedditSource(UpdateSource):
     sourceName: str = 'reddit'
     def update(self, values: List[EnvRedditDetails]) -> None:
         for i in values:
-            Sources(name=i.subreddit, source=self.sourceName, url=f"https://reddit.com/r/{i.subreddit}/").update()
+            Sources(name=i.subreddit, source=self.sourceName, url=f"https://reddit.com/r/{i.subreddit}/", fromEnv=True).update()
             s: Sources = Sources(name=i.subreddit, source=self.sourceName).findBySourceAndName()
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
@@ -82,7 +82,7 @@ class UpdateTwitchSource(UpdateSource):
     sourceName: str = "twitch"
     def update(self, values: List[EnvTwitchDetails]) -> None:
         for i in values:
-            Sources(name=i.user, source=self.sourceName, url=f"https://twitch.tv/{i.user}/").update()
+            Sources(name=i.user, source=self.sourceName, url=f"https://twitch.tv/{i.user}/", fromEnv=True).update()
             s: Sources = Sources(name=i.user, source=self.sourceName).findBySourceAndName()
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
@@ -97,7 +97,8 @@ class UpdateTwitterSource(UpdateSource, IUpdateSourceURL):
                 url=self.__getUrl__(
                     type=i.type.lower(), 
                     name=i.name
-                )
+                ),
+                fromEnv=True
             )
             s.update()
             s: Sources = Sources(name=i.name, source=self.sourceName, type=i.type.lower()).findBySourceNameType()
@@ -115,7 +116,8 @@ class UpdateInstagramSource(UpdateSource, IUpdateSourceURL):
         for i in values:
             uri: str = self.__getUrl__(type=i.type.lower(), name=i.name)
             Sources(
-                name=i.name, source=self.sourceName, type=i.type.lower(), url=uri
+                name=i.name, source=self.sourceName, 
+                type=i.type.lower(), url=uri, fromEnv=True
             ).update()
             s: Sources = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
@@ -135,6 +137,7 @@ class UpdatePokemonGoHubSource(UpdateSource):
                 source=self.sourceName,
                 enabled=values.enabled,
                 url="https://pokemongohub.net",
+                fromEnv=True
             ).update()
             s: Sources = Sources(name=self.sourceName).findByName()
             self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
@@ -150,6 +153,7 @@ class UpdatePhantasyStarOnline2Source(UpdateSource):
                 source=self.sourceName,
                 enabled=values.enabled,
                 url="https://pso2.com",
+                fromEnv=True
             ).update()
             s: Sources = Sources(name=self.sourceName).findByName()
             self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
@@ -165,7 +169,7 @@ class UpdateFinalFantasyXIVSource(UpdateSource):
 
     def update(self, values: EnvFinalFantasyXIVDetails) -> None:  
         try:
-            s = Sources(name=self.topic, source=self.sourceName, enabled=self.enabled, url=self.url)
+            s = Sources(name=self.topic, source=self.sourceName, enabled=self.enabled, url=self.url, fromEnv=True)
             s.update()
             s = Sources(name=self.topic, source=self.sourceName).findBySourceAndName()
             self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
@@ -248,7 +252,7 @@ class InitDb:
                 v.name = f"{v.server} - {v.channel}"
 
             d = DiscordWebHooks(
-                name=v.name, server=v.server, channel=v.channel, url=v.url
+                name=v.name, server=v.server, channel=v.channel, url=v.url, fromEnv=True
             )
             d.update()
 

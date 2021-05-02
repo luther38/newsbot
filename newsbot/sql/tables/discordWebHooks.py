@@ -9,7 +9,7 @@ from sqlalchemy import (
     Binary,
 )
 import uuid
-from typing import List
+from typing import ClassVar, List
 from sqlalchemy.orm.session import Session
 from newsbot.sql import Base, database
 from newsbot.sql.tables import ITables
@@ -24,6 +24,7 @@ class DiscordWebHooks(Base, ITables):
     server = Column(String)
     channel = Column(String)
     enabled = Column(Boolean)
+    fromEnv = Column(Boolean)
 
     def __init__(
         self,
@@ -32,17 +33,17 @@ class DiscordWebHooks(Base, ITables):
         server: str = "",
         channel: str = "",
         url: str = "",
+        fromEnv: bool = False
     ) -> None:
         self.id = str(uuid.uuid4())
         self.server = server
         self.channel = channel
-        if name == "":
-            self.name = self.__generateName__()
-        else:
-            self.name = name
+        if name == "":  self.name = self.__generateName__()
+        else:           self.name = name
         self.key = key
         self.url = url
         self.enabled = True
+        self.fromEnv: bool = fromEnv
 
     def add(self) -> None:
         s: Session = database.newSession()
@@ -81,6 +82,7 @@ class DiscordWebHooks(Base, ITables):
                 server=self.server,
                 channel=self.channel,
                 url=self.url,
+                fromEnv=self.fromEnv
             )
             if key != "":
                 d.id = key

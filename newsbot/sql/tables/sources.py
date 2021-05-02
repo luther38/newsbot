@@ -27,9 +27,11 @@ class Sources(Base, ITables):
     enabled: bool = Column(Boolean)
     url: str = Column(String)
     tags: str = Column(String)
+    fromEnv: bool = Column(Boolean)
 
     def __init__(
         self,
+        id: str = "",
         name: str = "",
         source: str = "",
         type: str = "",
@@ -37,8 +39,10 @@ class Sources(Base, ITables):
         enabled: bool = True,
         url: str = "",
         tags: str = "",
+        fromEnv: bool = False
     ) -> None:
-        self.id: str = str(uuid.uuid4())
+        if id == "": self.id: str = str(uuid.uuid4())
+        else: self.id = id
         self.name: str = name
         self.source: str = source
         self.type: str = type
@@ -46,6 +50,7 @@ class Sources(Base, ITables):
         self.enabled: bool = enabled
         self.url: str = url
         self.tags: str = tags
+        self.fromEnv: bool = fromEnv
 
     def add(self) -> None:
         s = database.newSession()
@@ -66,8 +71,8 @@ class Sources(Base, ITables):
         s = database.newSession()
         key = ""
         try:
-            exists = Sources(name=self.name).findByName()
-            if exists != None:
+            exists = Sources(name=self.name, source=self.source).findBySourceAndName()
+            if exists.source != None:
                 key = exists.id
                 exists.clearSingle()
 
@@ -78,12 +83,36 @@ class Sources(Base, ITables):
                 type=self.type,
                 value=self.value,
                 tags=self.tags,
+                enabled=self.enabled,
+                fromEnv=self.fromEnv
             )
             if key != "":
                 d.id = key
 
             d.add()
         except Exception as e:
+            print(f"Failed to update")
+            print(e)
+            pass
+
+    def updateId(self, id: str) -> None:
+        s = database.newSession()
+        try:
+            Sources(id=id).clearSingle()
+            d = Sources(
+                name=self.name,
+                source=self.source,
+                url=self.url,
+                type=self.type,
+                value=self.value,
+                tags=self.tags,
+                enabled=self.enabled,
+                fromEnv=self.fromEnv
+            )
+            d.id = id
+            d.add()
+        except Exception as e:
+            print(f"Failed to update")
             print(e)
             pass
 
@@ -130,6 +159,22 @@ class Sources(Base, ITables):
             else:
                 return hooks[0]
 
+    def findById(self) -> object:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources).filter(
+                    Sources.id.contains(self.id)):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+
     def findAllByName(self) -> List:
         s = database.newSession()
         hooks = list()
@@ -153,7 +198,41 @@ class Sources(Base, ITables):
         finally:
             s.close()
             return hooks
+    
+    def findBySourceAndName(self) -> object:
+        s = database.newSession()
+        hooks: List[Sources] = list()
+        try:
+            for res in s.query(Sources).filter(
+                Sources.source.contains(self.source),
+                Sources.name.contains(self.name)
+                ):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            if len(hooks) >= 1:
+                return hooks[0]
+            else:
+                return Sources()
 
+    def findBySourceNameType(self) -> object:
+        s = database.newSession()
+        hooks: List[Sources] = list()
+        try:
+            for res in s.query(Sources).filter(
+                Sources.source.contains(self.source),
+                Sources.name.contains(self.name),
+                Sources.type.contains(self.type)
+                ):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks[0]
+    
     def __len__(self) -> int:
         s = database.newSession()
         l = list()
