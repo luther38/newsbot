@@ -24,7 +24,7 @@ Config Index
         You can configure each of them below!
     </p>
     <ul>
-        <li><a href="{{ url_for('config.sourceList', source='ffxiv')}}">Final Fantasy XIV</a></li>
+        <li><a href="{{ url_for('config.sourceList', source='finalfantasyxiv')}}">Final Fantasy XIV</a></li>
         <li><a href="{{ url_for('config.sourceList', source='ffxiv')}}">Phantasy Star Online 2</a></li>
         <li><a href="{{ url_for('config.sourceList', source='ffxiv')}}">Pokemon Go Hub</a></li>
         <li><a href="{{ url_for('config.sourceList', source='reddit')}}">Reddit</a></li>
@@ -38,10 +38,10 @@ Config Index
     <h2>Discord Web Hooks</h2>
     <p>By adding a new Discord Web Hook, you are able to define what topic you want to post to a web hook.</p>
     <button>
-        <a href="{{ url_for('config.discordNew') }}">New</a>
+        <a href="{{ url_for('config.discord.new') }}">New</a>
     </button>
     <button>
-        <a href="{{ url_for('config.discordList') }}">List</a>
+        <a href="{{ url_for('config.discord.list') }}">List</a>
     </button>
 
 </nav>

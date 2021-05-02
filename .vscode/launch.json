@@ -25,12 +25,6 @@
                 "--no-debugger"
             ],
             "jinja": true
-        },
-        {
-            "name": "Python: Module",
-            "type": "python",
-            "request": "launch",
-            "module": "newsbotUi"
         }
     ]
 }

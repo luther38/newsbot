@@ -27,6 +27,30 @@
         <tr>
             <th>Name</th>
             <th>Value</th>
+            <th>Enabled</th>
+            <th>Actions</th>
+        </th>
+        {% for i in items %}
+        <tr>
+            <td>{{i.name}}</td>
+            <td>{{i.url}}</td>
+            <td>{{i.enabled}}</td>
+            <td>
+                <button type="button">
+                    <a href="{{ url_for('config.sourceEdit', id=i.id, source=sourceName)}}">EDIT</a>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>    
+
+
+    {% if 'final fantasy xiv' in sourceName.lower() %}
+    <p> ffxiv table</p>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
             <th>Actions</th>
         </th>
         {% for i in items %}
@@ -36,6 +60,7 @@
             <td>placeholder</td>
         </tr>
         {% endfor %}
-    </table>    
+    </table>
+    {% endif %}
 </nav>
 {% endblock %}

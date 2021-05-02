@@ -1,6 +1,26 @@
-from newsbot.startup import Startup
+from logging import debug
+from threading import Thread
+from newsbot.core.startup import Startup
+from newsbot.worker.startup import NewsbotWorker
+from newsbotUi import app
 
-Startup()
+# Start up core and workers
+#Thread(target=Startup(), name="Core").start()
+coreStarted: bool = False
+workerStarted: bool = False
+uiStarted: bool = False
 
-# from newsbotUi import start_flask
-# flask = start_flask()
+if coreStarted == False:
+    Startup()
+    coreStarted = True
+if workerStarted == False:
+    NewsbotWorker()
+    workerStarted = True
+
+# Start the UI
+#Thread(target=app.run(debug=True), name="WebUI").start()
+if uiStarted == False:
+    #app.run(debug=True)
+    uiStarted = True
+
+

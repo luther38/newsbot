@@ -9,7 +9,7 @@ Config Wizzard - Newsbot
     <h1>DISCORD WEBHOOKS</h1>
 
     <button type="button"><a href="{{ url_for('config.index')}}">BACK</a></button>
-    <button type="button"><a href="{{ url_for('config.discordNew')}}">NEW</a></button>
+    <button type="button"><a href="{{ url_for('config.discord.new')}}">NEW</a></button>
     </br>
     <table>
         <tr>
@@ -27,7 +27,7 @@ Config Wizzard - Newsbot
             <td>{{i['url']}}</td>
             <td>
                 <button>
-                    <a href="{{ url_for('config.discordEdit', id=i['id']) }}">EDIT</a>
+                    <a href="{{ url_for('config.discord.edit', id=i['id']) }}">EDIT</a>
                 </button>
             </td>
         </tr>
