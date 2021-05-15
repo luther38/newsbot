@@ -18,11 +18,23 @@ class TestEnvRedditReader():
         return True
 
     #@pytest.fixture
-    def loadDiscordLinkName(self, max:int = 1) -> bool:
+    def loadDiscordLinkName(self, max:int = 0, DiscordLinks:int = 0) -> bool:
         i:int = 0
+        l:int = 0
+        text: str = ""
+        while l <= DiscordLinks:
+            temp = f"s0.c{l}"
+            if text != "":
+                text = f"{text},{temp}"
+            else: 
+                text = temp
+
+            l=l+1
+
         while i <= max:
-            environ[f"NEWSBOT_REDDIT_{i}_LINK_DISCORD"] = f"s0.c{i}"
+            environ[f"NEWSBOT_REDDIT_{i}_LINK_DISCORD"] = text
             i = i+1
+
         return True
 
     @pytest.mark.coreEnvReddit
@@ -39,7 +51,7 @@ class TestEnvRedditReader():
         assert len(res) == 1 and res[0].subreddit == "aww0"
 
     @pytest.mark.coreEnvReddit
-    def test_loadEnvOneSubredditInvert(self):
+    def test_loadEnvOneSubredditFail(self):
         self.loadSubredditEnv(max=0)
         r = EnvRedditReader(loadEnvFile=False)
         res = r.read()
@@ -50,11 +62,11 @@ class TestEnvRedditReader():
         self.loadDiscordLinkName(max=0)
         r = EnvRedditReader(loadEnvFile=False)
         res = r.read()
-        assert len(res) == 1 and res[0].discordLinkName[0] == "s0.c0"
+        assert len(res[0].discordLinkName) == 1 and res[0].discordLinkName[0] == "s0.c0"
 
 
     @pytest.mark.coreEnvReddit
-    def test_loadEnvOneDiscordLinkInvert(self):
+    def test_loadEnvOneDiscordLinkFail(self):
         self.loadDiscordLinkName(max=0)
         r = EnvRedditReader(loadEnvFile=False)
         res = r.read()
@@ -66,20 +78,28 @@ class TestEnvRedditReader():
         self.loadDiscordLinkName(max=0)
         r = EnvRedditReader(loadEnvFile=False)
         res = r.read()
-        assert len(res) == 1 and res[0].subreddit == 'aww0' and res[0].discordLinkName[0] == "s0.c0"
+        assert len(res) == 1 and len(res[0].discordLinkName) == 1
     
     @pytest.mark.coreEnvReddit
-    def test_loadEnvOneFullEnvInvert(self):
+    def test_loadEnvOneFullEnvFail(self):
         self.loadSubredditEnv(max=0)
         self.loadDiscordLinkName(max=0)
         r = EnvRedditReader(loadEnvFile=False)
         res = r.read()
         assert len(res) == 1 and res[0].subreddit != 'aww1' and res[0].discordLinkName[0] != "s0.c1"
 
+
     @pytest.mark.coreEnvReddit
-    def test_loadEnvOneFullEnvInvert(self):
-        self.loadSubredditEnv(max=0)
-        self.loadDiscordLinkName(max=0)
+    def test_loadEnvTwoSubreddits(self):
+        self.loadSubredditEnv(max=1)        
         r = EnvRedditReader(loadEnvFile=False)
         res = r.read()
-        assert len(res) == 1 and res[0].subreddit != 'aww1' and res[0].discordLinkName[0] != "s0.c1"
+        assert len(res) == 2 and res[0].subreddit == 'aww0' and res[1].subreddit == "aww1"
+
+    @pytest.mark.coreEnvReddit
+    def test_loadEnvTwoSubredditsFail(self):
+        self.loadSubredditEnv(max=1)        
+        r = EnvRedditReader(loadEnvFile=False)
+        res = r.read()
+        assert len(res) == 2 and res[0].subreddit != 'aaww0' and res[1].subreddit != "aaww1"
+

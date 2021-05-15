@@ -1,5 +1,5 @@
-from newsbot.sources.youtube import YoutubeReader
-from newsbot.tables import Sources, DiscordWebHooks
+from newsbot.worker.sources.youtube import YoutubeReader
+from newsbot.core.sql.tables import Sources, DiscordWebHooks
 
 
 class TestYouTube:

@@ -1,5 +1,5 @@
-from newsbot.tables import Sources
-from newsbot.sources.reddit import RedditReader
+from newsbot.core.sql.tables import Sources
+from newsbot.worker.sources.reddit import RedditReader
 
 
 class TestReddit:

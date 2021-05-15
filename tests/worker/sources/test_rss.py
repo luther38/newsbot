@@ -1,5 +1,5 @@
-from newsbot.sources.rss import RssReader
-from newsbot.tables import Sources
+from newsbot.worker.sources.rss import RssReader
+from newsbot.core.sql.tables import Sources
 
 
 class TestRss:
