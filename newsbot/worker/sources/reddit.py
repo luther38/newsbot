@@ -1,12 +1,15 @@
 from typing import List
 from json import loads
+
+from bs4 import BeautifulSoup
 from newsbot.core.logger import Logger
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.core.cache import Cache
-from newsbot.worker.sources.common import BChrome, ISources, BSources
+from newsbot.worker.sources.driver import BFirefox
+from newsbot.worker.sources.common import BSources
 from time import sleep
 
-class RedditReader(ISources, BSources, BChrome):
+class RedditReader(BSources, BFirefox):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://reddit.com/r/aww/top.json"
@@ -34,44 +37,26 @@ class RedditReader(ISources, BSources, BChrome):
             self.logger.debug(f"Collecting posts for '/r/{subreddit}'...")
 
             # Add the info we get via Selenium to the Cache to avoid pulling it each time.
-            authorImage = Cache(key=f"reddit {subreddit} authorImage").find()
-            authorName = Cache(key=f"reddit {subreddit} authorName").find()
+            authorImage = Cache(key=f"reddit.{subreddit}.authorImage").find()
+            authorName = Cache(key=f"reddit.{subreddit}.authorName").find()
             if authorImage == "":
-                # Collect values that we do not get from the RSS
-                self.uri = f"https://reddit.com/r/{subreddit}"
-                self.driverGoTo(self.uri)
-                # source = self.driverGetContent()
-                soup = self.getParser(seleniumContent=self.driverGetContent())
+                soup = self.getSubRedditSoup(subreddit)
+                authorImage = self.findSubThumbnail(soup)
+                subTagline = self.findTagline(soup)
 
-                subImages = soup.find_all(
-                    name="img", attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"}
-                )
-                if len(subImages) != 0:
-                    # Failed to find the custom icon.  The sub might not have a custom CSS.
-                    authorImage = subImages[0].attrs["src"]
+                if subTagline != "":
+                    authorName = f"/r/{subreddit} - {subTagline}"
+                else:
+                    authorName = f"/r/{subreddit}"
 
-                if authorImage == "":
-                    # I am not sure how to deal with svg images at this time.  Going to throw in the default reddit icon.
-                    subImages = soup.find_all(
-                        name="svg", attrs={"class": "ixfotyd9YXZz0LNAtJ25N"}
-                    )
-                    if len(subImages) == 1:
-                        authorImage = "https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png"
-
-                subName = soup.find_all(
-                    name="h1", attrs={"class": "_2yYPPW47QxD4lFQTKpfpLQ"}
-                )
-                authorName = f"/r/{subreddit} - {subName[0].text}"
-                Cache(key=f"reddit {subreddit} authorImage", value=authorImage).add()
-                Cache(key=f"reddit {subreddit} authorName", value=authorName).add()
+                Cache(key=f"reddit.{subreddit}.authorImage", value=authorImage).add()
+                Cache(key=f"reddit.{subreddit}.authorName", value=authorName).add()
 
             # Now check the RSS
             posts = self.getPosts(subreddit)
             for p in posts:
-                if (
-                    Articles(url=f"https://reddit.com{p['data']['permalink']}").exists()
-                    == False
-                ):
+                a = Articles(url=f"https://reddit.com{p['data']['permalink']}")
+                if (a.exists() == False ):
                     allArticles.append(
                         self.getPostDetails(
                             p["data"], subreddit, authorName, authorImage
@@ -82,6 +67,43 @@ class RedditReader(ISources, BSources, BChrome):
 
         self.driverClose()
         return allArticles
+
+    def getSubRedditSoup(self, subreddit: str) -> BeautifulSoup:
+        # Collect values that we do not get from the RSS
+        self.uri = f"https://reddit.com/r/{subreddit}"
+        self.driverGoTo(self.uri)
+        soup = self.getParser(seleniumContent=self.driverGetContent())
+        return soup
+
+    def findSubThumbnail(self, soup: BeautifulSoup) -> str:
+        authorImage: str = ""
+
+        #Find the 
+        subImages = soup.find_all(name="img", attrs={"class": "Mh_Wl6YioFfBc9O1SQ4Jp"})
+
+        if len(subImages) != 0:
+            # Failed to find the custom icon.  The sub might not have a custom CSS.
+            authorImage = subImages[0].attrs["src"]
+
+        if authorImage == "":
+            # I am not sure how to deal with svg images at this time.  
+            # Going to throw in the default reddit icon.
+            subImages = soup.find_all(
+                name="svg", attrs={"class": "ixfotyd9YXZz0LNAtJ25N"}
+            )
+            if len(subImages) == 1:
+                authorImage = "https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png"
+        return authorImage
+
+    def findTagline(self, soup: BeautifulSoup) -> str:
+        tagLine: str = ''
+        try:
+            subName = soup.find_all(name="h1", attrs={"class": "_2yYPPW47QxD4lFQTKpfpLQ"} )
+            tagLine = subName[0].text
+            assert subName[0].text
+        except Exception as e:
+            self.logger.critical(f"Failed to find the subreddit name in the html. Error {e}")
+        return tagLine
 
     def getVideoThumbnail(self, preview) -> str:
         try:
@@ -108,16 +130,16 @@ class RedditReader(ISources, BSources, BChrome):
         self, obj: dict, subreddit: str, authorName: str, authorImage: str
     ) -> Articles:
         try:
-
-            a = Articles()
-            a.url = f"https://reddit.com{obj['permalink']}"
-            a.siteName = f"Reddit {subreddit}"
-            a.authorImage = authorImage
-            a.authorName = authorName
-            a.title = f"{obj['title']}"
-            a.tags = obj["subreddit"]
-            a.sourceType = "Reddit"
-            a.sourceName = subreddit
+            a = Articles(
+                url=f"https://reddit.com{obj['permalink']}",
+                siteName= f"Reddit {subreddit}",
+                authorName=authorName,
+                authorImage=authorImage,
+                title=obj['title'],
+                tags=obj["subreddit"],
+                sourceType = "Reddit",
+                sourceName = subreddit
+            )
 
             # figure out what url we are going to display
             if obj["is_video"] == True:
@@ -127,7 +149,7 @@ class RedditReader(ISources, BSources, BChrome):
                 a.thumbnail = self.getVideoThumbnail(obj["preview"])
 
             elif obj["media_only"] == True:
-                print("review dis")
+                self.logger.warning(f"Found 'media_only' object. url: {a.url}")
             elif "gallery" in obj["url"]:
                 self.uri = obj["url"]
                 source = self.getContent()

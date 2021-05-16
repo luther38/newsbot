@@ -1,20 +1,14 @@
+from newsbot.worker.sources.driver import BFirefox
 from typing import List
-#from newsbot import env
 from newsbot.core.logger import Logger
-from newsbot.worker.sources.common import (
-    BChrome,
-    ISources,
-    BSources,
-    UnableToFindContent,
-    UnableToParseContent,
-)
+from newsbot.worker.sources.common import BSources
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
+from newsbot.worker.sources.driver import BFirefox
 from newsbot.core.cache import Cache
 from bs4 import BeautifulSoup
 from time import sleep
 
-
-class YoutubeReader(ISources, BSources, BChrome):
+class YoutubeReader(BSources, BFirefox):
     def __init__(self):
         self.logger = Logger(__class__)
         self.uri: str = "https://youtube.com"

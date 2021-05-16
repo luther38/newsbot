@@ -1,14 +1,13 @@
-#from newsbot import env
 from newsbot.core.logger import Logger
-from newsbot.worker.sources.common import ISources, BSources, UnableToFindContent
 from newsbot.core.sql.tables import Sources, DiscordWebHooks, Articles
+from newsbot.worker.sources.common import BSources, UnableToFindContent
 from bs4 import BeautifulSoup
 from typing import List
 import re
 from requests import get, Response
 
 
-class PSO2Reader(ISources, BSources):
+class PSO2Reader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri: str = "https://pso2.com/news"

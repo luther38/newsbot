@@ -1,3 +1,10 @@
+from typing import List
+from requests import get, Response
+from bs4 import BeautifulSoup
+from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, SourceLinks
+from abc import ABC, abstractclassmethod
+from newsbot.core.logger import Logger
+
 class UnableToFindContent(Exception):
     """
     Used when failure to return results from a scrape request.
@@ -11,15 +18,34 @@ class UnableToParseContent(Exception):
     """
     pass
 
-from typing import List
-from sqlalchemy.sql.expression import false, true
-from sqlalchemy.sql.selectable import FromClause
-from requests import Response
-from bs4 import BeautifulSoup
-from newsbot.core.sql.tables import Sources, DiscordWebHooks, SourceLinks
-from newsbot.core.logger import Logger
+class ISources(ABC):
+    def __init__(self, rootUrl: str = "") -> None:
+        # This defines the URI that will be requested by requests.
+        # This can be static, or filled in by each loop of links.
+        #self.uri: str = ""
 
-class BSources:
+        # This contains all the links that will be looped though.
+        #self.links = list()
+
+        # This contains all the DiscordWebHooks that relate to this Source.
+        #self.hooks = list()
+
+        #self.sourceEnabled: bool = False
+        #self.outputDiscord: bool = False
+        pass
+
+    #@abstractclassmethod
+    #def checkConfig(self) -> str:
+    #    raise NotImplementedError
+
+    @abstractclassmethod
+    def getArticles(self) -> List[Articles]:
+        """
+        This is the primary loop that checks the source to extract all the articles.
+        """
+        raise NotImplementedError
+
+class BSources(ISources):
     """
     This class contains some common code found in the sources.  Do not use this on its own!
     """
@@ -89,87 +115,4 @@ class BSources:
         return {"User-Agent": "NewsBot - Automated News Delivery"}
 
 
-from selenium.webdriver import Chrome, ChromeOptions
 
-
-class BChrome:
-    """
-    This class helps to interact with Chrome/Selenium.
-    It was made to be used as a Base class for the sources who need Chrome.
-    """
-
-    def __init__(self) -> None:
-        self.logger = Logger(__class__)
-        self.uri: str = ""
-        self.driver = self.driverStart()
-        pass
-
-    def driverStart(self) -> Chrome:
-        options = ChromeOptions()
-        options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        try:
-            driver = Chrome(options=options)
-            return driver
-        except Exception as e:
-            self.logger.critical(f"Chrome Driver failed to start! Error: {e}")
-
-    def driverGetContent(self) -> str:
-        try:
-            return self.driver.page_source
-        except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
-
-    # def __driverGet__(self, uri: str ) -> None:
-    #    self.driverGoTo(uri=uri)
-
-    def driverGoTo(self, uri: str) -> None:
-        try:
-            self.driver.get(uri)
-            self.driver.implicitly_wait(10)
-        except Exception as e:
-            self.logger.error(f"Driver failed to get {uri}. Error: {e}")
-
-    def driverClose(self) -> None:
-        try:
-            self.driver.close()
-        except Exception as e:
-            self.logger.error(f"Driver failed to close. Error: {e}")
-
-
-from typing import List
-from requests import get, Response
-from bs4 import BeautifulSoup
-from newsbot.core.sql.tables import Articles
-from abc import ABC
-
-
-class ISources(ABC):
-    def __init__(self, rootUrl: str = "") -> None:
-        # This defines the URI that will be requested by requests.
-        # This can be static, or filled in by each loop of links.
-        self.uri: str = ""
-
-        # This contains all the links that will be looped though.
-        self.links = list()
-
-        # This contains all the DiscordWebHooks that relate to this Source.
-        self.hooks = list()
-
-        self.sourceEnabled: bool = False
-        self.outputDiscord: bool = False
-        pass
-
-    def checkConfig(self) -> str:
-        raise NotImplementedError
-
-    # def getParser(self, souce: str) -> BeautifulSoup:
-    #    raise NotImplementedError
-
-    def getArticles(self) -> List[Articles]:
-        """
-        This is the primary loop that checks the source to extract all the articles.
-        """
-        raise NotImplementedError

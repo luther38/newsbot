@@ -1,22 +1,15 @@
 from typing import List
-#from newsbot import env
 from newsbot.core.logger import Logger
-from newsbot.worker.sources.common import (
-    BChrome,
-    BSources,
-    ISources,
-    UnableToFindContent,
-    UnableToParseContent,
-)
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
+from newsbot.worker.sources.common import BSources
+from newsbot.worker.sources.driver import BFirefox
 from requests import get, Response
 from bs4 import BeautifulSoup
 from re import findall
-from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-class InstagramReader(ISources, BSources, BChrome):
+class InstagramReader(BSources, BFirefox):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://www.instagram.com/"

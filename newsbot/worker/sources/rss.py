@@ -1,27 +1,18 @@
 from typing import List, Dict
-#from newsbot import env
+import re
+from bs4 import BeautifulSoup
+from json import loads
 from newsbot.core.logger import Logger
-from newsbot.worker.sources.common import (
-    BSources,
-    ISources,
-    UnableToFindContent,
-    UnableToParseContent,
-)
+from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Icons
+from newsbot.worker.sources.common import BSources
 from newsbot.worker.sources.rssHelper import *
 from newsbot.worker.common.requestContent import (
     RequestContent,
     RequestArticleContent,
     RequestSiteContent,
 )
-from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Icons
-from newsbot.core.cache import Cache
-from requests import get, Response
-import re
-from bs4 import BeautifulSoup
-from json import loads
 
-
-class RssReader(ISources, BSources):
+class RssReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://example.net/"

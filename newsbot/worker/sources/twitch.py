@@ -1,17 +1,12 @@
 from typing import List
 from newsbot.core.logger import Logger
 from newsbot.core.api import TwitchAPI
-from newsbot.worker.sources.common import (
-    ISources,
-    BSources,
-    UnableToFindContent,
-    UnableToParseContent,
-)
+from newsbot.worker.sources.common import BSources
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.core.cache import Cache
 
 
-class TwitchReader(ISources, BSources):
+class TwitchReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://twitch.tv/"

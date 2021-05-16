@@ -8,14 +8,12 @@ from newsbot.core.sql.tables import (
     DiscordQueue,
     DiscordWebHooks,
     Icons,
-    SourceLinks,
-    articles,
+    SourceLinks
 )
 from newsbot.worker.outputs.ioutputs import IOutputs
-from newsbot.common.convertHtml import ConvertHtml
+from newsbot.worker.common.convertHtml import ConvertHtml
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
-
 
 class Discord(IOutputs):
     def __init__(self) -> None:

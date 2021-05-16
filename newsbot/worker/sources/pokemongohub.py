@@ -1,19 +1,13 @@
 from typing import List
-#from newsbot import env
 from newsbot.core.logger import Logger
-from newsbot.worker.sources.common import (
-    BSources,
-    ISources,
-    UnableToFindContent,
-    UnableToParseContent,
-)
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
+from newsbot.worker.sources.common import BSources, UnableToFindContent
 from requests import get, Response
 from bs4 import BeautifulSoup
 import re
 
 
-class PogohubReader(ISources, BSources):
+class PogohubReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://pokemongohub.net/rss"

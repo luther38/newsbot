@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from newsbot.common.requestContent import RequestContent
+from newsbot.worker.common.requestContent import RequestContent
 
 
 class IRssContent:

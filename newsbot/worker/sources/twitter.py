@@ -1,22 +1,15 @@
 from typing import List, Set
-
 import tweepy
-#from newsbot import env
 from newsbot.core.logger import Logger
-from newsbot.worker.sources.common import (
-    BChrome,
-    ISources,
-    BSources,
-    UnableToFindContent,
-    UnableToParseContent,
-)
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Settings
+from newsbot.worker.sources.driver import BFirefox
+from newsbot.worker.sources.common import BSources
 from tweepy import AppAuthHandler, API, Cursor
 from os import getenv, initgroups
 from time import sleep
 
 
-class TwitterReader(ISources, BSources, BChrome):
+class TwitterReader(BSources, BFirefox):
     def __init__(self):
         self.logger = Logger(__class__)
         self.uri: str = "https://twitter.com"

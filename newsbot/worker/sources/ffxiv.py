@@ -2,14 +2,9 @@ from typing import List
 from bs4 import BeautifulSoup
 from newsbot.core.logger import Logger
 from newsbot.core.sql.tables import Articles
-from newsbot.worker.sources.common import (
-    ISources,
-    BSources,
-)
-from json import loads
+from newsbot.worker.sources.common import BSources
 
-
-class FFXIVReader(ISources, BSources):
+class FFXIVReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri: str = "https://na.finalfantasyxiv.com/lodestone/news/"
