@@ -1,5 +1,6 @@
 from wtforms import Form, StringField
 from wtforms import validators
+from wtforms.fields.core import BooleanField
 from wtforms.validators import DataRequired, URL
 
 class DiscordWebhookAddForm(Form):
@@ -11,4 +12,5 @@ class DiscordWebhookAddForm(Form):
 class YoutubeNew(Form):
     name = StringField('name', validators=[DataRequired()])
     username = StringField('username', validators=[DataRequired()])
-    discordServer = StringField('discord', validators=[DataRequired()])
+    discordwebhook = StringField('discord', validators=[DataRequired()])
+    enabled = BooleanField('enabled')

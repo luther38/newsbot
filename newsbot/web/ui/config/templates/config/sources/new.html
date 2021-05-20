@@ -8,7 +8,7 @@ New Source - Newsbot
 <nav>
     <h1>{{ sourceName.upper() }} WEBHOOKS</h1>
 
-    <button type="button"><a href="{{ url_for('config.discordList')}}">BACK</a></button>
+    <button type="button"><a href="{{ url_for('config.discord.list')}}">BACK</a></button>
 
     {% if "youtube" in sourceName %}
     <form method="POST">
@@ -50,6 +50,7 @@ New Source - Newsbot
         <input type="submit" value="Submit">
     </form>
     {% endif %}
+
     <p>All fields are required.</p>
 </nav>
 {% endblock %}

@@ -2,9 +2,9 @@ from .iTables import ITables
 
 from .articles import Articles
 from .discordQueue import DiscordQueue
-from .discordWebHooks import DiscordWebHooks
+from .discordWebHooks import DiscordWebHooks, DiscordWebHooksTable
 from .icons import Icons
 from .logs import Logs
 from .settings import Settings
 from .sourceLinks import SourceLinks
-from .sources import Sources
+from .sources import Sources, SourcesTable

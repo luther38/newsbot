@@ -1,40 +1,36 @@
 from flask import Blueprint, render_template, request
 from sqlalchemy.sql.expression import false, update
 from wtforms import form
-from newsbot.core.sql.tables import DiscordWebHooks, Sources
-from newsbotUi.config.forms import DiscordWebhookAddForm, YoutubeNew
-from json import loads
+from newsbot.core.sql.tables import DiscordWebHooks, Sources, SourcesTable
+from newsbot.web.ui.config.forms import DiscordWebhookAddForm, YoutubeNew
 
-config = Blueprint(name="config", import_name=__name__, template_folder="templates")
+configSource = Blueprint(name="config.source", import_name=__name__, template_folder="templates")
 
-
-@config.route("/")
-def index() -> None:
-    return render_template("config/index.html")
-
-@config.route("/source/<string:source>/list")
-def sourceList(source: str) -> None:
-    r:Sources = Sources(source=source).findAllBySource()
+@configSource.route("/<string:source>/list")
+def list(source: str) -> None:
+    r = SourcesTable().findAllBySource(source)
+    #r:Sources = Sources(source=source).findAllBySource()
     if source == "finalfantasyxiv":
         return render_template("config/sources/ffxiv/list.html", items=r, sourceName=source)
 
     return render_template("config/sources/list.html", items=r, sourceName=source)
 
 
-@config.route("/source/<string:source>/new", methods=["GET", "POST"])
-def sourceMultiNew(source: str) -> None:
+@configSource.route("/<string:source>/new", methods=["GET", "POST"])
+def multiNew(source: str) -> None:
     discord = DiscordWebHooks().findAll()
     if request.method == "POST":
         if "youtube" in source:
             form = YoutubeNew(formdata=request.form)
+            
             Sources(name=request.form[''], source='youtube',)
     
     return render_template(
         "/config/sources/new.html", discord=discord, sourceName=source
     )
 
-@config.route("/source/<string:source>/edit/<string:id>", methods=["GET", "POST"])
-def sourceEdit(source: str, id: str) -> None:
+@configSource.route("/<string:source>/edit/<string:id>", methods=["GET", "POST"])
+def edit(source: str, id: str) -> None:
     updated:bool = false
     err: str = ""
     s = Sources()
@@ -53,8 +49,3 @@ def sourceEdit(source: str, id: str) -> None:
             print(err)
             
     return render_template("/config/sources/edit.html", sourceName=source, item=res, updated=updated, err=err)
-
-
-@config.route("/wizzard")
-def wizzard() -> None:
-    return render_template("config/wizzard.html")

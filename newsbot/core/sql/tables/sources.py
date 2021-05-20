@@ -11,11 +11,12 @@ from sqlalchemy import (
 )
 import uuid
 from typing import List
+
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql import database, Base
 from newsbot.core.sql.tables import Articles, ITables
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
-
-
+from json import dumps
 
 class Sources(Base, ITables):
     # database = DB(Base)
@@ -52,6 +53,20 @@ class Sources(Base, ITables):
         self.url: str = url
         self.tags: str = tags
         self.fromEnv: bool = fromEnv
+
+    def toJson(self, item: object) -> str:
+        d = {
+            'id': item.id,
+            'name': item.name,
+            'source': item.source,
+            'type': item.type,
+            'value': item.value,
+            'enabled': item.enabled,
+            'url': item.url,
+            'tags': item.tags,
+            "fromEnv": item.fromEnv
+        }
+        print(d)
 
     def add(self) -> None:
         s = database.newSession()
@@ -233,6 +248,18 @@ class Sources(Base, ITables):
         finally:
             s.close()
             return hooks[0]
+
+    def findAll(self) -> List:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
     
     def __len__(self) -> int:
         s = database.newSession()
@@ -246,3 +273,76 @@ class Sources(Base, ITables):
             s.close()
 
         return len(l)
+
+class SourceTableFind():
+    def findAllBySource(self, source: str) -> List[Sources]:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources).filter(Sources.source.contains(source)):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks    
+
+    def findAll(self) -> List[Sources]:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
+
+    def findById(self) -> Sources:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(Sources).filter(
+                    Sources.id.contains(self.id)):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+
+class SourceTableConvert():
+    def toListDict(self, items: List[Sources]) -> List[dict]:
+        l = list()
+        for i in items:
+            l.append(self.toDict(i))
+        return l
+
+    def toDict(self, item: Sources) -> dict:
+        d = {
+            'id': item.id,
+            'name': item.name,
+            'source': item.source,
+            'type': item.type,
+            'value': item.value,
+            'enabled': item.enabled,
+            'url': item.url,
+            'tags': item.tags,
+            "fromEnv": item.fromEnv
+        }
+        return d
+
+class SourcesTable(ITables, SourceTableFind, SourceTableConvert):
+    def add(self, item: Sources) -> None:
+        s = database.newSession()
+        try:
+            s.add(item)
+            s.commit()
+        except FailedToAddToDatabase as e:
+            print(f"Failed to add {item.name} to Source table! {e}")
+        finally:
+            s.close()

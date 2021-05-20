@@ -1,5 +1,4 @@
-
-newsbot.db
+*.db
 .env*
 
 .DS_Store

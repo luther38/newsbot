@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request
 from sqlalchemy.sql.expression import false
 from wtforms import form
-from newsbot.core.sql.tables import DiscordWebHooks, Sources
-from newsbotUi.config.forms import DiscordWebhookAddForm, YoutubeNew
+from newsbot.core.sql.tables import DiscordWebHooks, DiscordWebHooksTable
+from newsbot.web.ui.config.forms import DiscordWebhookAddForm, YoutubeNew
 from json import loads
 
 configDiscord = Blueprint(name="config.discord", import_name=__name__, template_folder="templates")
@@ -21,12 +21,14 @@ def new() -> None:
         print(f"URI = {request.form['url']}")
 
         name = f"{request.form['server']} - {request.form['channel']}"
-        DiscordWebHooks(
-            name=name,
-            server=request.form["server"],
-            channel=request.form["channel"],
-            url=request.form["url"],
-        ).add()
+        DiscordWebHooksTable().add(
+            DiscordWebHooks(
+                name=name,
+                server=request.form["server"],
+                channel=request.form["channel"],
+                url=request.form["url"],
+            )
+        )
 
     return render_template("config/discord/new.html", form=form)
 

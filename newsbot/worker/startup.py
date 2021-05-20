@@ -16,13 +16,16 @@ from newsbot.worker.sources import (
 
 class NewsbotWorker():
     def __init__(self) -> None:
-        logger = Logger(__class__)
+        self.logger = Logger(__class__)
+        pass
 
+
+    def start(self) -> bool:
         ## Turn on outputs first
-        logger.info("Turning on output monitors.")
+        self.logger.info("Turning on output monitors.")
         Thread(target=Discord().enableThread, name="Discord").start()
 
-        logger.info("Turning on source monitors.")
+        self.logger.info("Turning on source monitors.")
         #Thread(target=Worker(FFXIVReader()).init, name="Final Fantasy XIV").start()
         #Thread(target=Worker(PogohubReader()).init, name="Pokemon Go Hub").start()
         #Thread(target=Worker(PSO2Reader()).init, name="PSO2").start()
@@ -32,3 +35,5 @@ class NewsbotWorker():
         #Thread(target=Worker(TwitterReader()).init, name="Twitter").start()
         #Thread(target=Worker(TwitchReader()).init, name="Twitch").start()
         #Thread(target=Worker(RssReader()).init, name="RSS").start()
+
+        return True

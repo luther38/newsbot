@@ -32,7 +32,7 @@
                     </select>
                  </form>
             </td>
-            <td><button type="button"><a href="{{ url_for('config.sourceEdit', source=sourceName)}}">UPDATE</a></button></td>
+            <td><button type="button"><a href="{{ url_for('config.source.edit', source=sourceName, id=i.id) }}">UPDATE</a></button></td>
         </tr>
         {% endfor %}
     </table>    

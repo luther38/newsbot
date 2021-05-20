@@ -17,9 +17,9 @@
         or 'twitch' in sourceName.lower()
         or 'rss' in sourceName.lower()
     %}
-    <button type="button"><a href="{{ url_for('config.sourceMultiNew', source=sourceName)}}">ADD</a></button>
+    <button type="button"><a href="{{ url_for('config.source.multiNew', source=sourceName)}}">ADD</a></button>
     {% else %}
-    <button type="button"><a href="{{ url_for('config.sourceEdit', source=sourceName)}}">UPDATE</a></button>
+    <button type="button"><a href="{{ url_for('config.source.edit', source=sourceName)}}">UPDATE</a></button>
     {% endif %}
     <button type="button"><a href="{{ url_for('config.index')}}">BACK</a></button>
 
@@ -37,7 +37,7 @@
             <td>{{i.enabled}}</td>
             <td>
                 <button type="button">
-                    <a href="{{ url_for('config.sourceEdit', id=i.id, source=sourceName)}}">EDIT</a>
+                    <a href="{{ url_for('config.source.edit', id=i.id, source=sourceName)}}">EDIT</a>
                 </button>
             </td>
         </tr>

@@ -228,3 +228,43 @@ class DiscordWebHooks(Base, ITables):
 
     def __generateName__(self) -> str:
         return f"{self.server} - {self.channel}"
+
+class DiscordWebHooksTable(ITables):
+    def add(self, item:DiscordWebHooks) -> None:
+        s: Session = database.newSession()
+        try:
+            s.add(item)
+            s.commit()
+        except Exception as e:
+            print(f"Failed to add {self.name} to DiscordWebHook table! {e}")
+        finally:
+            s.close()
+
+    def findAll(self) -> List[DiscordWebHooks]:
+        s = database.newSession()
+        hooks = list()
+        try:
+            for res in s.query(DiscordWebHooks):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            s.close()
+            return hooks
+
+    def toListDict(self, items: List[DiscordWebHooks]) -> List[dict]:
+        l = list()
+        for i in items:
+            l.append(self.toDict(i))
+        return l
+
+    def toDict(self, item: DiscordWebHooks) -> dict:
+        d = {
+            'id': item.id,
+            'name': item.name,
+            'server': item.server,
+            'channel': item.channel,
+            'url': item.url,
+            "fromEnv": item.fromEnv
+        }
+        return d
