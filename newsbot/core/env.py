@@ -5,6 +5,8 @@ from pathlib import Path
 from abc import ABC, abstractclassmethod
 import os
 
+from sqlalchemy.sql.expression import false
+
 class IEnvReader(ABC):
     @abstractclassmethod
     def read(self) -> List:
@@ -28,14 +30,16 @@ class BEnvReader():
         return res
 
     def __parseBool__(self, envFlag: str) -> bool:
-        value:str = os.getenv(envFlag).lower()
-        if value == 'false':
+        try:
+            value:str = os.getenv(envFlag).lower()
+            if value == 'false':
+                return False
+            elif value == 'true':
+                return True
+            else:
+                raise Exception(f"Unknown value type for '{envFlag}'.  Expected True or False.")
+        except:
             return False
-        elif value == 'true':
-            return True
-        else:
-            raise Exception(f"Unknown value type for '{envFlag}'.  Expected True or False.")
-
 
 class EnvDiscordDetails:
     def __init__(
