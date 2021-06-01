@@ -31,6 +31,12 @@ RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.29.1/geckod
 	mv geckodriver /usr/local/bin && \
 	rm geckodriver-v0.29.1-linux64.tar.gz
 
+run wget https://github.com/crate-ci/typos/releases/download/v1.0.3/typos-v1.0.3-x86_64-unknown-linux-gnu.tar.gz && \
+	tar xf typos-v1.0.3-x86_64-unknown-linux-gnu.tar.gz && \
+	chmod +x typos && \
+	mv typos /usr/local/bin && \
+	rm typos-v1.0.3-x86_64-unknown-linux-gnu.tar.gz
+
 #RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
 #	sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
 	#apt-get update && \

@@ -55,7 +55,7 @@ The application settings are currently stored in the .env file.  Use the templat
 
 ### Discord Webhooks
 
-If you want to have a single source post to multiple webhooks, you can do that.  On the line where you enter your webhook seperate each one with a space character.  The program will split them up and post updates to both webhooks.
+If you want to have a single source post to multiple webhooks, you can do that.  On the line where you enter your webhook separate each one with a space character.  The program will split them up and post updates to both webhooks.
 
 ## Sources
 

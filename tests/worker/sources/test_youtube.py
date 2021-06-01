@@ -1,23 +1,28 @@
 from newsbot.worker.sources.youtube import YoutubeReader
-from newsbot.core.sql.tables import Sources, DiscordWebHooks
-
+from newsbot.core.sql.tables import Sources, DiscordWebHooks, SourcesTable
+import pytest
 
 class TestYouTube:
-    def test_00EnableSource(self):
-        Sources(
-            name="Youtube LoadingReadyRun",
-            url="https://www.youtube.com/user/loadingreadyrun",
-        ).add()
-
-        res = Sources(name="Youtube").findAllByName()
+    @pytest.fixture
+    def enableSource(self):
+        table = SourcesTable()
+        table.add(
+            Sources(
+                name="LoadingReadyRun",
+                source="YouTube",
+                url="https://www.youtube.com/user/loadingreadyrun",
+            )
+        )
+        res = table.findAllBySource(source="YouTube")
+        
         if len(res) >= 1:
             assert True
         else:
             assert False
 
-    def test_01CheckSource(self):
+    def test_01CheckSource(self, enableSource):
         yt = YoutubeReader()
-        assert yt.sourceEnabled
+        assert yt.sourceEnabled == True
 
     def test_01CheckHooks(self):
         yt = YoutubeReader()
