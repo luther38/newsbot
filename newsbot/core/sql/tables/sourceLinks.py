@@ -20,14 +20,17 @@ from newsbot.core.sql.exceptions import FailedToAddToDatabase
 class SourceLinks(Base, ITables):
     __tablename__ = "sourcelinks"
     id = Column("id", String, primary_key=True)
-    name: str = Column("name", String)
+    sourceName: str = Column("sourceName", String)
     sourceID: str = Column("sourceID", String)
+    discordName: str = Column("discordName", String)
     discordID: str = Column("discordID", String)
 
-    def __init__(self, name: str = "", sourceID: str = "", discordID: str = ""):
+    def __init__(self, sourceName: str = "", sourceID: str = "", 
+        discordName: str = '', discordID: str = ""):
         self.id = str(uuid.uuid4())
-        self.name = name
+        self.sourceName = sourceName
         self.sourceID = sourceID
+        self.discordName = discordName
         self.discordID = discordID
 
     def add(self) -> None:
@@ -226,3 +229,33 @@ class SourceLinks(Base, ITables):
             s.close()
 
         return len(l)
+
+class SourceLinksTable(ITables):
+    def __init__(self) -> None:
+        self.s = database.newSession()
+
+    def __exit__(self) -> None:
+        self.s.close()
+
+    def add(self, item: SourceLinks) -> None:
+        try:
+            self.s.add(item)
+            self.s.commit()
+        except FailedToAddToDatabase as e:
+            print(f"Failed to add {self.name} to 'SourceLinks'. {e}")
+
+    def findBySourceName(self, sourceName: str ) -> SourceLinks:
+        d = SourceLinks()
+        try:
+            for d in self.s.query(SourceLinks).filter(SourceLinks.sourceName.contains(sourceName)):
+                return d
+        except Exception as e:
+            pass
+    
+    def findByDiscordName(self, discourdName: str ) -> SourceLinks:
+        d = SourceLinks()
+        try:
+            for d in self.s.query(SourceLinks).filter(SourceLinks.discordName.contains(discourdName)):
+                return d
+        except Exception as e:
+            pass

@@ -244,7 +244,7 @@ class TwitchAPI:
         clips = list()
         if res.status_code != 200:
             Logger().error(
-                f"Clips request returnd a bad status_code. Code: {res.status_code}, Error: {res.text}"
+                f"Clips request returned a bad status_code. Code: {res.status_code}, Error: {res.text}"
             )
             return clips
         else:

@@ -22,7 +22,7 @@ class ITables():
         raise NotImplementedError()
 
 #    @abstractclassmethod
-    def findById(self) -> object:
+    def findById(self, id: str) -> object:
         """
         This will look and return the object based off the ID value.
         """

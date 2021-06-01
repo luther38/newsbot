@@ -299,21 +299,7 @@ class SourceTableFind():
             s.close()
             return hooks
 
-    def findById(self) -> Sources:
-        s = database.newSession()
-        hooks = list()
-        try:
-            for res in s.query(Sources).filter(
-                    Sources.id.contains(self.id)):
-                hooks.append(res)
-        except Exception as e:
-            pass
-        finally:
-            s.close()
-            if len(hooks) == 0:
-                return None
-            else:
-                return hooks[0]
+
 
 class SourceTableConvert():
     def toListDict(self, items: List[Sources]) -> List[dict]:
@@ -337,12 +323,31 @@ class SourceTableConvert():
         return d
 
 class SourcesTable(ITables, SourceTableFind, SourceTableConvert):
+    def __init__(self) -> None:
+        self.s = database.newSession()
+
+    def __exit__(self) -> None:
+        self.s.close()
+
     def add(self, item: Sources) -> None:
-        s = database.newSession()
         try:
-            s.add(item)
-            s.commit()
+            self.s.add(item)
+            self.s.commit()
         except FailedToAddToDatabase as e:
             print(f"Failed to add {item.name} to Source table! {e}")
+    
+    def findById(self, id: str) -> Sources:
+        hooks = list()
+        try:
+            for res in self.s.query(Sources).filter(
+                    Sources.id.contains(id)):
+                hooks.append(res)
+        except Exception as e:
+            pass
         finally:
-            s.close()
+            #self.s.close()
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+        

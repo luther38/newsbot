@@ -43,7 +43,8 @@ class UpdateSource(IUpdateSource):
             for h in hookNames:
                 l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
                 sl = SourceLinks(
-                    name=f"{source.source}_{source.name}_>_{l.name}", sourceID=source.id, discordID=l.id
+                    discordName=f"{l.name}", discordID=l.id,
+                    sourceName=f"{source.source}_{source.name}", sourceID=source.id
                 )
                 sl.update()
         except Exception as e:

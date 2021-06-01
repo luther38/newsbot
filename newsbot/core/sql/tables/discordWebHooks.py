@@ -1,16 +1,12 @@
 from sqlalchemy import (
     Column,
     String,
-    Integer,
-    Float,
     Boolean,
-    ForeignKey,
-    create_engine,
-    Binary,
 )
 import uuid
 from typing import ClassVar, List
 from sqlalchemy.orm.session import Session
+from werkzeug.datastructures import UpdateDictMixin
 from newsbot.core.sql import database, Base
 from newsbot.core.sql.tables import Articles, ITables
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
@@ -39,8 +35,10 @@ class DiscordWebHooks(Base, ITables):
         self.id = str(uuid.uuid4())
         self.server = server
         self.channel = channel
-        if name == "":  self.name = self.__generateName__()
-        else:           self.name = name
+        if name == "":  
+            self.name = self.__generateName__()
+        else: 
+            self.name = name
         self.key = key
         self.url = url
         self.enabled = True
@@ -229,15 +227,18 @@ class DiscordWebHooks(Base, ITables):
         return f"{self.server} - {self.channel}"
 
 class DiscordWebHooksTable(ITables):
-    def add(self, item:DiscordWebHooks) -> None:
-        s: Session = database.newSession()
+    def __init__(self) -> None:
+        self.s = database.newSession()
+
+    def add(self, item:DiscordWebHooks) -> bool:
+        #self.s: Session = database.newSession()
         try:
-            s.add(item)
-            s.commit()
+            self.s.add(item)
+            self.s.commit()
+            return True
         except Exception as e:
-            print(f"Failed to add {self.name} to DiscordWebHook table! {e}")
-        finally:
-            s.close()
+            print(f"Failed to add {item.name} to DiscordWebHook table! {e}")
+            return False
 
     def findAll(self) -> List[DiscordWebHooks]:
         s = database.newSession()
@@ -251,11 +252,53 @@ class DiscordWebHooksTable(ITables):
             s.close()
             return hooks
 
+    def findById(self, id: str) -> DiscordWebHooks:
+        hooks = list()
+        try:
+            for res in self.s.query(DiscordWebHooks).filter(DiscordWebHooks.id == id):
+                hooks.append(res)
+        except Exception as e:
+            pass
+        finally:
+            if len(hooks) == 0:
+                return None
+            else:
+                return hooks[0]
+
+    def delete(self, id: str = '') -> bool:
+        if id != "":
+            return self.deleteById(id=id)
+
+    def deleteById(self, id: str) -> None:
+        try:
+            for d in self.s.query(DiscordWebHooks).filter(DiscordWebHooks.id == id):
+                self.s.delete(d)
+            self.s.commit()
+            status = True
+        except Exception as e:
+            print(f"{e}")
+            status = False
+        finally:
+            return status
+
+    def update(self, updateWith: DiscordWebHooks, id: str = '') -> bool:
+        if id != '':
+            return self.updateById(updateWith=updateWith, id = id)
+        else:
+            raise Exception("Failed to update a record because no value was given to query.")
+
+    def updateById(self, updateWith: DiscordWebHooks, id: str) -> bool:
+        self.deleteById(id)
+        self.add(updateWith)
+            
     def toListDict(self, items: List[DiscordWebHooks]) -> List[dict]:
         l = list()
         for i in items:
             l.append(self.toDict(i))
         return l
+
+    def __exit__(self) -> None:
+        self.s.close()
 
     def toDict(self, item: DiscordWebHooks) -> dict:
         d = {
@@ -267,3 +310,4 @@ class DiscordWebHooksTable(ITables):
             "fromEnv": item.fromEnv
         }
         return d
+
