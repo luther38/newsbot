@@ -1,3 +1,4 @@
+from newsbot.core.sql.tables.sources import SourcesTable
 from typing import List
 from requests import get, Response
 from bs4 import BeautifulSoup
@@ -82,15 +83,20 @@ class BSources(ISources):
 
     def isDiscordEnabled(self, siteName: str) -> List[DiscordWebHooks]:
         h: List[DiscordWebHooks] = list()
-        s = Sources(source=siteName).findAllBySource()
+        tSources = SourcesTable()
+        s = tSources.findAllBySource(source=siteName)
         for i in s:
             sl: SourceLinks = SourceLinks(sourceID=i.id).findBySourceID()
-            if sl.discordID != "" or sl.discordID != None:
+            if sl == None:
+                continue
+            elif sl.discordID != "" or sl.discordID != None:
                 d = DiscordWebHooks()
                 d.id = sl.discordID
                 discordRef: DiscordWebHooks = d.findById()
                 if discordRef.enabled == True:
                     h.append(discordRef)
+            else:
+                continue
         return h
 
     def getContent(self) -> Response:

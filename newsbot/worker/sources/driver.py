@@ -1,6 +1,9 @@
+from time import sleep
 from newsbot.core.logger import Logger
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver import Firefox, FirefoxOptions
+from os.path import exists
+from os import remove
 from abc import ABC, abstractclassmethod
 
 class IDriver(ABC):
@@ -12,20 +15,36 @@ class BDriver(IDriver):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri: str = ''
-        self.driver = self.driverStart()
+        self.driver: Firefox = self.driverStart()
 
     def driverGetContent(self) -> str:
         try:
-            return self.driver.page_source
+            content = self.driver.page_source
         except Exception as e:
-            self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
+            if "Failed to decode response from marionette" in e.args[0]:
+                self.logger.critical(f"Failed to read from browser.  This can be due to not enough RAM on the system. Error: {e}")
+            else:
+                self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def driverGoTo(self, uri: str) -> None:
         try:
             self.driver.get(uri)
-            self.driver.implicitly_wait(10)
+            sleep(secs=3)
+            #self.driver.implicitly_wait(10)
         except Exception as e:
             self.logger.error(f"Driver failed to get {uri}. Error: {e}")
+
+    def driverSaveScreenshot(self, path: str) -> None:
+        try:
+            if exists(path) == True:
+                remove(path)
+        except Exception as e:
+            self.logger.error(f"Attempted to remove the old screenshot on disk, but failed. Error: {e}")
+
+        try:
+            self.driver.save_screenshot(path)
+        except Exception as e:
+            self.logger.error(f"Attempted to save a screenshot to '{path}', but failed to do so. Error: {e}")
 
     def driverClose(self) -> None:
         try:

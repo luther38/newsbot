@@ -41,7 +41,7 @@ class YoutubeReader(BSources, BFirefox):
             if channelID == "":
                 self.uri = f"{site.url}"
                 self.driverGoTo(self.uri)
-                # self.driver.save_screenshot("youtube_step1.png")
+                self.driverSaveScreenshot("youtube_step1.png")
                 siteContent: str = self.driverGetContent()
                 page: BeautifulSoup = self.getParser(seleniumContent=siteContent)
                 channelID: str = self.getChannelId(page)
