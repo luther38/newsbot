@@ -29,6 +29,9 @@ Config Wizzard - Newsbot
                 <button>
                     <a href="{{ url_for('config.discord.edit', id=i['id']) }}">EDIT</a>
                 </button>
+                <button>
+                    <a href="{{ url_for('config.discord.delete', id=i['id']) }}">DELETE</a>
+                </button>
             </td>
         </tr>
         {% endfor %}

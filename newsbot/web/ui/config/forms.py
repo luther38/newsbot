@@ -11,6 +11,6 @@ class DiscordWebhookAddForm(Form):
 
 class YoutubeNew(Form):
     name = StringField('name', validators=[DataRequired()])
-    username = StringField('username', validators=[DataRequired()])
+    url = StringField('url', validators=[DataRequired()])
     discordwebhook = StringField('discord', validators=[DataRequired()])
     enabled = BooleanField('enabled')

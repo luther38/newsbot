@@ -8,6 +8,10 @@ New Discord Webhook - Newsbot
 <nav>
     <h1>DISCORD WEBHOOKS</h1>
 
+    {% if isUpdated == True %}
+    <h2>The record '{{form.name}}' has been saved!</h2>
+    {% endif %}
+
     <button type="button"><a href="{{ url_for('config.discord.list')}}">BACK</a></button>
 
     <form method="POST">

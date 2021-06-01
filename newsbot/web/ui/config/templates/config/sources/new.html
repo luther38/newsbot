@@ -1,22 +1,26 @@
 {% extends 'base.html'%}
 
 {% block title %}
-New Source - Newsbot
+New  Source - Newsbot
 {% endblock %}
 
 {% block body %}
 <nav>
     <h1>{{ sourceName.upper() }} WEBHOOKS</h1>
 
-    <button type="button"><a href="{{ url_for('config.discord.list')}}">BACK</a></button>
+    {% if isUpdated == True %}
+    <h2>The record '{{form.name.data}}' has been saved!</h2>
+    {% endif %}
+
+    <button type="button"><a href="{{ url_for('config.source.list', source=sourceName)}}">BACK</a></button>
 
     {% if "youtube" in sourceName %}
     <form method="POST">
         <label for="nameInput">Name:</label>
         <input type="text" id="nameInput" name='name'>
 
-        <label for="usernameInput">Username:</label>
-        <input type="text" id="usernameInput" name='username'>
+        <label for="url">URL:</label>
+        <input type="text" id="url" name='url'>
 
         <label for="enabledInput">Enabled:</label>
         <input type="checkbox", id="enabledInput", name='enabled'>
