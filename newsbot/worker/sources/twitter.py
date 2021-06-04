@@ -84,7 +84,7 @@ class TwitterReader(BSources, BFirefox):
             if tweet.in_reply_to_screen_name != None:
                 continue
 
-            lang = Settings(key="twitter.prefered.lang").findSingleByKey()
+            lang = Settings(key="twitter.preferred.lang").findSingleByKey()
             if lang.value == "None":
                 pass
             elif tweet.lang == lang.value:

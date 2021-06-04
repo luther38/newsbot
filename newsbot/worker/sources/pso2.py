@@ -12,7 +12,7 @@ class PSO2Reader(BSources):
         self.logger = Logger(__class__)
         self.uri: str = "https://pso2.com/news"
         self.siteName: str = "Phantasy Star Online 2"
-        self.authorName: str = f"{self.siteName} Offical Site"
+        self.authorName: str = f"{self.siteName} Official Site"
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False

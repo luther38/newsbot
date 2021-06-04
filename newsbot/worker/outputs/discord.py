@@ -140,14 +140,14 @@ class Discord(IOutputs):
             self.getHooks(source=article.sourceType, name=article.sourceName)
         )
 
-        # Chcekcing to see if we returned a single responce or multiple.
+        # Chcekcing to see if we returned a single response or multiple.
         if hooks == 1:
-            responces = list()
-            responces.append(res)
+            response = list()
+            response.append(res)
         else:
-            responces = res
+            response = res
 
-        return responces
+        return response
 
     def getHooks(self, source: str, name: str) -> List[str]:
         hooks = list()

@@ -65,7 +65,7 @@ class InstagramReader(BSources, BFirefox):
                 pass
             except Exception as e:
                 self.logger.error(
-                    f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed responce. {e}"
+                    f"Failed to parse articles from {self.siteName}.  Chances are we have a malformed response. {e}"
                 )
 
         self.driverClose()

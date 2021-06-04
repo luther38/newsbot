@@ -210,12 +210,12 @@ class EnvTwitterConfig:
         self,
         apiKey: str = "",
         apiKeySecret: str = "",
-        preferedLang: str = "",
+        preferredLang: str = "",
         ignoreRetweet: bool = False,
     ) -> None:
         self.apiKey: str = apiKey
         self.apiKeySecret: str = apiKeySecret
-        self.preferedLang: str = str(preferedLang)
+        self.preferredLang: str = str(preferredLang)
         self.ignoreRetweet: bool = ignoreRetweet
         pass
 
@@ -224,7 +224,7 @@ class EnvTwitterConfigReader(IEnvReader,BEnvReader):
         item = EnvTwitterConfig(
             apiKey=os.getenv(f"NEWSBOT_TWITTER_API_KEY"),
             apiKeySecret=os.getenv(f"NEWSBOT_TWITTER_API_KEY_SECRET"),
-            preferedLang=os.getenv(f"NEWSBOT_TWITTER_PERFERED_LANG"),
+            preferredLang=os.getenv(f"NEWSBOT_TWITTER_PERFERED_LANG"),
             ignoreRetweet=self.__parseBool__(f"NEWSBOT_TWITTER_IGNORE_RETWEET")
         )
         return item

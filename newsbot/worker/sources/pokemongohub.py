@@ -52,7 +52,7 @@ class PogohubReader(BSources):
                 self.logger.debug(f"Pokemon Go Hub - Finished checking.")
             except Exception as e:
                 self.logger.error(
-                    f"Failed to parse articles from Pokemon Go Hub.  Chances are we have a malformed responce. {e}"
+                    f"Failed to parse articles from Pokemon Go Hub.  Chances are we have a malformed response. {e}"
                 )
 
         return allArticles

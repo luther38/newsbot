@@ -244,7 +244,7 @@ class InitDb:
         Settings(
             key="twitch livestreams enabled", value=twitchConfig.monitorLiveStreams
         ).add()
-        Settings(key="twitter.prefered.lang", value=twitterConfig.preferedLang).add()
+        Settings(key="twitter.preferred.lang", value=twitterConfig.preferredLang).add()
         Settings(key="twitter.ignore.retweet", value=twitterConfig.ignoreRetweet).add()
 
     def updateDiscordValues(self, values: List[EnvDiscordDetails]) -> None:

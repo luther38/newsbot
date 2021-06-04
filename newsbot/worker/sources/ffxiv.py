@@ -10,7 +10,7 @@ class FFXIVReader(BSources):
         self.uri: str = "https://na.finalfantasyxiv.com/lodestone/news/"
         self.baseUri: str = "https://na.finalfantasyxiv.com"
         self.siteName: str = "finalfantasyxiv"
-        self.authorName: str = "Final Fantasy XIV Offical Site"
+        self.authorName: str = "Final Fantasy XIV Official Site"
         self.links = list()
         self.hooks = list()
         self.sourceEnabled: bool = False
