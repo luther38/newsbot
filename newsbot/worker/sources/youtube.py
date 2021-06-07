@@ -1,3 +1,4 @@
+from newsbot.core.sql.tables.schema import SourceLinks
 from newsbot.worker.sources.driver import BFirefox
 from typing import List
 from newsbot.core.logger import Logger
@@ -50,18 +51,9 @@ class YoutubeReader(BSources, BFirefox):
                 # Not finding the values I want with just request.  Time for Chrome.
                 # We are collecting info that is not present in the RSS feed.
                 # We are going to store them in the class.
-                try:
-                    authorImage = page.find_all(name="img", attrs={"id": "img"})
-                    self.authorImage = authorImage[0].attrs["src"]
-                    Cache(
-                        key=f"{site.source} {site.name} authorImage",
-                        value=self.authorImage,
-                    ).add()
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to find the authorImage for {site.name}.  CSS might have changed. {e}"
-                    )
-                authorImage.clear()
+                self.setAuthorImage(page, site)
+
+                #authorImage.clear()
 
                 try:
                     authorName = page.find_all(
@@ -120,3 +112,19 @@ class YoutubeReader(BSources, BFirefox):
                 pass
 
         return ""
+
+    def setAuthorImage(self, page: BeautifulSoup, site: Sources) -> str:
+        try:
+            authorImage = page.find_all(name="yt-img-shadow", attrs={"id": "avatar"})
+            img = authorImage[0].contents[1].attrs["src"]
+            if img != '':
+                Cache(
+                    key=f"{site.source} {site.name} authorImage",
+                    value=img,
+                ).add()
+            else:
+                self.logger.error(f"Failed to find the AuthorImage on the youtube page.")
+        except Exception as e:
+            self.logger.error(
+                f"Failed to find the authorImage for {site.name}.  CSS might have changed. {e}"
+            )
