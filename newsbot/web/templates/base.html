@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <!---
+        <link href="{{ url_for('static', filename='node_modules/bootstrap/dist/css/bootstrap.css' ) }}" rel="stylesheet" type="text/css" />
+        <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/popper.js/dist/popper.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+    -->
+        
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}{%endblock%}</title>
+</html>
+
+<div class='container'>
+    <header>
+        {%include 'pTopBar.html'%}
+    </header>
+    <br>
+    <body>
+        {% block body %}{%endblock%}
+    </body>
+    <footer>
+        
+    </footer>
+</div>

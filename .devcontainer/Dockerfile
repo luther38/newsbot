@@ -5,8 +5,8 @@ FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
 ENV PYTHONUNBUFFERED 1
 ENV DEBIAN_FRONTEND=noninteractive
-ENV CHROME_VERSION=89.0.4389.90-1
-ENV DRIVER_VERSION=89.0.4389.23
+ENV CHROME_VERSION=90.0.4430.85-1
+ENV DRIVER_VERSION=90.0.4430.24
 
 # Update args in docker-compose.yaml to set the UID/GID of the "vscode" user.
 ARG USER_UID=1000
