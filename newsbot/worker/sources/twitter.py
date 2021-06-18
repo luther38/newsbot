@@ -1,6 +1,7 @@
 from typing import List, Set
 import tweepy
 from newsbot.core.logger import Logger
+from newsbot.core.constant import SourceName
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Settings
 from newsbot.worker.sources.driver import BFirefox
 from newsbot.worker.sources.common import BSources
@@ -14,7 +15,7 @@ class TwitterReader(BSources, BFirefox):
         self.logger = Logger(__class__)
         self.uri: str = "https://twitter.com"
         self.baseUri = self.uri
-        self.siteName: str = "Twitter"
+        self.siteName: str = SourceName.TWITTER.value
 
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()

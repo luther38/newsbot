@@ -3,6 +3,7 @@ from newsbot.core.logger import Logger
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.worker.sources.common import BSources
 from newsbot.worker.sources.driver import BFirefox
+from newsbot.core.constant import SourceName
 from requests import get, Response
 from bs4 import BeautifulSoup
 from re import findall
@@ -14,7 +15,7 @@ class InstagramReader(BSources, BFirefox):
         self.logger = Logger(__class__)
         self.uri = "https://www.instagram.com/"
         self.baseUri = self.uri
-        self.siteName: str = "Instagram"
+        self.siteName: str = SourceName.INSTAGRAM.value
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False

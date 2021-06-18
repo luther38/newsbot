@@ -2,6 +2,7 @@ from newsbot.core.sql.tables.schema import SourceLinks
 from newsbot.worker.sources.driver import BFirefox
 from typing import List
 from newsbot.core.logger import Logger
+from newsbot.core.constant import SourceName
 from newsbot.worker.sources.common import BSources
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.worker.sources.driver import BFirefox
@@ -13,7 +14,7 @@ class YoutubeReader(BSources, BFirefox):
     def __init__(self):
         self.logger = Logger(__class__)
         self.uri: str = "https://youtube.com"
-        self.siteName: str = "Youtube"
+        self.siteName: str = SourceName.YOUTUBE.value
         self.feedBase: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 
         self.links: List[Sources] = list()
