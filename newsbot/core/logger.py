@@ -1,6 +1,6 @@
 from enum import Enum
 from abc import ABC, abstractclassmethod
-from newsbot.core.sql.tables import Logs
+from newsbot.core.sql.tables import Logs, LogsTable
 from datetime import datetime
 from inspect import getframeinfo, stack
 from os.path import exists
@@ -110,13 +110,15 @@ class LoggerFile(LoggerCommon):
 class LoggerSql():
     def sendToSql(self, message, type) -> None:
         dt = datetime.now()
-        Logs(
-            date=f"{dt.year}-{dt.month}-{dt.day}",
-            time=f"{dt.hour}:{dt.minute}:{dt.second}",
-            type=type,
-            caller=self.callerClass,
-            message=message,
-        ).add()
+        self.sqlTable.add(
+            Logs(
+                date=f"{dt.year}-{dt.month}-{dt.day}",
+                time=f"{dt.hour}:{dt.minute}:{dt.second}",
+                type=type,
+                caller=self.callerClass,
+                message=message,
+            )
+        )
         pass
 
 class Logger(ILogger, LoggerStdOut, LoggerFile, LoggerSql):
@@ -133,6 +135,7 @@ class Logger(ILogger, LoggerStdOut, LoggerFile, LoggerSql):
         self.callerClass: str = str(callerClass)
         self.logFile: str = './mounts/logs/newsbot.log'
         self.file = LoggerFile()
+        self.sqlTable = LogsTable()
         pass
 
     def debug(self, message: str) -> None:
