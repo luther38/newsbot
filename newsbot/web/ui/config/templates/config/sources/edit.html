@@ -1,0 +1,57 @@
+{% extends 'base.html'%}
+
+{% block title %}
+EDIT {{ sourceName.upper() }} {{ item.name.upper() }} - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>EDIT {{ sourceName.upper() }} {{ item.name.upper() }} </h1>
+
+    {% if err != "" %}
+    <h2>Error</h2>
+    <p>Sorry about this, but we ran into an error updating the record. Error: {{err}}</p>
+    {% endif %}
+
+    {% if isUpdated == True %}
+    <h2>The record was updated! :tada:</h2>
+    {% endif %}
+
+    <button type="button">
+        <a href="{{ url_for('config.source.list', source=sourceName)}}">BACK</a>
+    </button>
+
+    <form method="POST">
+        <label for="serverInput">Name:</label>
+        <input type="text" id="nameInput" name='name' value="{{item.name}}">
+
+        <label for="channelInput">URL:</label>
+        <input type="text" id="uriInput" name="url" value="{{item.url}}">
+        
+        <label for="discordInput">Discord Web Hook:</label>
+        <select name="discordwebhook" id="discord">
+            {% for i in discord %}
+                <option value="{{ i['name'] }}">{{i['name']}}</option>
+            {% endfor %}
+        </select>
+
+        <label for="enabled">Enabled:</label>                    
+        <select name = "enabled">
+            {% if item.enabled == True %}
+            <option value="True" selected>Enabled</option>
+            {% else %}
+            <option value="True">Enabled</option>
+            {% endif %}
+            
+            {% if item.enabled == False %}
+            <option value="False" selected>Disabled</option>
+            {% else %}
+            <option value="False">Disabled</option>
+            {% endif %}
+        </select>
+
+        <input type="submit" value="Submit">
+    </form>
+    <p>All fields are required.</p>
+</nav>
+{% endblock %}

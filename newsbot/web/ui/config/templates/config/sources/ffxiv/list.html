@@ -1,0 +1,40 @@
+{% extends 'base.html'%}
+
+{% block title %}
+{{sourceName.upper()}} Config - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>{{sourceName.upper()}} CONFIGURATION</h1>
+
+    <p>Here is the current list that Newsbot is monitoring!</p>
+
+    <button type="button"><a href="{{ url_for('config.index')}}">BACK</a></button>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Enabled</th>
+            <th>Actions</th>
+        </th>
+        {% for i in items %}
+        <tr>
+            <td>{{i.name}}</td>
+            <td>{{i.enabled}}</td>
+            <td>
+                <form>
+                    <select name = "dropdown">
+                        <option value="{{i['value']}}" selected>{{i['value']}}</option>
+                        <option value="Enabled">Enabled</option>
+                        <option value="Disabled">Disabled</option>
+                    </select>
+                 </form>
+            </td>
+            <td><button type="button"><a href="{{ url_for('config.source.edit', source=sourceName, id=i.id) }}">UPDATE</a></button></td>
+        </tr>
+        {% endfor %}
+    </table>    
+</nav>
+{% endblock %}

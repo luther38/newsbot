@@ -1,0 +1,48 @@
+{% extends 'base.html'%}
+
+{% block title %}
+Config Index
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>Newsbot Configuration</h1>
+
+    <p>Here you are able to make changes to Newsbot!</p>
+
+    <h2>Configuration Wizzard</h2>
+
+    <p>If this is your first time configuring newsbot, the configuration wizzard is recommend.</p>
+
+    <a href="{{ url_for('config.wizzard', source='final fantasy XIV')}}">Wizzard Setup</a>
+
+    <h2>Sources</h2>
+    <p> 
+        Within Newsbot, it contains sources.  
+        A Source is a record that defines what it will try to pull records from.
+        Most sources are a single website, but some like RSS pulls a common news feed.
+        You can configure each of them below!
+    </p>
+    <ul>
+        <li><a href="{{ url_for('config.source.list', source='finalfantasyxiv')}}">Final Fantasy XIV</a></li>
+        <li><a href="{{ url_for('config.source.list', source='ffxiv')}}">Phantasy Star Online 2</a></li>
+        <li><a href="{{ url_for('config.source.list', source='ffxiv')}}">Pokemon Go Hub</a></li>
+        <li><a href="{{ url_for('config.source.list', source='reddit')}}">Reddit</a></li>
+        <li><a href="{{ url_for('config.source.list', source='youtube')}}">YouTube</a></li>
+        <li><a href="{{ url_for('config.source.list', source='twitch')}}">Twitch</a></li>
+        <li><a href="{{ url_for('config.source.list', source='twitter')}}">Twitter</a></li>
+        <li><a href="{{ url_for('config.source.list', source='instagram')}}">Instagram</a></li>
+        <li><a href="{{ url_for('config.source.list', source='rss')}}">RSS</a></li>
+    </ul>
+
+    <h2>Discord Web Hooks</h2>
+    <p>By adding a new Discord Web Hook, you are able to define what topic you want to post to a web hook.</p>
+    <button>
+        <a href="{{ url_for('config.discord.new') }}">New</a>
+    </button>
+    <button>
+        <a href="{{ url_for('config.discord.list') }}">List</a>
+    </button>
+
+</nav>
+{% endblock %}

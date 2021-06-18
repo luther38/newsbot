@@ -1,0 +1,60 @@
+{% extends 'base.html'%}
+
+{% block title %}
+New  Source - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>{{ sourceName.upper() }} WEBHOOKS</h1>
+
+    {% if isUpdated == True %}
+    <h2>The record '{{form.name.data}}' has been saved!</h2>
+    {% endif %}
+
+    <button type="button"><a href="{{ url_for('config.source.list', source=sourceName)}}">BACK</a></button>
+
+    {% if "youtube" in sourceName %}
+    <form method="POST">
+        <label for="nameInput">Name:</label>
+        <input type="text" id="nameInput" name='name'>
+
+        <label for="url">URL:</label>
+        <input type="text" id="url" name='url'>
+
+        <label for="enabledInput">Enabled:</label>
+        <input type="checkbox", id="enabledInput", name='enabled'>
+
+        <label for="discordInput">Discord Web Hook:</label>
+        <select name="discordwebhook" id="discord">
+            {% for i in discord %}
+                <option value="{{ i['name'] }}">{{i['name']}}</option>
+            {% endfor %}
+        </select>
+        
+        <input type="submit" value="Submit">
+    </form>
+    {% endif %}
+
+    {% if "reddit" in sourceName %}
+    <form method="POST">
+        <label for="nameInput">Name:</label>
+        <input type="text" id="nameInput" name='name'>
+
+        <label for="linkInput">Subreddit:</label>
+        <input type="text" id="linkInput" name='link'>
+
+        <label for="discordInput">Discord Web Hook:</label>
+        <select name="discordwebhook" id="discordInput">
+            {% for i in discord %}
+                <option value="{{ i['name'] }}">{{i['name']}}</option>
+            {% endfor %}
+        </select>
+        
+        <input type="submit" value="Submit">
+    </form>
+    {% endif %}
+
+    <p>All fields are required.</p>
+</nav>
+{% endblock %}

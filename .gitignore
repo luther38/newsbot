@@ -1,6 +1,5 @@
-
-newsbot.db
-.env
+*.db
+.env*
 
 .DS_Store
 # Byte-compiled / optimized / DLL files

@@ -1,6 +1,6 @@
 .devcontainer
 .vscode
 *.newsbot.db
-.env
+.env*
 newsbot.log
 chromedriver

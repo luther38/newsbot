@@ -1,0 +1,66 @@
+{% extends 'base.html'%}
+
+{% block title %}
+{{sourceName.upper()}} Config - Newsbot
+{% endblock %}
+
+{% block body %}
+<nav>
+    <h1>{{sourceName.upper()}} CONFIGURATION</h1>
+
+    <p>Here is the current list that Newsbot is monitoring!</p>
+
+    {% if 'youtube' in sourceName.lower()
+        or 'reddit' in sourceName.lower()
+        or 'twitter' in sourceName.lower()
+        or 'instagram' in sourceName.lower()
+        or 'twitch' in sourceName.lower()
+        or 'rss' in sourceName.lower()
+    %}
+    <button type="button"><a href="{{ url_for('config.source.multiNew', source=sourceName)}}">ADD</a></button>
+    {% else %}
+    <button type="button"><a href="{{ url_for('config.source.edit', source=sourceName)}}">UPDATE</a></button>
+    {% endif %}
+    <button type="button"><a href="{{ url_for('config.index')}}">BACK</a></button>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Enabled</th>
+            <th>Actions</th>
+        </th>
+        {% for i in items %}
+        <tr>
+            <td>{{i.name}}</td>
+            <td>{{i.url}}</td>
+            <td>{{i.enabled}}</td>
+            <td>
+                <button type="button">
+                    <a href="{{ url_for('config.source.edit', id=i.id, source=sourceName)}}">EDIT</a>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>    
+
+
+    {% if 'final fantasy xiv' in sourceName.lower() %}
+    <p> ffxiv table</p>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Actions</th>
+        </th>
+        {% for i in items %}
+        <tr>
+            <td>{{i['name']}}</td>
+            <td>{{i['url']}}</td>
+            <td>placeholder</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</nav>
+{% endblock %}
