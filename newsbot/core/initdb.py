@@ -14,17 +14,20 @@ from newsbot.core.env import (
 )
 from os import name, system
 from newsbot.core.env import Env
+from newsbot.core.constant import SourceName, SourceType
 from typing import List
 from abc import ABC, abstractclassmethod
 from newsbot.core.sql.tables import (
     Sources,
+    SourcesTable,
     DiscordWebHooks,
+    DiscordWebHooksTable,
     Icons,
+    IconsTable,
     Settings,
+    SettingsTable,
     SourceLinks,
-    DiscordWebHooks,
-    SourceLinks,
-    settings,
+    SourceLinksTable,
 )
 
 class FailedToIUpdateSource(Exception):
@@ -38,15 +41,23 @@ class IUpdateSource(ABC):
         pass
 
 class UpdateSource(IUpdateSource):
+    sourceTable = SourcesTable()
+
     def updateSourceLinks(self, source: Sources, hookNames: List[str]) -> None:
         try:
             for h in hookNames:
-                l: DiscordWebHooks = DiscordWebHooks(name=h).findByName()
+                l: DiscordWebHooks = DiscordWebHooksTable().findByName(name=h)
+                slTable = SourceLinksTable()
                 sl = SourceLinks(
-                    discordName=f"{l.name}", discordID=l.id,
-                    sourceName=f"{source.source}_{source.name}", sourceID=source.id
+                    discordName=f"{l.name}", 
+                    discordID=l.id,
+                    
+                    sourceName=source.name, 
+                    sourceType=source.source,
+                    sourceID=source.id
                 )
-                sl.update()
+                slTable.update(sl)
+                
         except Exception as e:
             print(f"Failed to update SourceLinks for {source.source} {source.name}. Error: {e}")
 
@@ -59,50 +70,44 @@ class UpdateRSSSource(UpdateSource):
     sourceName: str = "rss"
     def update(self, values: List[EnvRssDetails]) -> None:
         for i in values:
-            Sources(name=i.name, source=self.sourceName, url=i.url, fromEnv=True).update()
-            s = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
+            self.sourceTable.update(item= Sources(name=i.name, source=SourceName.RSS.value ,url=i.url, fromEnv=True))
+            s = self.sourceTable.findByNameandSource(name=i.name, source=SourceName.RSS.value)
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
 class UpdateYoutubeSource(UpdateSource):
     sourceName: str = "youtube"
     def update(self, values: List[EnvYoutubeDetails]) -> None:
         for i in values:
-            Sources(name=i.name, source=self.sourceName, url=i.url, fromEnv=True).update()
-            s: Sources = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
+            self.sourceTable.update(item= Sources(name=i.name, source=SourceName.YOUTUBE.value, url=i.url, fromEnv=True))
+            s = self.sourceTable.findByNameandSource(name=i.name, source=SourceName.YOUTUBE.value)
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
 class UpdateRedditSource(UpdateSource):
     sourceName: str = 'reddit'
     def update(self, values: List[EnvRedditDetails]) -> None:
         for i in values:
-            Sources(name=i.subreddit, source=self.sourceName, url=f"https://reddit.com/r/{i.subreddit}/", fromEnv=True).update()
-            s: Sources = Sources(name=i.subreddit, source=self.sourceName).findBySourceAndName()
+            self.sourceTable.update(Sources(name=i.subreddit, source=SourceName.REDDIT.value, url=f"https://reddit.com/r/{i.subreddit}/", fromEnv=True))
+            s = self.sourceTable.findByNameandSource(name=i.subreddit, source=SourceName.REDDIT.value)
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
 class UpdateTwitchSource(UpdateSource):
     sourceName: str = "twitch"
     def update(self, values: List[EnvTwitchDetails]) -> None:
         for i in values:
-            Sources(name=i.user, source=self.sourceName, url=f"https://twitch.tv/{i.user}/", fromEnv=True).update()
-            s: Sources = Sources(name=i.user, source=self.sourceName).findBySourceAndName()
+            self.sourceTable.update(Sources(name=i.user, source=SourceName.TWITCH.value, url=f"https://twitch.tv/{i.user}/", fromEnv=True))
+            s = self.sourceTable.findByNameandSource(name=i.user, source=SourceName.TWITCH.value)
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
 class UpdateTwitterSource(UpdateSource, IUpdateSourceURL): 
     sourceName: str = "twitter"
     def update(self, values: List[EnvTwitterDetails]) -> None:
         for i in values:
-            s = Sources(
-                name=i.name, 
-                source=self.sourceName, 
-                type=i.type.lower(), 
-                url=self.__getUrl__(
-                    type=i.type.lower(), 
-                    name=i.name
-                ),
-                fromEnv=True
+            self.sourceTable.update(
+                Sources(name=i.name, source=SourceName.TWITTER.value, type=i.type.lower(), 
+                    url=self.__getUrl__(type=i.type.lower(), name=i.name),fromEnv=True
+                )
             )
-            s.update()
-            s: Sources = Sources(name=i.name, source=self.sourceName, type=i.type.lower()).findBySourceNameType()
+            s = self.sourceTable.findBySourceNameType(name=i.name, source=SourceName.TWITTER.value, type=i.type.lower())
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
     def __getUrl__(self, type: str, name: str) -> str:
@@ -116,11 +121,13 @@ class UpdateInstagramSource(UpdateSource, IUpdateSourceURL):
     def update(self, values: List[EnvInstagramDetails]) -> None:
         for i in values:
             uri: str = self.__getUrl__(type=i.type.lower(), name=i.name)
-            Sources(
-                name=i.name, source=self.sourceName, 
-                type=i.type.lower(), url=uri, fromEnv=True
-            ).update()
-            s: Sources = Sources(name=i.name, source=self.sourceName).findBySourceAndName()
+            self.sourceTable.update(
+                Sources(
+                    name=i.name, source=SourceName.INSTAGRAM.value, 
+                    type=i.type.lower(), url=uri, fromEnv=True
+                )
+            )
+            s = self.sourceTable.findBySourceNameType(name=i.name, source=SourceName.INSTAGRAM.value, type=i.type)
             self.updateSourceLinks(source=s, hookNames=i.discordLinkName)
 
     def __getUrl__(self, type: str, name: str) -> str:
@@ -133,14 +140,16 @@ class UpdatePokemonGoHubSource(UpdateSource):
     sourceName: str = 'pokemongohub'
     def update(self, values: EnvPokemonGoDetails) -> None:
         try:
-            Sources(
-                name=self.sourceName,
-                source=self.sourceName,
-                enabled=values.enabled,
-                url="https://pokemongohub.net",
-                fromEnv=True
-            ).update()
-            s: Sources = Sources(name=self.sourceName).findByName()
+            self.sourceTable.update(
+                Sources(
+                    name=SourceName.POKEMONGO.value,
+                    source=SourceName.POKEMONGO.value,
+                    enabled=values.enabled,
+                    url="https://pokemongohub.net",
+                    fromEnv=True
+                )
+            )
+            s = self.sourceTable.findByName(name=SourceName.POKEMONGO.value)
             self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
         except Exception as e:
             print(f"Failed to enable 'Pokemon Go Hub' source. Error: {e}")
@@ -149,14 +158,16 @@ class UpdatePhantasyStarOnline2Source(UpdateSource):
     sourceName: str = "phantasystaronline2"
     def update(self, values: EnvPhantasyStarOnline2Details) -> None:
         try:
-            Sources(
-                name=self.sourceName,
-                source=self.sourceName,
-                enabled=values.enabled,
-                url="https://pso2.com",
-                fromEnv=True
-            ).update()
-            s: Sources = Sources(name=self.sourceName).findByName()
+            self.sourceTable.update(
+                Sources(
+                    name=SourceName.PHANTASYSTARONLINE2.value,
+                    source=SourceName.PHANTASYSTARONLINE2.value,
+                    enabled=values.enabled,
+                    url="https://pso2.com",
+                    fromEnv=True
+                )
+            )
+            s = self.sourceTable.findByName(name=SourceName.PHANTASYSTARONLINE2.value)
             self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
         except Exception as e:
             print(f"Failed to enabled 'Phantasy Star Online 2' source. Error: {e}")
@@ -170,12 +181,20 @@ class UpdateFinalFantasyXIVSource(UpdateSource):
 
     def update(self, values: EnvFinalFantasyXIVDetails) -> None:  
         try:
-            s = Sources(name=self.topic, source=self.sourceName, enabled=self.enabled, url=self.url, fromEnv=True)
-            s.update()
-            s = Sources(name=self.topic, source=self.sourceName).findBySourceAndName()
+            self.sourceTable.update(
+                Sources(
+                    name=self.topic, 
+                    source=SourceName.FINALFANTASYXIV.value, 
+                    enabled=self.enabled, 
+                    url=self.url, 
+                    fromEnv=True
+                )
+            )
+            
+            s = self.sourceTable.findByNameandSource(name=self.topic, source=SourceName.FINALFANTASYXIV.value)
             self.updateSourceLinks(source=s, hookNames=values.discordLinkName)
         except Exception as e:
-            print(f"Failed to enabled '{self.topic}' in '{self.sourceName}' source. Error: {e}")
+            print(f"Failed to enabled '{self.topic}' in '{SourceName.FINALFANTASYXIV.value}' source. Error: {e}")
 
 
 class InitDb:
@@ -191,71 +210,101 @@ class InitDb:
         DiscordWebHooks().clearTable()
 
     def addStaticIcons(self) -> None:
+        table = IconsTable()
         # Icons().clearTable()
-        Icons(
-            site="Default Pokemon Go Hub",
-            fileName="https://pokemongohub.net/wp-content/uploads/2017/04/144.png",
-        ).update()
-        Icons(
-            site="Default Phantasy Star Online 2",
-            fileName="https://raw.githubusercontent.com/jtom38/newsbot/master/mounts/icons/pso2.jpg",
-        ).update()
-        Icons(
-            site="Default Final Fantasy XIV",
-            fileName="https://img.finalfantasyxiv.com/lds/h/0/U2uGfVX4GdZgU1jASO0m9h_xLg.png",
-        ).update()
-        Icons(
-            site="Default Reddit",
-            fileName="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png",
-        ).update()
-        Icons(
-            site="Default YouTube",
-            fileName="https://www.youtube.com/s/desktop/c46c1860/img/favicon_144.png",
-        ).update()
-        Icons(
-            site="Default Twitter",
-            fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png",
-        ).update()
-        Icons(
-            site="Default Instagram",
-            fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png",
-        ).update()
-        Icons(
-            site="Default Twitch",
-            fileName="https://static.twitchcdn.net/assets/favicon-32-d6025c14e900565d6177.png",
-        ).update()
+        table.update(
+            Icons(
+                site=f"Default {SourceName.POKEMONGO.value}",
+                fileName="https://pokemongohub.net/wp-content/uploads/2017/04/144.png"
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.PHANTASYSTARONLINE2.value}",
+                fileName="https://raw.githubusercontent.com/jtom38/newsbot/master/mounts/icons/pso2.jpg",
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.FINALFANTASYXIV.value}",
+                fileName="https://img.finalfantasyxiv.com/lds/h/0/U2uGfVX4GdZgU1jASO0m9h_xLg.png",
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.REDDIT.value}",
+                fileName="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png",
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.YOUTUBE.value}",
+                fileName="https://www.youtube.com/s/desktop/c46c1860/img/favicon_144.png",
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.TWITTER.value}",
+                fileName="https://abs.twimg.com/responsive-web/client-web/icon-ios.8ea219d5.png",
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.INSTAGRAM.value}",
+                fileName="https://www.instagram.com/static/images/ico/favicon-192.png/68d99ba29cc8.png",
+            )
+        )
+        table.update(
+            Icons(
+                site=f"Default {SourceName.TWITCH.value}",
+                fileName="https://static.twitchcdn.net/assets/favicon-32-d6025c14e900565d6177.png",
+            )
+        )
 
         # RSS based sites
-        Icons(
-            site="Default Engadget",
-            fileName="https://s.yimg.com/kw/assets/apple-touch-icon-120x120.png",
-        ).update()
-        Icons(
-            site="Default GitHub",
-            fileName="https://github.githubassets.com/images/modules/open_graph/github-logo.png",
-        ).update()
+        table.update(
+            Icons(
+                site="Default Engadget",
+                fileName="https://s.yimg.com/kw/assets/apple-touch-icon-120x120.png",
+            )
+        )
+        table.update(
+            Icons(
+                site="Default GitHub",
+                fileName="https://github.githubassets.com/images/modules/open_graph/github-logo.png",
+            )
+        )
 
     def rebuildCache(
         self, twitchConfig: EnvTwitchConfig, twitterConfig: EnvTwitterConfig
         ) -> None:
-        Settings().clearTable()
-        Settings(key="twitch clips enabled", value=twitchConfig.monitorClips).add()
-        Settings(key="twitch vod enabled", value=twitchConfig.monitorVod).add()
-        Settings(
-            key="twitch livestreams enabled", value=twitchConfig.monitorLiveStreams
-        ).add()
-        Settings(key="twitter.preferred.lang", value=twitterConfig.preferredLang).add()
-        Settings(key="twitter.ignore.retweet", value=twitterConfig.ignoreRetweet).add()
+        table = SettingsTable()
+        table.clearTable()
+        table.add(Settings(key="twitch clips enabled", value=twitchConfig.monitorClips))
+        table.add(Settings(key="twitch vod enabled", value=twitchConfig.monitorVod))
+        table.add(Settings(key="twitch livestreams enabled", value=twitchConfig.monitorLiveStreams))
+        table.add(Settings(key="twitter.preferred.lang", value=twitterConfig.preferredLang))
+        table.add(Settings(key="twitter.ignore.retweet", value=twitterConfig.ignoreRetweet))
 
     def updateDiscordValues(self, values: List[EnvDiscordDetails]) -> None:
+        table = DiscordWebHooksTable()
         for v in values:
-            if v.name == "":
-                v.name = f"{v.server} - {v.channel}"
 
-            d = DiscordWebHooks(
-                name=v.name, server=v.server, channel=v.channel, url=v.url, fromEnv=True
-            )
-            d.update()
+            if v.name == "":
+                v.name = table.__generateName__(server=v.server, channel=v.channel)
+                #v.name = f"{v.server} - {v.channel}"
+            
+            item:DiscordWebHooks = table.findByName(v.name)
+            if item.name != ' - ':
+                item.url = v.url
+                table.add(item)
+                pass
+            else:
+                d = DiscordWebHooks(
+                    name=v.name, server=v.server, channel=v.channel, url=v.url, fromEnv=True
+                )
+                table.add(d)
+            
 
     def runDatabaseTasks(self) -> None:
         self.updateDiscordValues(values=self.e.discord_values)
