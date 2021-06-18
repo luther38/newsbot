@@ -1,6 +1,7 @@
 from typing import List
 from bs4 import BeautifulSoup
 from newsbot.core.logger import Logger
+from newsbot.core.constant import SourceName, SourceType
 from newsbot.core.sql.tables import Articles
 from newsbot.worker.sources.common import BSources
 
@@ -55,11 +56,11 @@ class FFXIVReader(BSources):
                 "li", {"class", "news__list--topics ic__topics--list"}
             ):
                 a = Articles(
-                    siteName=self.siteName,
+                    siteName=SourceName.FINALFANTASYXIV.value,
                     tags="ffxiv, topics, news",
                     authorName=self.authorName,
                     sourceName="topics",
-                    sourceType="finalfantasyxiv"
+                    sourceType=SourceName.FINALFANTASYXIV.value
                 )
                 header = news.contents[0].contents
                 body = news.contents[1].contents
@@ -80,11 +81,11 @@ class FFXIVReader(BSources):
                 "a", {"class", "news__list--link ic__info--list"}
             ):
                 a = Articles(
-                    siteName=self.siteName,
+                    siteName=SourceName.FINALFANTASYXIV.value,
                     tags="ffxiv, notices, news",
                     authorName=self.authorName,
                     sourceName="notices",
-                    sourceType="finalfantasyxiv"
+                    sourceType=SourceName.FINALFANTASYXIV.value
                 )
                 a.title = news.text
                 a.url = f"{self.baseUri}{news.attrs['href']}"
@@ -107,11 +108,11 @@ class FFXIVReader(BSources):
                 "a", {"class", "news__list--link ic__maintenance--list"}
             ):
                 a = Articles(
-                    siteName=self.siteName,
+                    siteName=SourceName.FINALFANTASYXIV.value,
                     tags="ffxiv, maintenance, news",
                     authorName=self.authorName,
                     sourceName="maintenance",
-                    sourceType="finalfantasyxiv"
+                    sourceType=SourceName.FINALFANTASYXIV.value
                 )
                 a.title = news.text
                 a.url = f"{self.baseUri}{news.attrs['href']}"
@@ -138,11 +139,11 @@ class FFXIVReader(BSources):
                 "a", {"class", "news__list--link ic__update--list"}
             ):
                 a = Articles(
-                    siteName=self.siteName,
+                    siteName=SourceName.FINALFANTASYXIV.value,
                     tags="ffxiv, updates, news",
                     authorName=self.authorName,
                     sourceName="updates",
-                    sourceType="finalfantasyxiv"
+                    sourceType=SourceName.FINALFANTASYXIV.value
                 )
                 a.title = news.text
                 a.url = f"{self.baseUri}{news.attrs['href']}"
@@ -169,11 +170,11 @@ class FFXIVReader(BSources):
                 "a", {"class", "news__list--link ic__obstacle--list"}
             ):
                 a = Articles(
-                    siteName=self.siteName,
+                    siteName=SourceName.FINALFANTASYXIV.value,
                     tags="ffxiv, news, status",
                     authorName=self.authorName,
                     sourceName="status",
-                    sourceType="finalfantasyxiv"
+                    sourceType=SourceName.FINALFANTASYXIV.value
                 )
                 a.siteName = self.siteName
                 a.title = news.text

@@ -1,7 +1,7 @@
 # from newsbot import database
 from newsbot.core.env import Env
 from newsbot.core.logger import Logger
-from newsbot.core.sql.tables import Articles, DiscordQueue
+from newsbot.core.sql.tables import Articles, ArticlesTable, DiscordQueue, DiscordQueueTable
 from newsbot.worker.sources.common import ISources
 from time import sleep
 
@@ -12,6 +12,8 @@ class Worker:
     """
 
     def __init__(self, source: ISources):
+        self.articlesTable = ArticlesTable()
+        self.queueTable = DiscordQueueTable()
         self.logger = Logger(__class__)
         self.source: ISources = source
         self.enabled: bool = False
@@ -40,16 +42,14 @@ class Worker:
 
                 # Check the DB if it has been posted
                 for i in news:
-                    exists = i.exists()
+                    exists = self.articlesTable.exists(i.url)
 
                     if exists == False:
-                        i.add()
+                        self.articlesTable.add(i)
 
                         if len(self.source.hooks) >= 1:
-                            dq = DiscordQueue()
-                            dq.convert(i)
-                            res = dq.add()
-
+                            dq = self.queueTable.convert(i)
+                            res = self.queueTable.add(dq)
                             self.discordQueueMessage(i, res)
 
                 self.logger.debug(f"{self.source.siteName} Worker is going to sleep.")

@@ -1,8 +1,9 @@
-from newsbot.core.sql.tables.sources import SourcesTable
+from newsbot.core.sql.tables.discordWebHooks import DiscordWebHooksTable
 from typing import List
 from requests import get, Response
 from bs4 import BeautifulSoup
-from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, SourceLinks
+from newsbot.core.sql.tables.schema import Articles, Sources, DiscordWebHooks, SourceLinks
+from newsbot.core.sql.tables import ArticlesTable, SourcesTable, DiscordQueueTable, SourceLinksTable
 from abc import ABC, abstractclassmethod
 from newsbot.core.logger import Logger
 
@@ -76,7 +77,7 @@ class BSources(ISources):
 
     def getSourceList(self, siteName: str) -> List[Sources]:
         l = list()
-        res = Sources(source=siteName).findAllBySource()
+        res = SourcesTable().findAllBySource(source=siteName)
         for i in res:
             l.append(i)
         return l
@@ -86,13 +87,15 @@ class BSources(ISources):
         tSources = SourcesTable()
         s = tSources.findAllBySource(source=siteName)
         for i in s:
-            sl: SourceLinks = SourceLinks(sourceID=i.id).findBySourceID()
+            sl: SourceLinks = SourceLinksTable().findBySourceID(sourceID=i.id)
+            #sl: SourceLinks = SourceLinks(sourceID=i.id).findBySourceID()
             if sl == None:
                 continue
             elif sl.discordID != "" or sl.discordID != None:
-                d = DiscordWebHooks()
-                d.id = sl.discordID
-                discordRef: DiscordWebHooks = d.findById()
+                #d = DiscordWebHooks()
+                discordRef = DiscordWebHooksTable().findById(id=sl.discordID)
+                #d.id = sl.discordID
+                #discordRef: DiscordWebHooks = d.findById()
                 if discordRef.enabled == True:
                     h.append(discordRef)
             else:
@@ -119,6 +122,3 @@ class BSources(ISources):
 
     def getHeaders(self) -> dict:
         return {"User-Agent": "NewsBot - Automated News Delivery"}
-
-
-

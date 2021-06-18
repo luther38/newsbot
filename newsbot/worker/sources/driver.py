@@ -20,16 +20,17 @@ class BDriver(IDriver):
     def driverGetContent(self) -> str:
         try:
             content = self.driver.page_source
+            return content
         except Exception as e:
             if "Failed to decode response from marionette" in e.args[0]:
-                self.logger.critical(f"Failed to read from browser.  This can be due to not enough RAM on the system. Error: {e}")
+                self.logger.critical(f"Code: s01 - Failed to read from browser.  This can be due to not enough RAM on the system. Error: {e}")
             else:
                 self.logger.critical(f"Failed to collect data from {self.uri}. {e}")
 
     def driverGoTo(self, uri: str) -> None:
         try:
             self.driver.get(uri)
-            sleep(secs=3)
+            sleep(3)
             #self.driver.implicitly_wait(10)
         except Exception as e:
             self.logger.error(f"Driver failed to get {uri}. Error: {e}")

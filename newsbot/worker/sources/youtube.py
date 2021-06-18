@@ -52,23 +52,7 @@ class YoutubeReader(BSources, BFirefox):
                 # We are collecting info that is not present in the RSS feed.
                 # We are going to store them in the class.
                 self.setAuthorImage(page, site)
-
-                #authorImage.clear()
-
-                try:
-                    authorName = page.find_all(
-                        name="yt-formatted-string",
-                        attrs={"class": "style-scope ytd-channel-name", "id": "text"},
-                    )
-                    self.authorName = authorName[0].text
-                    Cache(
-                        key=f"youtube {site.name} authorName", value=self.authorName
-                    ).add()
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to find the authorName for {site.name}.  CSS might have changed. {e}"
-                    )
-                authorName.clear()
+                self.setAuthorName(page, site)
             else:
                 self.authorName = Cache(key=f"youtube {site.name} authorName").find()
                 self.authorImage = Cache(key=f"youtube {site.name} authorImage").find()
@@ -86,6 +70,7 @@ class YoutubeReader(BSources, BFirefox):
                     a.video = a.url
                     a.title = item.contents[7].text
                     a.pubDate = item.contents[13].text
+                    #TODO to be phased out
                     a.siteName = site.name
                     a.thumbnail = item.contents[17].contents[5].attrs["url"]
                     a.authorImage = self.authorImage
@@ -113,6 +98,23 @@ class YoutubeReader(BSources, BFirefox):
 
         return ""
 
+    def setAuthorName(self, page: BeautifulSoup, site: Sources):
+        try:
+            authorName = page.find_all(
+                name="yt-formatted-string",
+                attrs={"class": "style-scope ytd-channel-name", "id": "text"},
+            )
+            self.authorName = authorName[0].text
+            if self.authorName == None or self.authorName == '':
+                self.logger.error(f"Failed to find the authorName for {site.name}.  CSS might have changed.")    
+            Cache(
+                key=f"youtube {site.name} authorName", value=self.authorName
+            ).add()
+        except Exception as e:
+            self.logger.error(
+                f"Failed to find the authorName for {site.name}.  CSS might have changed. {e}"
+            )
+
     def setAuthorImage(self, page: BeautifulSoup, site: Sources) -> str:
         try:
             authorImage = page.find_all(name="yt-img-shadow", attrs={"id": "avatar"})
@@ -122,6 +124,7 @@ class YoutubeReader(BSources, BFirefox):
                     key=f"{site.source} {site.name} authorImage",
                     value=img,
                 ).add()
+                self.authorImage = img
             else:
                 self.logger.error(f"Failed to find the AuthorImage on the youtube page.")
         except Exception as e:

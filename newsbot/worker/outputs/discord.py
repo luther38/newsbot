@@ -2,13 +2,19 @@ from typing import List
 from enum import Enum
 import re
 from time import sleep
+from newsbot.core.constant import SourceName
 from newsbot.core.env import Env
 from newsbot.core.logger import Logger
+from newsbot.core.sql import db, tables
 from newsbot.core.sql.tables import (
     DiscordQueue,
+    DiscordQueueTable,
     DiscordWebHooks,
+    DiscordWebHooksTable,
     Icons,
-    SourceLinks
+    IconsTable,
+    SourceLinks,
+    SourceLinksTable
 )
 from newsbot.worker.outputs.ioutputs import IOutputs
 from newsbot.worker.common.convertHtml import ConvertHtml
@@ -18,7 +24,7 @@ from requests import Response
 class Discord(IOutputs):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
-        self.table = DiscordQueue()
+        self.table = DiscordQueueTable()
         self.tempMessage: DiscordWebhook = DiscordWebhook("placeholder")
         self.env = Env()
         pass
@@ -28,9 +34,7 @@ class Discord(IOutputs):
             # Tell the database to give us the queue on the table.
             try:
                 queue = self.table.getQueue()
-
                 for i in queue:
-
                     resp = self.sendMessage(i)
 
                     # Only remove the object from the queue if we sent it out correctly.
@@ -40,12 +44,12 @@ class Discord(IOutputs):
                             safeToRemove = False
 
                     if safeToRemove == True:
-                        i.remove()
+                        self.table.removeByLink(i.link)
 
                     sleep(self.env.discord_delay_seconds)
             except Exception as e:
                 self.logger.error(
-                    f"Failed to post a message. {i.title}. Status_code: {resp.status_code}. msg: {resp.text}. error {e}"
+                    f"Failed to post a message. {i.title}. Status_code: {resp[0].status_code}. OK: {resp[0].ok}. error {e}"
                 )
 
             sleep(self.env.discord_delay_seconds)
@@ -151,20 +155,19 @@ class Discord(IOutputs):
 
     def getHooks(self, source: str, name: str) -> List[str]:
         hooks = list()
+        table = SourceLinksTable()
         try:
-            if source == "pokemongohub" or \
-                source == "phantasystaronline2" or \
-                source == "finalfantasyxiv":
-                dbHooks: SourceLinks = SourceLinks(name=f"{source}").findAllByName()
+            if source == SourceName.POKEMONGO.value or \
+                source == SourceName.PHANTASYSTARONLINE2.value or \
+                source == SourceName.FINALFANTASYXIV.value:
+                dbHooks = table.findAllBySourceType(sourceType=source)
+                if source == SourceName.FINALFANTASYXIV.value:
+                    dbHooks = table.__filterDupes__(dbHooks)
             else:
-                dbHooks: SourceLinks = SourceLinks(
-                    name=f"{source}_{name}"
-                ).findAllByName()
-
+                dbHooks = table.findAllBySourceNameAndType(name=name, type=source)
+                
             for hook in dbHooks:
-                dwh = DiscordWebHooks()
-                dwh.id = hook.discordID
-                item: DiscordWebHooks = dwh.findById()
+                item = DiscordWebHooksTable().findById(hook.discordID)                
                 if item.url != "":
                     hooks.append(item.url)
             return hooks
@@ -222,41 +225,42 @@ class Discord(IOutputs):
         return msg
 
     def getAuthorIcon(self, authorIcon: str, siteName: str) -> str:
+        table = IconsTable()
         if authorIcon != "":
             return authorIcon
+        
+        if (
+            siteName == SourceName.FINALFANTASYXIV.value
+            or siteName == SourceName.PHANTASYSTARONLINE2.value
+            or siteName == SourceName.POKEMONGO.value
+        ):
+            res = table.findAllByName(site=f"Default {siteName}")
+            return res[0].filename
         else:
-            if (
-                siteName == "Final Fantasy XIV"
-                or siteName == "Phantasy Star Online 2"
-                or siteName == "Pokemon Go Hub"
-            ):
-                res = Icons(site=f"Default {siteName}").findAllByName()
-                return res[0].filename
+            s: List[str] = siteName.split(" ")
+            if s[0] == SourceName.RSS.value:
+                # res = Icons(site=f"Default {s[1]}").findAllByName()
+                res = table.findAllByName(site=siteName)
             else:
-                s: List[str] = siteName.split(" ")
-                if s[0] == "RSS":
-                    # res = Icons(site=f"Default {s[1]}").findAllByName()
-                    res = Icons(site=siteName).findAllByName()
-                else:
-                    res = Icons(site=f"Default {s[0]}").findAllByName()
-                return res[0].filename
+                res = table.findAllByName(site=f"Default {s[0]}")
+            return res[0].filename
 
     def buildFooter(self, siteName: str) -> str:
         footer = ""
         end: str = "Brought to you by NewsBot"
-        if "reddit" in siteName.lower():
+        if SourceName.REDDIT.value in siteName.lower():
             s = siteName.split(" ")
             footer = f"{end}"
-        elif "Youtube" in siteName:
+        elif SourceName.YOUTUBE.value in siteName:
             s = siteName.split(" ")
             footer = f"{s[1]} - {end}"
-        elif "Instagram" in siteName or "Twitter" in siteName:
+        elif SourceName.INSTAGRAM.value in siteName or SourceName.TWITTER.value in siteName:
             s = siteName.split(" ")
             if s[1] == "tag":
                 footer = f"#{s[2]} - {end}"
             elif s[1] == "user":
                 footer = f"{s[2]} - {end}"
-        elif "RSS" in siteName:
+        elif SourceName.RSS.value in siteName:
             s = siteName.split(" ")
             footer = f"{s[1]} - {end}"
         else:
@@ -265,26 +269,27 @@ class Discord(IOutputs):
         return footer
 
     def getFooterIcon(self, siteName: str, sourceType: str) -> str:
+        table = IconsTable()
         if (
-            siteName == "Phatnasy Star Online 2"
-            or siteName == "Pokemon Go Hub"
-            or siteName == "Final Fantasy XIV"
+            siteName == SourceName.PHANTASYSTARONLINE2.value
+            or siteName == SourceName.POKEMONGO.value
+            or siteName == SourceName.FINALFANTASYXIV.value
         ):
-            res = Icons(site=f"Default {siteName}").findAllByName()
+            res = table.findAllByName(site=f"Default {siteName}")
             return res[0].filename
         else:
-            s: List[str] = siteName.split(" ")
+            #s: List[str] = siteName.split(" ")
             try:
                 values = (f"Default {siteName}", f"Default {sourceType}", siteName)
                 for v in values:
-                    r = Icons(site=v).findAllByName()
+                    r = table.findAllByName(site=v)
                     if len(r) == 1:
                         res = r
             except:
                 pass
 
             try:
-                r = Icons(site=siteName).findAllByName()
+                r = table.findAllByName(site=siteName)
                 if len(r) == 1:
                     res = r
             except Exception as e:
@@ -302,21 +307,21 @@ class Discord(IOutputs):
 
     def getEmbedColor(self, siteName: str) -> int:
         # Decimal values can be collected from https://www.spycolor.com
-        if "Reddit" in siteName:
+        if SourceName.REDDIT.value in siteName:
             return 16395272
-        elif "Youtube" in siteName:
+        elif SourceName.YOUTUBE.value  in siteName:
             return 16449542
-        elif "Instagram" in siteName:
+        elif SourceName.INSTAGRAM.value in siteName:
             return 13303930
-        elif "Twitter" in siteName:
+        elif SourceName.TWITTER.value in siteName:
             return 1937134
-        elif "Final Fantasy XIV" in siteName:
+        elif SourceName.FINALFANTASYXIV.value in siteName:
             return 11809847
-        elif "Pokemon Go Hub" in siteName:
+        elif SourceName.POKEMONGO.value in siteName:
             return 2081673
-        elif "Phantasy Star Online 2" in siteName:
+        elif SourceName.PHANTASYSTARONLINE2.value in siteName:
             return 5557497
-        elif "Twitch" in siteName:
+        elif SourceName.TWITCH.value in siteName:
             return 9718783
         else:
             return 0
