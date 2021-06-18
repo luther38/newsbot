@@ -1,6 +1,7 @@
+from newsbot.core.constant import SourceName
 from typing import List
 from newsbot.core.logger import Logger
-from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
+from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, ArticlesTable
 from newsbot.worker.sources.common import BSources, UnableToFindContent
 from requests import get, Response
 from bs4 import BeautifulSoup
@@ -11,7 +12,7 @@ class PogohubReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://pokemongohub.net/rss"
-        self.siteName: str = "Pokemon Go Hub"
+        self.siteName: str = SourceName.POKEMONGO.value
         self.authorName: str = "Pokemon Go Hub"
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
@@ -43,7 +44,8 @@ class PogohubReader(BSources):
 
                         # we are doing the check here to see if we need to fetch the thumbnail.
                         # if we have seen the link already, move on and save on time.
-                        seenAlready = item.exists()
+                        seenAlready = ArticlesTable().exists(item.url)
+                        #seenAlready = item.exists()
                         if seenAlready == False:
                             # get thumbnail
                             item.thumbnail = self.getArticleThumbnail(item.url)

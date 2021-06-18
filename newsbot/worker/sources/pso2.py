@@ -1,5 +1,6 @@
 from newsbot.core.logger import Logger
 from newsbot.core.sql.tables import Sources, DiscordWebHooks, Articles
+from newsbot.core.constant import SourceName
 from newsbot.worker.sources.common import BSources, UnableToFindContent
 from bs4 import BeautifulSoup
 from typing import List
@@ -11,7 +12,7 @@ class PSO2Reader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri: str = "https://pso2.com/news"
-        self.siteName: str = "Phantasy Star Online 2"
+        self.siteName: str = SourceName.PHANTASYSTARONLINE2.value
         self.authorName: str = f"{self.siteName} Official Site"
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()

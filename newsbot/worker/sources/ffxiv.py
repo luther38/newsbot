@@ -10,7 +10,7 @@ class FFXIVReader(BSources):
         self.logger = Logger(__class__)
         self.uri: str = "https://na.finalfantasyxiv.com/lodestone/news/"
         self.baseUri: str = "https://na.finalfantasyxiv.com"
-        self.siteName: str = "finalfantasyxiv"
+        self.siteName: str = SourceName.FINALFANTASYXIV.value
         self.authorName: str = "Final Fantasy XIV Official Site"
         self.links = list()
         self.hooks = list()

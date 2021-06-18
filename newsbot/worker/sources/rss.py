@@ -3,6 +3,7 @@ import re
 from bs4 import BeautifulSoup
 from json import loads
 from newsbot.core.logger import Logger
+from newsbot.core.constant import SourceName
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Icons
 from newsbot.worker.sources.common import BSources
 from newsbot.worker.sources.rssHelper import *
@@ -16,7 +17,7 @@ class RssReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://example.net/"
-        self.siteName: str = "RSS"
+        self.siteName: str = SourceName.RSS.value
         self.feedName: str = ""
         self.RssHelper: IRssContent = IRssContent()
         self.links: List[Sources] = list()

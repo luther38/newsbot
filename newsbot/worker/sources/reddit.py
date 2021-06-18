@@ -1,8 +1,8 @@
 from typing import List
 from json import loads
-
 from bs4 import BeautifulSoup
 from newsbot.core.logger import Logger
+from newsbot.core.constant import SourceName
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.core.cache import Cache
 from newsbot.worker.sources.driver import BFirefox
@@ -13,7 +13,7 @@ class RedditReader(BSources, BFirefox):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://reddit.com/r/aww/top.json"
-        self.siteName = "Reddit"
+        self.siteName = SourceName.REDDIT.value
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False

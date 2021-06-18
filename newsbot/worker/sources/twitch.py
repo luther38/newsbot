@@ -1,5 +1,6 @@
 from typing import List
 from newsbot.core.logger import Logger
+from newsbot.core.constant import SourceName
 from newsbot.core.api import TwitchAPI
 from newsbot.worker.sources.common import BSources
 from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
@@ -10,7 +11,7 @@ class TwitchReader(BSources):
     def __init__(self) -> None:
         self.logger = Logger(__class__)
         self.uri = "https://twitch.tv/"
-        self.siteName: str = "Twitch"
+        self.siteName: str = SourceName.TWITCH.value
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
