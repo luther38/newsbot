@@ -1,4 +1,5 @@
-from newsbot.core.sql.tables import Settings
+from abc import ABC, abstractclassmethod
+from newsbot.core.sql.tables import Settings, SettingsTable
 
 class Cache:
     def __init__(self, key: str, value: str = "") -> None:
@@ -17,16 +18,19 @@ class Cache:
         self.sql.remove(self.key)
 
 
-class iCache:
+class iCache(ABC):
     def __init__(self):
         pass
-
+    
+    @abstractclassmethod
     def find(self, key: str) -> str:
         raise NotImplementedError
 
+    @abstractclassmethod
     def add(self, key: str, value: str) -> str:
         raise NotImplementedError
 
+    @abstractclassmethod
     def remove(self, key: str) -> None:
         raise NotImplementedError
 
@@ -39,15 +43,17 @@ class SqlCache(iCache):
     """
 
     def __init__(self):
+        #self.table = SettingsTable()
         pass
 
     def find(self, key: str) -> str:
-        res: Settings = Settings(key=key).findSingleByKey()
+        res = SettingsTable().findSingleByKey(key=key)
         return res.value
 
     def add(self, key: str, value: str) -> str:
-        Settings(key=key, value=value).add()
+        SettingsTable().add(Settings(key=key, value=value))
         return value
 
     def remove(self, key: str) -> None:
-        Settings(key=key).remove()
+        SettingsTable().remove(key=key)
+        
