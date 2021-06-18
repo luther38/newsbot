@@ -60,7 +60,7 @@ def edit(source: str, id: str) -> None:
                 res.name = form.name.data
                 res.url = form.url.data
                 res.enabled = form.enabled.data
-                linksTable.
+                #linksTable.
                 table.add(res)
                 updated: bool = True
             except Exception as e:

@@ -16,7 +16,7 @@ def startWorker() -> None:
     NewsbotWorker().start()
 
 def start() -> Flask:
-    startCore()
+    #startCore()
     #startWorker()
     
     app = Flask(
