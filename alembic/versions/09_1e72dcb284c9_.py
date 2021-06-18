@@ -5,7 +5,7 @@ Revises: 86fa6bab6bc0
 Create Date: 2021-03-28 14:43:29.737553
 
 """
-from newsbot.core.cache import Cache
+
 from alembic.op import add_column, drop_column, create_table, drop_table
 from sqlalchemy import Column, String
 
@@ -20,7 +20,8 @@ def upgrade():
     create_table(
         "sourcelinks",
         Column("id", String, primary_key=True),
-        Column("sourceName", String,),
+        Column("sourceName", String),
+        Column("sourceType", String),
         Column("sourceID", String),
         Column('discordName', String),
         Column("discordID", String),
