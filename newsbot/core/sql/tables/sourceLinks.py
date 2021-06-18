@@ -1,216 +1,39 @@
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Float,
-    Boolean,
-    create_engine,
-    Binary,
-)
-import uuid
+from newsbot.core.sql.tables.schema import Sources
 from typing import List
-
 from sqlalchemy.orm.session import Session
-from newsbot.core.sql import database, Base
-from newsbot.core.sql.tables import Articles, ITables
+from newsbot.core.constant import SourceName, SourceType
+from newsbot.core.sql import database
+from newsbot.core.sql.tables.sources import SourcesTable
+from newsbot.core.sql.tables import ITables, DiscordWebHooksTable, SourceLinks, discordWebHooks
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
+class SourceLinksTable(ITables):
+    def __init__(self) -> None:
+        self.s = database.newSession()
 
+    #def __exit__(self) -> None:
+    #    self.s.close()
 
-class SourceLinks(Base, ITables):
-    __tablename__ = "sourcelinks"
-    id = Column("id", String, primary_key=True)
-    sourceName: str = Column("sourceName", String)
-    sourceID: str = Column("sourceID", String)
-    discordName: str = Column("discordName", String)
-    discordID: str = Column("discordID", String)
+    def __convertFromEnum__(self, item:Sources) -> Sources:
+        item.source = item.source.value
+        item.type = item.type.value
+        return item
 
-    def __init__(self, sourceName: str = "", sourceID: str = "", 
-        discordName: str = '', discordID: str = ""):
-        self.id = str(uuid.uuid4())
-        self.sourceName = sourceName
-        self.sourceID = sourceID
-        self.discordName = discordName
-        self.discordID = discordID
+    def __convertToEnum__(self, item: Sources) -> Sources:
+        item.source = SourceName.fromString(item.source)
+        item.type = SourceType.fromString(item.type)
+        return item
 
-    def add(self) -> None:
-        """
-        Adds a single object to the table.
-        Returns: None
-        """
-        s: Session = database.newSession()
-        try:
-            s.add(self)
-            s.commit()
-        except FailedToAddToDatabase as e:
-            print(f"Failed to add {self.name} to 'SourceLinks'. {e}")
-        finally:
-            s.close()
-
-    def update(self) -> None:
-        """
-        This looks for at the name column to find an existing record.
-        If it does not find a record, it will look up based off the SourceID given to see if something exists for that source.
-        """
-        # s: Session = database.newSession()
-        key = ""
-        try:
-            exists = SourceLinks(name=self.name).findByName()
-            sourceId = SourceLinks(sourceID=self.sourceID).findBySourceID()
-
-            if exists != None:
-                key = exists.id
-                exists.clearSingle()
-            elif sourceId != None:
-                if sourceId.name == self.name:
-                    key = sourceId.id
-                    sourceId.clearSingle()
-
-            d = SourceLinks(
-                name=self.name, sourceID=self.sourceID, discordID=self.discordID
-            )
-            if key != "":
-                d.id = key
-
-            d.add()
-        except Exception as e:
-            print(e)
-            pass
-
-    def remove(self) -> None:
-        """
-        Removes single object based on its ID value.
-        Returns: None
-        """
-        s = database.newSession()
-        try:
-            for d in s.query(SourceLinks).filter(SourceLinks.id == self.id):
-                s.delete(d)
-            s.commit()
-        except Exception as e:
-            Logger().error(f"Failed to remove {self.name} from SourceLinks table. {e}")
-        finally:
-            s.close()
-
-    def clearSingle(self) -> bool:
-        """
-        This will remove a single entry from the table by its ID value.
-        """
-        s: Session = database.newSession()
-        result: bool = False
-        try:
-            for i in s.query(SourceLinks).filter(SourceLinks.id == self.id):
-                s.delete(i)
-                s.commit()
-
-                result = True
-        except Exception as e:
-            print(e)
-        finally:
-            s.close()
-            return result
-
-    def clearTable(self) -> None:
-        """
-        Removes all the objects found in the SourceLinks Table.
-
-        Returns: None
-        """
-        s = database.newSession()
-        try:
-            for d in s.query(SourceLinks):
-                s.delete(d)
-            s.commit()
-        except Exception as e:
-            print(f"{e}")
-        finally:
-            s.close()
-
-    def findByName(self) -> object:
-        s: Session = database.newSession()
-        hooks = list()
-        try:
-            for res in s.query(SourceLinks).filter(SourceLinks.name == self.name):
-                hooks.append(res)
-        except Exception as e:
-            pass
-        finally:
-            s.close()
-            if len(hooks) == 0:
-                return None
-            else:
-                return hooks[0]
-
-    def findBySourceID(self) -> object:
-        s: Session = database.newSession()
-        hooks = list()
-        try:
-            for res in s.query(SourceLinks).filter(
-                SourceLinks.sourceID == self.sourceID
-            ):
-                hooks.append(res)
-        except Exception as e:
-            pass
-        finally:
-            s.close()
-            if len(hooks) == 0:
-                return None
-            else:
-                return hooks[0]
-
-    def findByDiscordID(self) -> object:
-        s: Session = database.newSession()
-        hooks = list()
-        try:
-            for res in s.query(SourceLinks).filter(
-                SourceLinks.discordID == self.discordID
-            ):
-                hooks.append(res)
-        except Exception as e:
-            pass
-        finally:
-            s.close()
-            if len(hooks) == 0:
-                return None
-            else:
-                return hooks[0]
-
-    def findAllByName(self) -> List:
-        """
-        Searches the database for objects that contain the name value.
-        
-        Returns: List[SourceLinks]
-        """
-        s = database.newSession()
-        l = list()
-        try:
-            for res in s.query(SourceLinks).filter(
-                SourceLinks.name.contains(self.name)
-            ):
-                l.append(res)
-        except Exception as e:
-            pass
-        finally:
-            s.close()
-            return l
-
-    def findSingleByname(self) -> None:
-        """
-        Searches the database for objects that contain the name value.
-        
-        Returns: SourceLinks
-        """
-        s = database.newSession()
-        d = SourceLinks()
-        try:
-            for d in s.query(SourceLinks).filter(SourceLinks.name.contains(self.name)):
-                pass
-        except Exception as e:
-            pass
-        finally:
-            s.close()
-
-        return d
+    def __filterDupes__(self, items: List[SourceLinks]) -> List[SourceLinks]:
+        newList: List[SourceLinks] = list()
+        for i in items:
+            isDupe = False
+            for nl in newList:
+                if i.discordName == nl.discordName:
+                    isDupe = True
+            if isDupe == False:
+                newList.append(i)
+        return newList
 
     def __len__(self) -> int:
         """
@@ -218,24 +41,13 @@ class SourceLinks(Base, ITables):
 
         Returns: Int
         """
-        s = database.newSession()
         l = list()
         try:
-            for res in s.query(SourceLinks).filter(SourceLinks.name == self.name):
+            for res in self.s.query(SourceLinks):
                 l.append(res)
         except Exception as e:
             pass
-        finally:
-            s.close()
-
         return len(l)
-
-class SourceLinksTable(ITables):
-    def __init__(self) -> None:
-        self.s = database.newSession()
-
-    def __exit__(self) -> None:
-        self.s.close()
 
     def add(self, item: SourceLinks) -> None:
         try:
@@ -244,18 +56,163 @@ class SourceLinksTable(ITables):
         except FailedToAddToDatabase as e:
             print(f"Failed to add {self.name} to 'SourceLinks'. {e}")
 
-    def findBySourceName(self, sourceName: str ) -> SourceLinks:
+    def update(self, item: SourceLinks) -> None:
+        """
+        This looks for at the name column to find an existing record.
+        If it does not find a record, it will look up based off the SourceID given to see if something exists for that source.
+        """
+        wasUpdated: bool = False
+        try:
+            fromDb = self.findBySourceNameAndType(name=item.sourceName, type=item.sourceType)
+
+            if fromDb.sourceName != '':
+                # the record was found, lets update this one
+                source = SourcesTable().findByNameandSource(name=item.sourceName, source=item.sourceType)
+                discord = DiscordWebHooksTable().findByName(name=item.discordName)
+
+                if source.source != '':
+                    if fromDb.sourceID != source.id:
+                        item.sourceID = source.id
+                        wasUpdated = True
+
+                if discord.name != '':
+                    if fromDb.discordID != discord.id:
+                        item.discordID = discord.id
+                        wasUpdated = True
+                
+                if wasUpdated == True:
+                    self.add(fromDb)
+                    
+            else:
+                # we did not find an existing record, just add a new one.
+                self.add(item)
+        except Exception as e:
+            print(e)
+            pass
+
+    def findAllByName(self, name: str) -> List[SourceLinks]:
+        """
+        Searches the database for objects that contain the name value.
+        
+        Returns: List[SourceLinks]
+        """
+        l = list()
+        try:
+            for res in self.s.query(SourceLinks).filter(SourceLinks.name.contains(name)):
+                l.append(res)
+        except Exception as e:
+            pass
+        return l
+
+    def findAllBySourceType(self, sourceType: str) -> List[SourceLinks]:
+        """
+        Searches the database for objects that contain the source value.
+        
+        Returns: List[SourceLinks]
+        """
+        l = list()
+        try:
+            for res in self.s.query(SourceLinks).filter(SourceLinks.sourceType.contains(sourceType)):
+                l.append(res)
+        except Exception as e:
+            pass
+        return l
+
+    def findAllBySourceNameAndType(self, name: str, type: str ) -> List[SourceLinks]:
+        l = list()
+        try:
+            for d in self.s.query(SourceLinks).filter(
+                SourceLinks.sourceName.contains(name),
+                SourceLinks.sourceType.contains(type)
+                ):
+                l.append(d)
+        except Exception as e:
+            pass
+        return l
+
+    def findByName(self, name: str) -> SourceLinks:
+        try:
+            for res in self.s.query(SourceLinks).filter(SourceLinks.name == name):
+                return res
+        except Exception as e:
+            pass
+        return SourceLinks()
+
+    def findBySourceNameAndType(self, name: str, type: str ) -> SourceLinks:
         d = SourceLinks()
         try:
-            for d in self.s.query(SourceLinks).filter(SourceLinks.sourceName.contains(sourceName)):
+            for d in self.s.query(SourceLinks).filter(
+                SourceLinks.sourceName.contains(name),
+                SourceLinks.sourceType.contains(type)
+                ):
                 return d
         except Exception as e:
             pass
+        return SourceLinks()
     
-    def findByDiscordName(self, discourdName: str ) -> SourceLinks:
+    def findBySourceID(self, sourceID: str) -> SourceLinks:
+        try:
+            for res in self.s.query(SourceLinks).filter(SourceLinks.sourceID == sourceID):
+                return res
+        except Exception as e:
+            pass
+        return SourceLinks()
+
+    def findSingleByName(self, name: str ) -> SourceLinks:
+        """
+        Searches the database for objects that contain the name value.
+        Returns: SourceLinks
+        """
+        try:
+            for d in self.s.query(SourceLinks).filter(SourceLinks.name.contains(name)):
+                return d
+                pass
+        except Exception as e:
+            pass
+        return SourceLinks()
+    
+    def findByDiscordName(self, discordName: str ) -> SourceLinks:
         d = SourceLinks()
         try:
-            for d in self.s.query(SourceLinks).filter(SourceLinks.discordName.contains(discourdName)):
+            for d in self.s.query(SourceLinks).filter(SourceLinks.discordName.contains(discordName)):
                 return d
         except Exception as e:
             pass
+        return SourceLinks()
+
+    def findByDiscordID(self, discordID: str) -> SourceLinks:
+        try:
+            for res in self.s.query(SourceLinks).filter(SourceLinks.discordID == discordID):
+                return res
+        except Exception as e:
+            pass
+        return SourceLinks()
+
+    def clearTable(self) -> None:
+        """
+        Removes all the objects found in the SourceLinks Table.
+
+        Returns: None
+        """
+        try:
+            for d in self.s.query(SourceLinks):
+                self.s.delete(d)
+            self.s.commit()
+        except Exception as e:
+            print(f"{e}")
+
+    def clearByID(self, id: str) -> bool:
+        """
+        This will remove a single entry from the table by its ID value.
+        """
+        result: bool = False
+        try:
+            for i in self.s.query(SourceLinks).filter(SourceLinks.id == id):
+                self.s.delete(i)
+                self.s.commit()
+                result = True
+        except Exception as e:
+            print(e)
+        return result
+
+

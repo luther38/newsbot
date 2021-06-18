@@ -1,44 +1,16 @@
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Float,
-    Boolean,
-    ForeignKey,
-    create_engine,
-    Binary,
-)
-import uuid
-from typing import List
-from newsbot.core.sql import database, Base
-from newsbot.core.sql.tables import Articles, ITables
+from newsbot.core.sql import database
+from newsbot.core.sql.tables import ITables, Logs
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
+class LogsTable():
+    def __init__(self) -> None:
+        self.s = database.newSession()
+    #def __exit__(self) -> None:
+    #    self.s.close()
 
-
-class Logs(Base):
-    __tablename__ = "logs"
-    id = Column("id", String, primary_key=True)
-    date = Column("date", String)
-    time = Column("time", String)
-    type = Column("type", String)
-    caller = Column("caller", String)
-    message = Column("message", String)
-
-    def __init__(self, date: str, time: str, type: str, caller: str, message: str):
-        self.id = str(uuid.uuid4())
-        self.date = date
-        self.time = time
-        self.type = type
-        self.caller = caller
-        self.message = message
-
-    def add(self) -> None:
-        s = database.newSession()
+    def add(self, item: Logs) -> None:
         try:
-            s.add(self)
-            s.commit()
+            self.s.add(item)
+            self.s.commit()
         except FailedToAddToDatabase as e:
-            print(f"Failed to add '{self.message}' to 'Logs'. {e}")
-        finally:
-            s.close()
+            print(f"Failed to add '{item.message}' to 'Logs'. {e}")

@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import create_engine
+from sqlalchemy.pool import SingletonThreadPool
 import sqlalchemy
 import os
 
@@ -14,7 +15,7 @@ class DB:
             uri = "sqlite://"
         else:
             uri = f"sqlite:///mounts/database/{name}"
-        self.engine = create_engine(uri)
+        self.engine = create_engine(uri, poolclass=SingletonThreadPool)
         self.session: sessionmaker = sessionmaker()
         self.session.configure(bind=self.engine)
         self.Base = Base
