@@ -1,11 +1,10 @@
 #from logging import debug
-#from newsbotUi import start, startCore
+from newsbot.core.startup import CoreStartup
+from newsbot.worker.startup import NewsbotWorker
 from newsbot.web import start
 
-
-
-# Start up core and workers
-#Thread(target=Startup(), name="Core").start()
+CoreStartup().start()
+NewsbotWorker().start()
 
 #api = ApiStartup()
 #apiApp = api.start()
@@ -16,5 +15,5 @@ from newsbot.web import start
 #Thread(target=app.run(debug=True), name="WebUI").start()
 
 #startCore()
-app = start()
+#app = start()
 
