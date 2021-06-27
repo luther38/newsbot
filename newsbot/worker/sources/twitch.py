@@ -12,11 +12,14 @@ class TwitchReader(BSources):
         self.logger = Logger(__class__)
         self.uri = "https://twitch.tv/"
         self.siteName: str = SourceName.TWITCH.value
+        
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
+
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
         self.checkEnv(self.siteName)
+        self.session: Session = None
         pass
 
     def getArticles(self) -> List[Articles]:
@@ -32,50 +35,50 @@ class TwitchReader(BSources):
             self.cacheUserId(userName=userName)
 
             # We have cached this information already
-            user_id = Cache(key=f"twitch {userName} user_id").find()
-            display_name = Cache(key=f"twitch {userName} display").find()
-            profile_image_url = Cache(key=f"twitch {userName} profile_image_url").find()
+            user_id = self.cache.find(key=f"twitch.{userName}.user_id")
+            display_name = self.cache.find(key=f"twitch.{userName}.display")
+            profile_image_url = self.cache.find(key=f"twitch.{userName}.profile_image_url")
 
-            enableClips = Cache(key="twitch.clips.enabled").find()
-            if enableClips.lower() == "true":
+            enableClips = self.cache.find(key="twitch.clips.enabled")
+            if enableClips == "1":
                 clips: List[TwitchClip] = self.api.getClips(self.auth, user_id=user_id)
                 for v in clips:
                     try:
                         a = Articles(
-                            siteName=f"Twitch user {display_name}",
+                            siteName=f"twitch user {display_name}",
                             authorName=display_name,
                             authorImage=profile_image_url,
-                            tags=f"Twitch, clip, {display_name}",
+                            tags=f"twitch, clip, {display_name}",
                             title=v.title,
                             pubDate=v.created_at,
                             url=v.url,
                             thumbnail=v.thumbnail_url,
                             description="A new clip has been posted! You can watch it with the link below.",
-                            sourceType="Twitch",
+                            sourceType=SourceName.TWITCH.value,
                             sourceName=userName,
                         )
                         allPosts.append(a)
                     except Exception as e:
                         self.logger.error(e)
 
-            enableVoD = Cache(key="twitch vod enable").find()
-            if enableVoD.lower() == "true":
+            enableVoD = self.cache.find(key="twitch.vod.enable")
+            if enableVoD == "1":
                 videos: List[TwitchVideo] = self.api.getVideos(
                     self.auth, user_id=user_id
                 )
                 for v in videos:
                     try:
                         a = Articles(
-                            siteName=f"Twitch user {display_name}",
+                            siteName=f"twitch user {display_name}",
                             authorName=display_name,
                             authorImage=profile_image_url,
-                            tags=f"Twitch, vod, {display_name}",
+                            tags=f"twitch, vod, {display_name}",
                             # description = v.description,
                             title=v.title,
                             description="A new video has been posed! You can watch it with the link below.",
                             pubDate=v.published_at,
                             url=v.url,
-                            sourceType="Twitch",
+                            sourceType=SourceName.TWITCH.value,
                             sourceName=userName,
                         )
                         thumb: str = v.thumbnail_url
@@ -89,17 +92,17 @@ class TwitchReader(BSources):
         return allPosts
 
     def cacheUserId(self, userName: str) -> None:
-        user_id = Cache(key=f"twitch {userName} user_id").find()
+        user_id = self.cache.find(key=f"twitch.{userName}.user_id")
         if user_id == "":
             # Take the value and add it to the cache so we dont need to call the API for this
             user: TwitchUser = self.api.getUser(self.auth, userName)
-            user_id = Cache(key=f"twitch {userName} user_id", value=user.id).add()
-            display_name = Cache(
-                key=f"twitch {userName} display_name", value=user.display_name
-            ).add()
-            profile_image_url = Cache(
-                key=f"twitch {userName} profile_image_url",
+            user_id = self.cache.add(key=f"twitch.{userName}.user_id", value=user.id)
+            display_name = self.cache.add(
+                key=f"twitch.{userName}.display_name", value=user.display_name
+            )
+            profile_image_url = self.cache.add(
+                key=f"twitch.{userName}.profile_image_url",
                 value=user.profile_image_url,
-            ).add()
+            )
         else:
             pass

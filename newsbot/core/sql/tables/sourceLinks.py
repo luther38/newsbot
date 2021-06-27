@@ -8,11 +8,13 @@ from newsbot.core.sql.tables import ITables, DiscordWebHooksTable, SourceLinks, 
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
 class SourceLinksTable(ITables):
-    def __init__(self) -> None:
-        self.s = database.newSession()
+    def __init__(self, session: Session) -> None:
+        self.setSession(session)
 
-    #def __exit__(self) -> None:
-    #    self.s.close()
+    def setSession(self, session: Session) -> None:
+        self.s = session
+        self.sourceTable = SourcesTable(session=self.s)
+        self.discordTable = DiscordWebHooksTable(session=self.s)
 
     def __convertFromEnum__(self, item:Sources) -> Sources:
         item.source = item.source.value
@@ -67,8 +69,8 @@ class SourceLinksTable(ITables):
 
             if fromDb.sourceName != '':
                 # the record was found, lets update this one
-                source = SourcesTable().findByNameandSource(name=item.sourceName, source=item.sourceType)
-                discord = DiscordWebHooksTable().findByName(name=item.discordName)
+                source = self.sourceTable.findByNameandSource(name=item.sourceName, source=item.sourceType)
+                discord = self.discordTable.findByName(name=item.discordName)
 
                 if source.source != '':
                     if fromDb.sourceID != source.id:

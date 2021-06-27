@@ -1,14 +1,15 @@
 from typing import List
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql import database
 from newsbot.core.sql.tables import ITables, Icons
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
 class IconsTable():
-    def __init__(self) -> None:
-        self.s = database.newSession()
+    def __init__(self, session: Session) -> None:
+        self.setSession(session)
 
-    #def __exit__(self) -> None:
-    #    self.s.close()
+    def setSession(self, session: Session) -> None:
+        self.s = session
 
     def __len__(self, site: str) -> int:
         """

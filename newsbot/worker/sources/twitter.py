@@ -1,8 +1,9 @@
 from typing import List, Set
+from sqlalchemy.orm.session import Session
 import tweepy
 from newsbot.core.logger import Logger
-from newsbot.core.constant import SourceName
-from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Settings
+from newsbot.core.constant import SourceName, SourceType
+from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks
 from newsbot.worker.sources.driver import BFirefox
 from newsbot.worker.sources.common import BSources
 from tweepy import AppAuthHandler, API, Cursor
@@ -22,7 +23,7 @@ class TwitterReader(BSources, BFirefox):
 
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv(self.siteName)
+        self.session: Session = None
 
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
@@ -44,15 +45,15 @@ class TwitterReader(BSources, BFirefox):
         for site in self.links:
             self.currentSite = site
             site: Sources = site
-            self.siteName = f"Twitter {site.name}"
+            #self.siteName = f"Twitter {site.name}"
             # siteType = site.type
-            self.logger.debug(
+            self.logger.info(
                 f"Twitter - {site.type} - {site.name} - Checking for updates."
             )
 
             # Figure out if we are looking for a user or tag
             if site.type == "user":
-                for i in self.getTweets(api, site.name):
+                for i in self.getTweets(api=api, username=site.name):
                     allArticles.append(i)
 
             elif site.type == "tag":
@@ -85,12 +86,12 @@ class TwitterReader(BSources, BFirefox):
             if tweet.in_reply_to_screen_name != None:
                 continue
 
-            lang = Settings(key="twitter.preferred.lang").findSingleByKey()
-            if lang.value == "None":
+            lang = self.cache.find(key="twitter.preferred.lang")
+            if lang == "None":
                 pass
-            elif tweet.lang == lang.value:
+            elif tweet.lang == lang:
                 pass
-            elif tweet.lang != lang.value:
+            elif tweet.lang != lang:
                 continue
 
             # Checking if this is a retweet
@@ -101,8 +102,12 @@ class TwitterReader(BSources, BFirefox):
             a = Articles(
                 siteName=self.currentSite.name,
                 sourceName=username,
-                sourceType="Twitter",
+                sourceType=self.siteName,
             )
+
+            # The default is to load the username but we need to inject the hashtag also
+            if hashtag != '':
+                a.sourceName = hashtag
 
             try:
                 a.description = tweet.text
@@ -127,9 +132,9 @@ class TwitterReader(BSources, BFirefox):
 
             # Find url for the post
             a.url = f"https://twitter.com/{authorScreenName}/status/{tweet.id}"
-            # a.url = self.getTweetUrl(tweet)
 
-            if a.exists() == False:
+            exists = self.articlesTable.exists(a.url)
+            if exists == False:
                 try:
                     tags = f"twitter, {searchValue}, "
                     for t in tweet.entities["hashtags"]:
@@ -229,8 +234,8 @@ class TwitterReader(BSources, BFirefox):
         True if we need to skip
         False if we move forward
         """
-        ignoreRetweet = Settings(key="twitter.ignore.retweet").findSingleByKey()
-        if ignoreRetweet.value == "1":
+        ignoreRetweet = self.cache.find(key="twitter.ignore.retweet")
+        if ignoreRetweet == "1":
             text: str = tweet.text
             if text.startswith("RT ") == True:
                 return True

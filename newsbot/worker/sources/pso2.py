@@ -1,3 +1,4 @@
+from sqlalchemy.orm.session import Session
 from newsbot.core.logger import Logger
 from newsbot.core.sql.tables import Sources, DiscordWebHooks, Articles
 from newsbot.core.constant import SourceName
@@ -13,12 +14,13 @@ class PSO2Reader(BSources):
         self.logger = Logger(__class__)
         self.uri: str = "https://pso2.com/news"
         self.siteName: str = SourceName.PHANTASYSTARONLINE2.value
-        self.authorName: str = f"{self.siteName} Official Site"
+        self.authorName: str = f"Phantasy Star Online 2 Official Site"
         self.links: List[Sources] = list()
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv(self.siteName)
+        #self.checkEnv(self.siteName)
+        self.session: Session = None
         pass
 
     def getArticles(self) -> List[Articles]:
@@ -38,8 +40,8 @@ class PSO2Reader(BSources):
                     a = Articles(
                         siteName=self.siteName,
                         authorName=self.authorName,
-                        sourceName="phantasystaronline2",
-                        sourceType="phantasystaronline2",
+                        sourceName=self.siteName,
+                        sourceType=self.siteName,
                     )
                     a.thumbnail = re.findall(
                         "url[(](.*?)[)]", news.contents[1].attrs["style"]

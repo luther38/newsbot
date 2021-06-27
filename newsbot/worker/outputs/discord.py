@@ -5,7 +5,7 @@ from time import sleep
 from newsbot.core.constant import SourceName
 from newsbot.core.env import Env
 from newsbot.core.logger import Logger
-from newsbot.core.sql import db, tables
+from newsbot.core.sql import database
 from newsbot.core.sql.tables import (
     DiscordQueue,
     DiscordQueueTable,
@@ -17,17 +17,24 @@ from newsbot.core.sql.tables import (
     SourceLinksTable
 )
 from newsbot.worker.outputs.ioutputs import IOutputs
+from newsbot.worker.outputs.errors import DiscordWebHookNotFound
 from newsbot.worker.common.convertHtml import ConvertHtml
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from requests import Response
 
 class Discord(IOutputs):
     def __init__(self) -> None:
+        self.enableTables()
         self.logger = Logger(__class__)
-        self.table = DiscordQueueTable()
         self.tempMessage: DiscordWebhook = DiscordWebhook("placeholder")
         self.env = Env()
         pass
+
+    def enableTables(self) -> None:
+        self.session = database.newSession()
+        self.table = DiscordQueueTable(session=self.session)
+        self.sourceLinks = SourceLinksTable(session=self.session)
+        self.iconsTable = IconsTable(session=self.session)
 
     def enableThread(self) -> None:
         while True:
@@ -35,24 +42,25 @@ class Discord(IOutputs):
             try:
                 queue = self.table.getQueue()
                 for i in queue:
-                    resp = self.sendMessage(i)
+                    if i.title != "":
+                        self.logger.info(f"Discord - Sending article '{i.title}'")
+                    else:
+                        self.logger.info(f"Discord - Sending article '{i.description}'")
 
-                    # Only remove the object from the queue if we sent it out correctly.
-                    safeToRemove: bool = True
-                    for r in resp:
-                        if r.status_code != 204:
-                            safeToRemove = False
-
+                    self.buildMessage(i)
+                    resp = self.sendMessage()
+                    safeToRemove = self.isSafeToRemove(resp)
                     if safeToRemove == True:
                         self.table.removeByLink(i.link)
 
-                    sleep(self.env.discord_delay_seconds)
+                    self.webhooks.clear()
+                    self.threadWait()
             except Exception as e:
                 self.logger.error(
                     f"Failed to post a message. {i.title}. Status_code: {resp[0].status_code}. OK: {resp[0].ok}. error {e}"
                 )
 
-            sleep(self.env.discord_delay_seconds)
+            self.threadWait()
 
     def buildMessage(self, article: DiscordQueue) -> None:
         # reset the stored message
@@ -62,6 +70,7 @@ class Discord(IOutputs):
         webhooks: List[str] = self.getHooks(
             source=article.sourceType, name=article.sourceName
         )
+        self.webhooks = webhooks
 
         # Make a new webhook with the hooks that relate to this site
         hook: DiscordWebhook = DiscordWebhook(webhooks)
@@ -75,7 +84,12 @@ class Discord(IOutputs):
         embed: DiscordEmbed = DiscordEmbed(title=title)  # , url=article.link)
 
         try:
-            authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
+            #authorIcon = self.getAuthorIcon(article.authorImage, article.siteName)
+            authorIcon = self.getAuthorIcon(
+                icon=article.authorImage, 
+                name=article.sourceName, 
+                type=article.sourceType
+                )
             embed.set_author(name=article.authorName, url=None, icon_url=authorIcon)
         except:
             pass
@@ -122,56 +136,75 @@ class Discord(IOutputs):
         )
         embed.set_footer(icon_url=footerIcon, text=footer)
 
-        embed.set_color(color=self.getEmbedColor(article.sourceType))
+        embed.set_color(color=self.getEmbedColor(sourceType=article.sourceType, sourceName=article.sourceName))
 
         hook.add_embed(embed)
         self.tempMessage = hook
 
-    def sendMessage(self, article: DiscordQueue) -> List[Response]:
-        if article.title != "":
-            self.logger.info(f"Discord - Sending article '{article.title}'")
-        else:
-            self.logger.info(f"Discord - Sending article '{article.description}'")
-        self.buildMessage(article)
+    def sendMessage(self) -> List[Response]:
         try:
-            res = self.tempMessage.execute()
+            res = self.convertToList(self.tempMessage.execute())
         except Exception as e:
             self.logger.critical(
                 f"Failed to send to Discord.  Check to ensure the webhook is correct. Error: {e}"
             )
+        return res
 
-        hooks: int = len(
-            self.getHooks(source=article.sourceType, name=article.sourceName)
-        )
-
+    def convertToList(self, r: Response) -> List[Response]:
+        hooks: int = len(self.webhooks)
         # Chcekcing to see if we returned a single response or multiple.
         if hooks == 1:
             response = list()
-            response.append(res)
+            response.append(r)
         else:
-            response = res
+            response = r
 
         return response
 
+    def isSafeToRemove(self, resp: List[Response]) -> bool:
+        safeToRemove: bool = True
+        for r in resp:
+            if r.status_code != 204:
+                self.logger.error("Found a invalid response code.  Expected 204.  Check the webhooks to make sure they are correct.")
+                safeToRemove = False
+
+        return safeToRemove
+
+    def threadWait(self) -> None:
+        sleep(self.env.discord_delay_seconds)
+
     def getHooks(self, source: str, name: str) -> List[str]:
+        if name == '':
+            self.logger.warning(f"{source} is missing a name!")
+
+        if source == '':
+            self.logger.warning(f"A null source name was given!")
+
         hooks = list()
-        table = SourceLinksTable()
+        table = self.sourceLinks
         try:
-            if source == SourceName.POKEMONGO.value or \
-                source == SourceName.PHANTASYSTARONLINE2.value or \
-                source == SourceName.FINALFANTASYXIV.value:
+            if source == SourceName.POKEMONGO.value:
                 dbHooks = table.findAllBySourceType(sourceType=source)
-                if source == SourceName.FINALFANTASYXIV.value:
-                    dbHooks = table.__filterDupes__(dbHooks)
+
+            elif source == SourceName.PHANTASYSTARONLINE2.value:
+                dbHooks = table.findAllBySourceType(sourceType=source)
+
+            elif source == SourceName.FINALFANTASYXIV.value:
+                dbHooks = table.findAllBySourceType(sourceType=source)
+                dbHooks = table.__filterDupes__(dbHooks)
+            
+            elif SourceName.TWITTER.value in source:
+                dbHooks = table.findAllBySourceNameAndType(type=SourceName.TWITTER.value, name=name)
+
             else:
                 dbHooks = table.findAllBySourceNameAndType(name=name, type=source)
-                
+            
             for hook in dbHooks:
-                item = DiscordWebHooksTable().findById(hook.discordID)                
+                item = DiscordWebHooksTable(session=self.session).findById(hook.discordID)
                 if item.url != "":
                     hooks.append(item.url)
             return hooks
-        except Exception as e:
+        except DiscordWebHookNotFound as e:
             self.logger.critical(f"Unable to find DiscordWebhook for {source} {name}")
 
     def convertFromHtml(self, msg: str) -> str:
@@ -224,26 +257,28 @@ class Discord(IOutputs):
             msg = msg.replace(replace, "")
         return msg
 
-    def getAuthorIcon(self, authorIcon: str, siteName: str) -> str:
-        table = IconsTable()
-        if authorIcon != "":
-            return authorIcon
+    def getAuthorIcon(self, icon: str, name: str, type: str) -> str:
+        table = self.iconsTable
+        if icon != "":
+            return icon
         
-        if (
-            siteName == SourceName.FINALFANTASYXIV.value
-            or siteName == SourceName.PHANTASYSTARONLINE2.value
-            or siteName == SourceName.POKEMONGO.value
-        ):
-            res = table.findAllByName(site=f"Default {siteName}")
-            return res[0].filename
-        else:
-            s: List[str] = siteName.split(" ")
-            if s[0] == SourceName.RSS.value:
-                # res = Icons(site=f"Default {s[1]}").findAllByName()
-                res = table.findAllByName(site=siteName)
+        try:
+            if (
+                type == SourceName.FINALFANTASYXIV.value
+                or type == SourceName.PHANTASYSTARONLINE2.value
+                or type == SourceName.POKEMONGO.value
+            ):
+                res = table.findAllByName(site=f"Default {name}")
+                return res[0].filename
             else:
-                res = table.findAllByName(site=f"Default {s[0]}")
-            return res[0].filename
+                s: List[str] = name.split(" ")
+                if type == SourceName.RSS.value:
+                    res = table.findAllByName(site=name)
+                else:
+                    res = table.findAllByName(site=f"Default {s[0]}")
+                return res[0].filename
+        except Exception as e:
+            self.logger.error(f"Failed to find the author icon for type:{type} name:{name}")
 
     def buildFooter(self, siteName: str) -> str:
         footer = ""
@@ -269,7 +304,7 @@ class Discord(IOutputs):
         return footer
 
     def getFooterIcon(self, siteName: str, sourceType: str) -> str:
-        table = IconsTable()
+        table = self.iconsTable
         if (
             siteName == SourceName.PHANTASYSTARONLINE2.value
             or siteName == SourceName.POKEMONGO.value
@@ -305,23 +340,29 @@ class Discord(IOutputs):
             except:
                 return ""
 
-    def getEmbedColor(self, siteName: str) -> int:
+    def getEmbedColor(self, sourceType: str, sourceName: str) -> int:
         # Decimal values can be collected from https://www.spycolor.com
-        if SourceName.REDDIT.value in siteName:
+        if SourceName.REDDIT.value in sourceType:
             return 16395272
-        elif SourceName.YOUTUBE.value  in siteName:
+        elif SourceName.YOUTUBE.value  in sourceType:
             return 16449542
-        elif SourceName.INSTAGRAM.value in siteName:
+        elif SourceName.INSTAGRAM.value in sourceType:
             return 13303930
-        elif SourceName.TWITTER.value in siteName:
+        elif SourceName.TWITTER.value in sourceType:
             return 1937134
-        elif SourceName.FINALFANTASYXIV.value in siteName:
+        elif SourceName.FINALFANTASYXIV.value in sourceType:
             return 11809847
-        elif SourceName.POKEMONGO.value in siteName:
+        elif SourceName.POKEMONGO.value in sourceType:
             return 2081673
-        elif SourceName.PHANTASYSTARONLINE2.value in siteName:
+        elif SourceName.PHANTASYSTARONLINE2.value in sourceType:
             return 5557497
-        elif SourceName.TWITCH.value in siteName:
+        elif SourceName.TWITCH.value in sourceType:
             return 9718783
+        elif SourceName.RSS.value in sourceType:
+            #self.getRssEmbedColor(sourceName=sourceName)
+            return 0
         else:
             return 0
+
+    def getRssEmbedColor(self, sourceName: str):
+        pass

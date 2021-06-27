@@ -1,21 +1,21 @@
 from abc import ABC, abstractclassmethod
+
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql.tables import Settings, SettingsTable
 
 class Cache:
-    def __init__(self, key: str, value: str = "") -> None:
-        self.sql: iCache = SqlCache()
-        self.key = key
-        self.value = value
+    def __init__(self, session: Session) -> None:
+        self.sql: iCache = SqlCache(session=session)
 
-    def find(self) -> str:
-        return self.sql.find(self.key)
+    def find(self, key: str) -> str:
+        return self.sql.find(key)
 
-    def add(self) -> str:
-        self.sql.add(self.key, self.value)
-        return self.value
+    def add(self, key: str, value: str) -> str:
+        self.sql.add(key, value)
+        return value
 
-    def remove(self) -> None:
-        self.sql.remove(self.key)
+    def remove(self, key: str) -> None:
+        self.sql.remove(key)
 
 
 class iCache(ABC):
@@ -42,18 +42,18 @@ class SqlCache(iCache):
     Always use Cache class and it will find the data as needed.
     """
 
-    def __init__(self):
-        #self.table = SettingsTable()
+    def __init__(self, session: Session):
+        self.session: Session = session
         pass
 
     def find(self, key: str) -> str:
-        res = SettingsTable().findSingleByKey(key=key)
+        res = SettingsTable(session=self.session).findSingleByKey(key=key)
         return res.value
 
     def add(self, key: str, value: str) -> str:
-        SettingsTable().add(Settings(key=key, value=value))
+        SettingsTable(session=self.session).add(Settings(key=key, value=value))
         return value
 
     def remove(self, key: str) -> None:
-        SettingsTable().remove(key=key)
+        SettingsTable(session=self.session).remove(key=key)
         

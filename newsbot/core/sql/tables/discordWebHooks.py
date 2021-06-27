@@ -6,8 +6,11 @@ from newsbot.core.sql.tables import ITables, DiscordWebHooks
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
 class DiscordWebHooksTable(ITables):
-    def __init__(self) -> None:
-        self.s = database.newSession()
+    def __init__(self, session: Session) -> None:
+        self.setSession(session)
+
+    def setSession(self, session: Session) -> None:
+        self.s = session
 
     def add(self, item:DiscordWebHooks) -> bool:
         try:
@@ -105,9 +108,6 @@ class DiscordWebHooksTable(ITables):
 
     def __generateName__(self, server: str, channel: str) -> str:
         return f"{server} - {channel}"
-
-    #def __exit__(self) -> None:
-    #    self.s.close()
 
     def __len__(self) -> int:
         l = list()
