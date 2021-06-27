@@ -15,7 +15,8 @@ class DB:
             uri = "sqlite://"
         else:
             uri = f"sqlite:///mounts/database/{name}"
-        self.engine = create_engine(uri, poolclass=SingletonThreadPool)
+        #self.engine = create_engine(uri, poolclass=SingletonThreadPool)
+        self.engine = create_engine(uri)
         self.session: sessionmaker = sessionmaker()
         self.session.configure(bind=self.engine)
         self.Base = Base

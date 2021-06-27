@@ -1,3 +1,4 @@
+from sqlalchemy.orm import Session
 from newsbot.core.env import (
     EnvDiscordDetails,
     EnvFinalFantasyXIVDetails,
@@ -14,6 +15,7 @@ from newsbot.core.env import (
 )
 from os import name, system
 from newsbot.core.env import Env
+from newsbot.core.sql import database
 from newsbot.core.constant import SourceName, SourceType
 from typing import List
 from abc import ABC, abstractclassmethod
@@ -41,13 +43,19 @@ class IUpdateSource(ABC):
         pass
 
 class UpdateSource(IUpdateSource):
-    sourceTable = SourcesTable()
+    def __init__(self, session: Session) -> None:
+        self.enableTables(session)
+
+    def enableTables(self, session: Session) -> None:
+        self.sourceTable = SourcesTable(session=session)
+        self.webHooksTable = DiscordWebHooksTable(session=session)
+        self.sourceLinksTable = SourceLinksTable(session=session)
 
     def updateSourceLinks(self, source: Sources, hookNames: List[str]) -> None:
         try:
             for h in hookNames:
-                l: DiscordWebHooks = DiscordWebHooksTable().findByName(name=h)
-                slTable = SourceLinksTable()
+                l: DiscordWebHooks = self.webHooksTable.findByName(name=h)
+                slTable = self.sourceLinksTable
                 sl = SourceLinks(
                     discordName=f"{l.name}", 
                     discordID=l.id,
@@ -173,11 +181,12 @@ class UpdatePhantasyStarOnline2Source(UpdateSource):
             print(f"Failed to enabled 'Phantasy Star Online 2' source. Error: {e}")
 
 class UpdateFinalFantasyXIVSource(UpdateSource):
-    def __init__(self, topic: str, enabled: bool) -> None:
+    def __init__(self, session: Session, topic: str, enabled: bool) -> None:
         self.topic: str = topic
         self.enabled: bool = enabled
         self.sourceName: str = "finalfantasyxiv"
         self.url: str = "https://finalfantasyxiv.com"
+        self.enableTables(session)
 
     def update(self, values: EnvFinalFantasyXIVDetails) -> None:  
         try:
@@ -200,6 +209,14 @@ class UpdateFinalFantasyXIVSource(UpdateSource):
 class InitDb:
     def __init__(self) -> None:
         self.e = Env()
+        self.enableTables()
+
+    def enableTables(self) -> None:
+        self.session = database.newSession()
+        self.iconsTable = IconsTable(session=self.session)
+        self.sourcesTable = SourcesTable(session=self.session)
+        self.settingsTable = SettingsTable(session=self.session)
+        self.discordWebHooksTable = DiscordWebHooksTable(session=self.session)
 
     def runMigrations(self) -> None:
         system("alembic upgrade head")
@@ -210,7 +227,7 @@ class InitDb:
         DiscordWebHooks().clearTable()
 
     def addStaticIcons(self) -> None:
-        table = IconsTable()
+        table = self.iconsTable
         # Icons().clearTable()
         table.update(
             Icons(
@@ -278,16 +295,16 @@ class InitDb:
     def rebuildCache(
         self, twitchConfig: EnvTwitchConfig, twitterConfig: EnvTwitterConfig
         ) -> None:
-        table = SettingsTable()
+        table = self.settingsTable
         table.clearTable()
-        table.add(Settings(key="twitch clips enabled", value=twitchConfig.monitorClips))
-        table.add(Settings(key="twitch vod enabled", value=twitchConfig.monitorVod))
-        table.add(Settings(key="twitch livestreams enabled", value=twitchConfig.monitorLiveStreams))
+        table.add(Settings(key="twitch.clips.enabled", value=twitchConfig.monitorClips))
+        table.add(Settings(key="twitch.vod.enabled", value=twitchConfig.monitorVod))
+        table.add(Settings(key="twitch.livestreams.enabled", value=twitchConfig.monitorLiveStreams))
         table.add(Settings(key="twitter.preferred.lang", value=twitterConfig.preferredLang))
         table.add(Settings(key="twitter.ignore.retweet", value=twitterConfig.ignoreRetweet))
 
     def updateDiscordValues(self, values: List[EnvDiscordDetails]) -> None:
-        table = DiscordWebHooksTable()
+        table = self.discordWebHooksTable
         for v in values:
 
             if v.name == "":
@@ -305,22 +322,21 @@ class InitDb:
                 )
                 table.add(d)
             
-
     def runDatabaseTasks(self) -> None:
         self.updateDiscordValues(values=self.e.discord_values)
-        UpdateRSSSource().update(values=self.e.rss_values)
-        UpdateYoutubeSource().update(values=self.e.youtube_values)
-        UpdateRedditSource().update(values=self.e.reddit_values)
-        UpdateTwitchSource().update(values=self.e.twitch_values)
-        UpdateTwitterSource().update(values=self.e.twitter_values)
-        UpdateInstagramSource().update(values=self.e.instagram_values)
-        UpdatePokemonGoHubSource().update(values=self.e.pogo_values)
-        UpdatePhantasyStarOnline2Source().update(values=self.e.pso2_values)
-        UpdateFinalFantasyXIVSource("topics", self.e.ffxiv_values.topicsEnabled).update(values=self.e.ffxiv_values)
-        UpdateFinalFantasyXIVSource("notices", self.e.ffxiv_values.noticesEnabled).update(values=self.e.ffxiv_values)
-        UpdateFinalFantasyXIVSource("maintenance", self.e.ffxiv_values.maintenanceEnabled).update(values=self.e.ffxiv_values)
-        UpdateFinalFantasyXIVSource("updates", self.e.ffxiv_values.updateEnabled).update(values=self.e.ffxiv_values)
-        UpdateFinalFantasyXIVSource("status", self.e.ffxiv_values.statusEnabled).update(values=self.e.ffxiv_values)
+        UpdateRSSSource(session=self.session).update(values=self.e.rss_values)
+        UpdateYoutubeSource(session=self.session).update(values=self.e.youtube_values)
+        UpdateRedditSource(session=self.session).update(values=self.e.reddit_values)
+        UpdateTwitchSource(session=self.session).update(values=self.e.twitch_values)
+        UpdateTwitterSource(session=self.session).update(values=self.e.twitter_values)
+        UpdateInstagramSource(session=self.session).update(values=self.e.instagram_values)
+        UpdatePokemonGoHubSource(session=self.session).update(values=self.e.pogo_values)
+        UpdatePhantasyStarOnline2Source(session=self.session).update(values=self.e.pso2_values)
+        UpdateFinalFantasyXIVSource(self.session, "topics", self.e.ffxiv_values.topicsEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource(self.session, "notices", self.e.ffxiv_values.noticesEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource(self.session, "maintenance", self.e.ffxiv_values.maintenanceEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource(self.session, "updates", self.e.ffxiv_values.updateEnabled).update(values=self.e.ffxiv_values)
+        UpdateFinalFantasyXIVSource(self.session, "status", self.e.ffxiv_values.statusEnabled).update(values=self.e.ffxiv_values)
         
         self.addStaticIcons()
         self.rebuildCache(

@@ -1,13 +1,17 @@
 from typing import List
+
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql import database
 from newsbot.core.sql.tables import ITables, Settings
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
 class SettingsTable():
-    def __init__(self) -> None:
-        self.s = database.newSession()
-    #def __exit__(self) -> None:
-    #    self.s.close()
+    def __init__(self, session: Session) -> None:
+        self.setSession(session)
+
+    def setSession(self, session: Session) -> None:
+        self.s = session
+    
     def __len__(self, key: str) -> int:
         """
         Returns the number of rows based off the Key value provided.

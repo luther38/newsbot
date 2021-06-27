@@ -2,9 +2,10 @@ from typing import List, Dict
 import re
 from bs4 import BeautifulSoup
 from json import loads
+from sqlalchemy.orm.session import Session
 from newsbot.core.logger import Logger
 from newsbot.core.constant import SourceName
-from newsbot.core.sql.tables import Articles, Sources, DiscordWebHooks, Icons
+from newsbot.core.sql.tables import Articles, ArticlesTable, IconsTable, Icons
 from newsbot.worker.sources.common import BSources
 from newsbot.worker.sources.rssHelper import *
 from newsbot.worker.common.requestContent import (
@@ -24,8 +25,13 @@ class RssReader(BSources):
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv(self.siteName)
+        #self.checkEnv(self.siteName)
+        self.session: Session = None
         pass
+
+    def enableTables(self) -> None:
+        self.icons = IconsTable(session=self.session)
+        self.articles = ArticlesTable(session=self.session)
 
     def getArticles(self) -> List[Articles]:
         allArticles: List[Articles] = list()
@@ -45,10 +51,10 @@ class RssReader(BSources):
             rsc.getPageDetails()
 
             # Check if the site icon has been cached
-            iconsExists = Icons(site=l.name).findAllByName()
+            iconsExists = self.icons.findAllByName(site=l.name)
             if len(iconsExists) == 0:
                 siteIcon: str = rsc.findSiteIcon(l.url)
-                Icons(site=l.name, fileName=siteIcon).update()
+                self.icons.update(Icons(fileName=siteIcon, site=l.name))
 
             # Check if we have helper code for deeper RSS integration
             # hasHelper: bool = self.enableHelper(l.url)
@@ -56,7 +62,7 @@ class RssReader(BSources):
             # Determin what typ of feed is on the site
             feed = rsc.findFeedLink(siteUrl=l.url)
             if feed["type"] == "atom":
-                ap = AtomParser(url=feed["content"], siteName=l.name)
+                ap = AtomParser(url=feed["content"], siteName=l.name, articlesTable=self.articles)
                 items = ap.getPosts()
                 for i in items:
                     a: Articles = ap.parseItem(i)
@@ -64,7 +70,7 @@ class RssReader(BSources):
                         allArticles.append(a)
 
             elif feed["type"] == "rss":
-                rp = RssParser(url=feed["content"], siteName=l.name)
+                rp = RssParser(url=feed["content"], siteName=l.name, articlesTable=self.articles)
                 items = rp.getPosts()
                 for item in items:
                     a = rp.processItem(item=item, title=l.name)
@@ -72,7 +78,7 @@ class RssReader(BSources):
                         allArticles.append(a)
 
             elif feed["type"] == "json":
-                jp = JsonParser(url=feed["content"], siteName=l.name)
+                jp = JsonParser(url=feed["content"], siteName=l.name, articlesTable=self.articles)
                 items = jp.getPosts()
                 for i in items:
                     a: Articles = jp.parseItem(i)
@@ -129,11 +135,12 @@ class IParser:
 
 
 class AtomParser(IParser):
-    def __init__(self, url: str, siteName: str) -> None:
+    def __init__(self, url: str, siteName: str, articlesTable: ArticlesTable) -> None:
         self.url: str = url
         self.siteName: str = siteName
         self.content = RequestSiteContent(url=url)
         self.content.getPageDetails()
+        self.articles = articlesTable
         pass
 
     def findFeedTitle(self) -> str:
@@ -146,10 +153,9 @@ class AtomParser(IParser):
     def parseItem(self, item: BeautifulSoup) -> Articles:
         feedTitle: str = self.content.findSingle(name="title")
 
-        a = Articles()
-        a.url = item.find(name="link", attrs={"type": "text/html"}).attrs["href"]
-        if a.exists() == False:
-            rc = RequestContent(url=a.url)
+        url = item.find(name="link", attrs={"type": "text/html"}).attrs["href"]
+        if self.articles.exists(url) == False:
+            rc = RequestContent(url=url)
             rc.getPageDetails()
             thumbnail = rc.findArticleThumbnail()
 
@@ -177,12 +183,13 @@ class AtomParser(IParser):
 
 
 class RssParser:
-    def __init__(self, url: str, siteName: str) -> None:
+    def __init__(self, url: str, siteName: str, articlesTable: ArticlesTable) -> None:
         self.logger = Logger(__class__)
         self.url: str = url
         self.siteName: str = siteName
         self.content: RequestSiteContent = RequestContent(url=url)
         self.content.getPageDetails()
+        self.articles = articlesTable
         # self.rssHelper: IRssContent = rssHelper
         pass
 
@@ -198,7 +205,7 @@ class RssParser:
             return Articles()
 
         # Check if we have already looked atthis link
-        if Articles(url=url).exists() == False:
+        if self.articles.exists(url=url) == False:
             # Set the new URI and store the source for now to avoid extra calls
             # rc = RequestContent(url=url)
             ra = RequestArticleContent(url=url)
@@ -210,7 +217,7 @@ class RssParser:
 
             a = Articles(
                 siteName=title,
-                sourceType="RSS",
+                sourceType=SourceName.RSS.value,
                 sourceName=title,
                 title=item.find(name="title").text,
                 description=self.findItemDescription(item, description),
@@ -277,19 +284,19 @@ class RssParser:
 
 
 class JsonParser:
-    def __init__(self, url: str, siteName: str):
+    def __init__(self, url: str, siteName: str, articlesTable: ArticlesTable):
         self.url: str = url
         self.siteName: str = siteName
         self.rc = RequestArticleContent(url=url)
         self.rc.getPageDetails()
         self.json = loads(self.rc.__source__)
+        self.articles = articlesTable
 
     def getPosts(self) -> List:
         return self.json["items"]
 
     def parseItem(self, item: Dict) -> Articles:
-        a = Articles(url=item["url"])
-        if a.exists() == False:
+        if self.articles.exists(url=item["url"]) == False:
             rc = RequestContent(url=item["url"])
             rc.getPageDetails()
             a = Articles(

@@ -1,3 +1,4 @@
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql.tables.schema import SourceLinks
 from newsbot.worker.sources.driver import BFirefox
 from typing import List
@@ -22,12 +23,11 @@ class YoutubeReader(BSources, BFirefox):
 
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-
-        self.checkEnv(self.siteName)
+        self.session: Session = None
         pass
 
     def getArticles(self) -> List[Articles]:
-        self.logger.debug(f"Checking YouTube for new content")
+        self.logger.info(f"Checking YouTube for new content")
         self.driver = self.driverStart()
 
         allArticles: List[Articles] = list()
@@ -39,15 +39,15 @@ class YoutubeReader(BSources, BFirefox):
             self.logger.debug(f"{site.source} - {site.name} - Checking for updates")
 
             # pull the source code from the main youtube page
-            channelID = Cache(key=f"{site.source} {site.name} channelID").find()
+            channelID = self.cache.find(key=f"{site.source} {site.name} channelID")
             if channelID == "":
                 self.uri = f"{site.url}"
                 self.driverGoTo(self.uri)
-                self.driverSaveScreenshot("youtube_step1.png")
+                #self.driverSaveScreenshot("youtube_step1.png")
                 siteContent: str = self.driverGetContent()
                 page: BeautifulSoup = self.getParser(seleniumContent=siteContent)
                 channelID: str = self.getChannelId(page)
-                Cache(key=f"youtube {site.name} channelID", value=channelID).add()
+                self.cache.add(key=f"youtube {site.name} channelID", value=channelID)
 
                 # Not finding the values I want with just request.  Time for Chrome.
                 # We are collecting info that is not present in the RSS feed.
@@ -55,8 +55,8 @@ class YoutubeReader(BSources, BFirefox):
                 self.setAuthorImage(page, site)
                 self.setAuthorName(page, site)
             else:
-                self.authorName = Cache(key=f"youtube {site.name} authorName").find()
-                self.authorImage = Cache(key=f"youtube {site.name} authorImage").find()
+                self.authorName = self.cache.find(key=f"youtube {site.name} authorName")
+                self.authorImage = self.cache.find(key=f"youtube {site.name} authorImage")
 
             # Generatet he hidden RSS feed uri
             self.uri = f"{self.feedBase}{channelID}"
@@ -108,9 +108,9 @@ class YoutubeReader(BSources, BFirefox):
             self.authorName = authorName[0].text
             if self.authorName == None or self.authorName == '':
                 self.logger.error(f"Failed to find the authorName for {site.name}.  CSS might have changed.")    
-            Cache(
+            self.cache.add(
                 key=f"youtube {site.name} authorName", value=self.authorName
-            ).add()
+            )
         except Exception as e:
             self.logger.error(
                 f"Failed to find the authorName for {site.name}.  CSS might have changed. {e}"
@@ -121,10 +121,10 @@ class YoutubeReader(BSources, BFirefox):
             authorImage = page.find_all(name="yt-img-shadow", attrs={"id": "avatar"})
             img = authorImage[0].contents[1].attrs["src"]
             if img != '':
-                Cache(
+                self.cache.add(
                     key=f"{site.source} {site.name} authorImage",
                     value=img,
-                ).add()
+                )
                 self.authorImage = img
             else:
                 self.logger.error(f"Failed to find the AuthorImage on the youtube page.")

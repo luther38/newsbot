@@ -1,5 +1,6 @@
 from typing import List
 from bs4 import BeautifulSoup
+from sqlalchemy.orm.session import Session
 from newsbot.core.logger import Logger
 from newsbot.core.constant import SourceName, SourceType
 from newsbot.core.sql.tables import Articles
@@ -16,7 +17,8 @@ class FFXIVReader(BSources):
         self.hooks = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv(self.siteName)
+        #self.checkEnv(self.siteName)
+        self.session: Session = None
         pass
 
     def getArticles(self) -> List[Articles]:

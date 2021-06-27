@@ -1,3 +1,4 @@
+from sqlalchemy.orm.session import Session
 from newsbot.core.constant import SourceName
 from typing import List
 from newsbot.core.logger import Logger
@@ -18,7 +19,8 @@ class PogohubReader(BSources):
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
-        self.checkEnv(self.siteName)
+        #self.checkEnv(self.siteName)
+        self.session: Session = None
         pass
 
     def getArticles(self) -> List[Articles]:
@@ -44,7 +46,7 @@ class PogohubReader(BSources):
 
                         # we are doing the check here to see if we need to fetch the thumbnail.
                         # if we have seen the link already, move on and save on time.
-                        seenAlready = ArticlesTable().exists(item.url)
+                        seenAlready = self.articlesTable.exists(item.url)
                         #seenAlready = item.exists()
                         if seenAlready == False:
                             # get thumbnail

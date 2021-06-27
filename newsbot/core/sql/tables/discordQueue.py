@@ -1,14 +1,16 @@
 from typing import List
+
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql import database
 from newsbot.core.sql.tables import Articles, DiscordQueue
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
 
 class DiscordQueueTable():
-    def __init__(self) -> None:
-        self.s = database.newSession()
+    def __init__(self, session: Session) -> None:
+        self.setSession(session)
         
-    #def __exit__(self) -> None:
-    #    self.s.close()
+    def setSession(self, session: Session) -> None:
+        self.s = session
 
     def __len__(self, siteName: str ) -> int:
         """
@@ -23,21 +25,24 @@ class DiscordQueueTable():
         return len(l)
 
     def convert(self, Article: Articles) -> DiscordQueue:
-        q = DiscordQueue()
+        try:
+            q = DiscordQueue()
 
-        q.siteName = Article.siteName
-        q.title = Article.title
-        q.link = Article.url
-        q.tags = Article.tags
-        q.thumbnail = Article.thumbnail
-        q.description = Article.description
-        q.video = Article.video
-        q.videoHeight = Article.videoHeight
-        q.videoWidth = Article.videoWidth
-        q.authorName = Article.authorName
-        q.authorImage = Article.authorImage
-        q.sourceName = Article.sourceName
-        q.sourceType = Article.sourceType
+            q.siteName = Article.siteName
+            q.title = Article.title
+            q.link = Article.url
+            q.tags = Article.tags
+            q.thumbnail = Article.thumbnail
+            q.description = Article.description
+            q.video = Article.video
+            q.videoHeight = Article.videoHeight
+            q.videoWidth = Article.videoWidth
+            q.authorName = Article.authorName
+            q.authorImage = Article.authorImage
+            q.sourceName = Article.sourceName
+            q.sourceType = Article.sourceType
+        except Exception as e:
+            print(e)
 
         return q
 
@@ -58,6 +63,7 @@ class DiscordQueueTable():
         except FailedToAddToDatabase as e:
             print(f"Failed to add {item.title} to DiscorQueue table! {e}")
             res = False
+        
         return res
 
     def remove(self, link: str) -> None:

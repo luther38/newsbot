@@ -1,4 +1,6 @@
-from typing import List
+
+from typing import List, SupportsBytes
+from sqlalchemy.orm.session import Session
 from json import loads
 from bs4 import BeautifulSoup
 from newsbot.core.logger import Logger
@@ -18,8 +20,9 @@ class RedditReader(BSources, BFirefox):
         self.hooks: List[DiscordWebHooks] = list()
         self.sourceEnabled: bool = False
         self.outputDiscord: bool = False
+        self.session: Session = None        
 
-        self.checkEnv(self.siteName)
+
 
     def getArticles(self) -> List[Articles]:
         # TODO Flag NSFW
@@ -37,8 +40,8 @@ class RedditReader(BSources, BFirefox):
             self.logger.debug(f"Collecting posts for '/r/{subreddit}'...")
 
             # Add the info we get via Selenium to the Cache to avoid pulling it each time.
-            authorImage = Cache(key=f"reddit.{subreddit}.authorImage").find()
-            authorName = Cache(key=f"reddit.{subreddit}.authorName").find()
+            authorImage = self.cache.find(key=f"reddit.{subreddit}.authorImage")
+            authorName = self.cache.find(key=f"reddit.{subreddit}.authorName")
             if authorImage == "":
                 soup = self.getSubRedditSoup(subreddit)
                 authorImage = self.findSubThumbnail(soup)
@@ -49,14 +52,14 @@ class RedditReader(BSources, BFirefox):
                 else:
                     authorName = f"/r/{subreddit}"
 
-                Cache(key=f"reddit.{subreddit}.authorImage", value=authorImage).add()
-                Cache(key=f"reddit.{subreddit}.authorName", value=authorName).add()
+                self.cache.add(key=f"reddit.{subreddit}.authorImage", value=authorImage)
+                self.cache.add(key=f"reddit.{subreddit}.authorName", value=authorName)
 
             # Now check the RSS
             posts = self.getPosts(subreddit)
             for p in posts:
-                a = Articles(url=f"https://reddit.com{p['data']['permalink']}")
-                if (a.exists() == False ):
+                exists = self.articlesTable.exists(url=f"https://reddit.com{p['data']['permalink']}")
+                if (exists == False):
                     allArticles.append(
                         self.getPostDetails(
                             p["data"], subreddit, authorName, authorImage
@@ -137,7 +140,7 @@ class RedditReader(BSources, BFirefox):
                 authorImage=authorImage,
                 title=obj['title'],
                 tags=obj["subreddit"],
-                sourceType = "Reddit",
+                sourceType = self.siteName,
                 sourceName = subreddit
             )
 

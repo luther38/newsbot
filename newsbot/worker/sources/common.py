@@ -1,9 +1,12 @@
+from newsbot.core.cache import Cache
+from sqlalchemy.orm import session
+from sqlalchemy.orm.session import Session
 from newsbot.core.sql.tables.discordWebHooks import DiscordWebHooksTable
-from typing import List
+from typing import List, Set
 from requests import get, Response
 from bs4 import BeautifulSoup
-from newsbot.core.sql.tables.schema import Articles, Sources, DiscordWebHooks, SourceLinks
-from newsbot.core.sql.tables import ArticlesTable, SourcesTable, DiscordQueueTable, SourceLinksTable
+from newsbot.core.sql.tables.schema import Articles, Settings, Sources, DiscordWebHooks, SourceLinks
+from newsbot.core.sql.tables import ArticlesTable, SourcesTable, SourceLinksTable, SettingsTable
 from abc import ABC, abstractclassmethod
 from newsbot.core.logger import Logger
 
@@ -21,30 +24,24 @@ class UnableToParseContent(Exception):
     pass
 
 class ISources(ABC):
+    session: Session = None
+    siteName: str = ''
     def __init__(self, rootUrl: str = "") -> None:
-        # This defines the URI that will be requested by requests.
-        # This can be static, or filled in by each loop of links.
-        #self.uri: str = ""
-
-        # This contains all the links that will be looped though.
-        #self.links = list()
-
-        # This contains all the DiscordWebHooks that relate to this Source.
-        #self.hooks = list()
-
-        #self.sourceEnabled: bool = False
-        #self.outputDiscord: bool = False
         pass
 
-    #@abstractclassmethod
-    #def checkConfig(self) -> str:
-    #    raise NotImplementedError
+    @abstractclassmethod
+    def enableTables(self) -> None:
+        raise NotImplementedError
 
     @abstractclassmethod
     def getArticles(self) -> List[Articles]:
         """
         This is the primary loop that checks the source to extract all the articles.
         """
+        raise NotImplementedError
+
+    @abstractclassmethod
+    def checkEnv(self, siteName: str) -> None:
         raise NotImplementedError
 
 class BSources(ISources):
@@ -63,6 +60,12 @@ class BSources(ISources):
         self.links: List[Sources] = list()
         pass
 
+    def enableTables(self) -> None:
+        self.articlesTable = ArticlesTable(session=self.session)
+        self.cache: Cache = Cache(session=self.session)
+        #self.sourcesTables = SourcesTable(session=self.session)
+        #self.discordWebHooksTable = DiscordWebHooksTable(session=self.session)
+
     def checkEnv(self, siteName: str) -> None:
         # Check if site was requested.
         outputDiscord = self.isDiscordEnabled(siteName)
@@ -77,25 +80,21 @@ class BSources(ISources):
 
     def getSourceList(self, siteName: str) -> List[Sources]:
         l = list()
-        res = SourcesTable().findAllBySource(source=siteName)
+        res = SourcesTable(session=self.session).findAllBySource(source=siteName)
         for i in res:
             l.append(i)
         return l
 
     def isDiscordEnabled(self, siteName: str) -> List[DiscordWebHooks]:
         h: List[DiscordWebHooks] = list()
-        tSources = SourcesTable()
+        tSources = SourcesTable(session=self.session)
         s = tSources.findAllBySource(source=siteName)
         for i in s:
-            sl: SourceLinks = SourceLinksTable().findBySourceID(sourceID=i.id)
-            #sl: SourceLinks = SourceLinks(sourceID=i.id).findBySourceID()
+            sl: SourceLinks = SourceLinksTable(session=self.session).findBySourceID(sourceID=i.id)
             if sl == None:
                 continue
             elif sl.discordID != "" or sl.discordID != None:
-                #d = DiscordWebHooks()
-                discordRef = DiscordWebHooksTable().findById(id=sl.discordID)
-                #d.id = sl.discordID
-                #discordRef: DiscordWebHooks = d.findById()
+                discordRef = DiscordWebHooksTable(session=self.session).findById(id=sl.discordID)
                 if discordRef.enabled == True:
                     h.append(discordRef)
             else:

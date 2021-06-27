@@ -8,14 +8,11 @@ from newsbot.core.sql.tables import ITables, Sources
 from newsbot.core.sql.exceptions import FailedToAddToDatabase
  
 class SourcesTable(ITables):
-    def __init__(self) -> None:
-        self.s = database.newSession()
-
-    #def __exit__(self) -> None:
-    #    self.s.close()
-
-    def __newSession__(self) -> Session:
-        return database.newSession()
+    def __init__(self, session: Session) -> None:
+        self.setSession(session)
+    
+    def setSession(self, session: Session) -> None:
+        self.s = session
 
     def __convertFromEnum__(self, item:Sources) -> Sources:
         t = item.source.__class__
@@ -35,13 +32,11 @@ class SourcesTable(ITables):
 
     def __len__(self) -> int:
         l = list()
-        s = self.__newSession__()
         try:
             for res in self.s.query(Sources):
                 l.append(res)
         except Exception as e:
             pass
-        s.close()
         return len(l)
     
     def clone(self, item: Sources) -> Sources:
@@ -61,22 +56,18 @@ class SourcesTable(ITables):
         ) 
 
     def add(self, item: Sources, session: Session = '') -> None:
-        s = self.__newSession__()
-
         if session != '':
-            s = session
-        
+            self.s = session      
         try:
-            s.add(item)
-            s.commit()
-            s.close()
+            self.s.add(item)
+            self.s.commit()
+            self.s.close()
         except FailedToAddToDatabase as e:
             print(f"Failed to add {item.name} to Source table! {e}")
     
     def update(self, item: Sources) -> None:
-        s = database.newSession()
         try:
-            exists = self.findByNameandSource(name=item.name, source=item.source, session=s)
+            exists = self.findByNameandSource(name=item.name, source=item.source)
             
             if exists.source != "":
                 exists.name = item.name
@@ -87,7 +78,7 @@ class SourcesTable(ITables):
                 exists.url = item.url
                 exists.tags = item.tags
 
-                self.add(exists, session=s)
+                self.add(exists)
             else:
                 self.add(item)
 
@@ -172,13 +163,9 @@ class SourcesTable(ITables):
             pass
         return Sources()
 
-    def findByNameandSource(self, name: str, source: str, session: Session = '') -> Sources:
-        s = self.s
-        if session != '':
-            s = session
-        
+    def findByNameandSource(self, name: str, source: str) -> Sources:       
         try:
-            for d in s.query(Sources).filter(
+            for d in self.s.query(Sources).filter(
                 Sources.name.contains(name),
                 Sources.source.contains(source)
                 ):
