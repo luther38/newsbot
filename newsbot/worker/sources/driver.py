@@ -2,6 +2,7 @@ from time import sleep
 from newsbot.core.logger import Logger
 from selenium.webdriver import Chrome, ChromeOptions
 from selenium.webdriver import Firefox, FirefoxOptions
+from selenium.webdriver.firefox.webdriver import FirefoxWebElement
 from os.path import exists
 from os import remove
 from abc import ABC, abstractclassmethod
@@ -29,8 +30,12 @@ class BDriver(IDriver):
 
     def driverGoTo(self, uri: str) -> None:
         try:
+            self.logger.debug(f"Changed page to '{uri}'")
             self.driver.get(uri)
-            sleep(3)
+            sleep(5)
+            newUrl = self.driverGetUrl()
+            if newUrl != uri:
+                self.logger.debug(f"Was redirected to '{newUrl}'!")
             #self.driver.implicitly_wait(10)
         except Exception as e:
             self.logger.error(f"Driver failed to get {uri}. Error: {e}")
@@ -46,6 +51,9 @@ class BDriver(IDriver):
             self.driver.save_screenshot(path)
         except Exception as e:
             self.logger.error(f"Attempted to save a screenshot to '{path}', but failed to do so. Error: {e}")
+
+    def driverGetUrl(self) -> str:
+        return self.driver.current_url
 
     def driverClose(self) -> None:
         try:
@@ -68,6 +76,12 @@ class BFirefox(BDriver):
         except Exception as e:
             self.logger.critical(f"Firefox driver failed to start: Error: {e}")
 
+    def driverFindByXPath(self, xpath: str) -> FirefoxWebElement:
+        try:
+            ele = self.driver.find_element_by_xpath(xpath)
+            return ele
+        except Exception as e:
+            self.logger.error(f"Firefox failed to select the item via xpath.  Something changed on the page.")
 
 class BChrome(BDriver):
     """
